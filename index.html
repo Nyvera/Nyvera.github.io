@@ -84,12 +84,10 @@
 
   <div class="chat-container">
     <div id="chatHistory" class="chat-history"></div>
-    <p id="vision-result"></p>
     <div class="chat-input">
       <textarea id="chatInput" placeholder="Ask or imagine something..."></textarea>
       <button onclick="handleSend()">Send</button>
       <button onclick="handleImage()">🎨</button>
-      <input type="file" id="imageInput" accept="image/*">
     </div>
   </div>
 
@@ -245,71 +243,6 @@ async function handleImage() {
 }
 
 renderMessages();
-    // Check if the user is premium
-let isPremium = localStorage.getItem('isPremium') === 'true';
-
-// Function to encode file to base64
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result); // result includes 'data:mime/type;base64,' prefix
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-async function analyzeImage(imageFile, question = "What's in this image?") {
-  // Check if user is premium before allowing image analysis
-  if (!isPremium) {
-    alert("This feature is only available to premium users.");
-    return;
-  }
-
-  const url = "https://text.pollinations.ai/openai";
-
-  try {
-    const base64ImageDataUrl = await fileToBase64(imageFile);
-
-    const payload = {
-      model: "openai", // Ensure vision support
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: question },
-            {
-              type: "image_url",
-              image_url: {
-                url: base64ImageDataUrl,
-              },
-            },
-          ],
-        },
-      ],
-      max_tokens: 10000, // Optional
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `HTTP error! status: ${response.status}, message: ${errorText}`
-      );
-    }
-
-    const result = await response.json();
-    console.log("Vision Analysis:", result.choices[0].message.content);
-    // Display the result
-    document.getElementById('vision-result').textContent = result.choices[0].message.content;
-  } catch (error) {
-    console.error("Error analyzing image:", error);
-  }
-}
   </script>
 </body>
 </html>

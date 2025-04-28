@@ -2,62 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Pricing - Echo AI</title>
+  <title>Free Plan - Echo AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       background-color: #f4f4f4;
-      padding: 20px;
       margin: 0;
+      padding: 0;
     }
     header {
+      background-color: #282c34;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #61dafb;
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    .nav-links a:hover {
+      background-color: rgba(97, 218, 251, 0.2);
+    }
+    .page-title {
       text-align: center;
-      margin-bottom: 40px;
+      margin: 40px 0;
+      color: #333;
     }
     .pricing-container {
       display: flex;
       justify-content: center;
       gap: 20px;
+      padding: 0 20px;
     }
     .plan-card {
       background: white;
       border: 2px solid #ddd;
-      padding: 100px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      text-align: flex;
+      padding: 50px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
       width: 400px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .plan-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     }
     .plan-card h2 {
       margin-top: 0;
+      color: #282c34;
+      font-size: 28px;
     }
     .plan-card p {
-      font-size: 16px;
+      font-size: 18px;
       color: #555;
+      line-height: 1.6;
     }
     .plan-button {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px;
+      background-color: #61dafb;
+      color: #282c34;
+      padding: 12px;
       font-size: 16px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       text-align: center;
-      margin-top: 10px;
+      margin-top: 15px;
       width: 100%;
+      transition: background-color 0.3s;
+      font-weight: bold;
     }
     .plan-button:hover {
-      background-color: #45a049;
+      background-color: #4fa8c3;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Echo AI - Pricing</h1>
-    <p>Choose the plan that works best for you</p>
+    <a href="index.html" class="logo">Echo AI</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="pricing.html">Pricing</a>
+    </div>
   </header>
+
+  <div class="page-title">
+    <h1>Echo AI - Free Plan</h1>
+    <p>Details of our Free Plan offering</p>
+  </div>
 
   <div class="pricing-container">
     <!-- Free Plan Card -->
@@ -66,6 +116,8 @@
       <p>Features:<br>Chat (Slow)<br>Image generation (Also Slow)</p>
       <p><strong>$0/month</strong></p>
       <button class="plan-button" onclick="window.location.href='index.html'">Start Free Plan</button>
+      <button class="plan-button" onclick="window.location.href='pricing.html'" style="margin-top: 10px; background-color: #e7e7e7; color: #333;">Back to Pricing</button>
     </div>
+  </div>
 </body>
 </html>

@@ -155,12 +155,27 @@ let chatHistory = [];
 let recognition;
 
 // Auto-insert examples
-function quickInsert(text) {
-  document.getElementById('prompt').value = text;
+function quickInsert(type) {
+  const promptInput = document.getElementById('prompt');
+  const modelSelect = document.getElementById('model-select');
+
+  if (type === "Search") {
+    promptInput.value = "Search:";
+    modelSelect.value = "searchgpt";
+  } else if (type === "Reason") {
+    promptInput.value = "Reason:";
+    modelSelect.value = "mistral";
+  } else if (type === "Deep Research") {
+    promptInput.value = "Deep Research:";
+    modelSelect.value = "searchgpt"; // Still searchgpt, but deeper
+  } else if (type === "Create image") {
+    promptInput.value = "Create image:";
+  }
 }
 
 async function handleInput() {
-  const prompt = document.getElementById('prompt').value.trim();
+  const promptInput = document.getElementById('prompt');
+  const prompt = promptInput.value.trim();
   if (!prompt) return;
 
   addMessage('user', prompt);
@@ -168,19 +183,33 @@ async function handleInput() {
   const modelSelect = document.getElementById('model-select');
   let selectedModel = modelSelect.value;
 
-  if (/draw|paint|generate image/i.test(prompt)) {
-    return generateImage(prompt.replace(/^(draw|paint|generate image)\s*/i, ''));
+  // Image generation check
+  if (/^(create|generate|draw|paint)\s+image/i.test(prompt)) {
+    const cleanedPrompt = prompt.replace(/^(create|generate|draw|paint)\s+image\s*/i, '');
+    return generateImage(cleanedPrompt || "a beautiful scene");
   }
-  if (/analyze/i.test(prompt)) {
+
+  // Auto-detect if the prompt hints at special handling
+  if (/^search:/i.test(prompt)) {
+    selectedModel = "searchgpt";
+  } else if (/^reason:/i.test(prompt)) {
+    selectedModel = "mistral";
+  } else if (/^deep research:/i.test(prompt)) {
+    selectedModel = "searchgpt"; // still searchgpt
+  } else if (/analyze/i.test(prompt)) {
     selectedModel = "openai-large";
-  }
-  if (/speak|say/i.test(prompt)) {
+  } else if (/speak|say/i.test(prompt)) {
     selectedModel = "openai-audio";
     return generateSpeech(prompt.replace(/^(speak|say)\s*/i, ''));
   }
 
-  // Regular chat
-  await streamChat(prompt, selectedModel);
+  // Special case for Deep Research: inject extra prompt boost
+  let userPrompt = prompt;
+  if (/^deep research:/i.test(prompt)) {
+    userPrompt = prompt.replace(/^deep research:/i, '') + " (Respond with thorough research, include sources if possible)";
+  }
+
+  await streamChat(userPrompt, selectedModel);
 }
 
 function addMessage(role, content, isImage = false) {
@@ -197,45 +226,56 @@ function addMessage(role, content, isImage = false) {
 }
 
 async function streamChat(userPrompt, model) {
-  addMessage('ai', ''); // empty first
-  const messages = [...chatHistory, {role: "user", content: userPrompt}];
-  
-  const payload = {
-    model: model,
-    messages: messages,
-    stream: true
-  };
+  addMessage('ai', 'Thinking... <span id="loader">. . .</span>'); // show loading spinner
 
-  const res = await fetch("https://text.pollinations.ai/openai", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const messages = [...chatHistory, {role: "user", content: userPrompt}];
+    const payload = {
+      model: model,
+      messages: messages,
+      stream: true
+    };
 
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let aiDiv = document.querySelector('.message.ai:last-child');
-  let text = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value);
-    chunk.split('\n\n').forEach(line => {
-      if (line.startsWith('data: ')) {
-        const json = JSON.parse(line.slice(6));
-        const delta = json.choices?.[0]?.delta?.content;
-        if (delta) {
-          text += delta;
-          aiDiv.textContent = text + getLoadingDots();
-          aiDiv.scrollIntoView({ behavior: "smooth", block: "end" });
-        }
-      }
+    const res = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+      body: JSON.stringify(payload)
     });
-  }
 
-  aiDiv.textContent = text;
-  chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: text});
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let aiDiv = document.querySelector('.message.ai:last-child');
+    let text = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      chunk.split('\n\n').forEach(line => {
+        if (line.startsWith('data: ')) {
+          const json = JSON.parse(line.slice(6));
+          const delta = json.choices?.[0]?.delta?.content;
+          if (delta) {
+            text += delta;
+            aiDiv.textContent = text + getLoadingDots();
+            aiDiv.scrollIntoView({ behavior: "smooth", block: "end" });
+          }
+        }
+      });
+    }
+
+    aiDiv.textContent = text;
+    chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: text});
+
+    // Auto summarize long responses
+    if (text.length > 300) {
+      aiDiv.textContent = text.slice(0, 300) + "... (more)";
+    }
+
+  } catch (error) {
+    addMessage('ai', 'Sorry, something went wrong. Please try again later.');
+    console.error("Error:", error);
+  }
 }
 
 function getLoadingDots() {
@@ -248,64 +288,19 @@ async function generateImage(prompt) {
   addMessage('ai', url, true);
 }
 
-async function generateSpeech(text) {
-  const url = `https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai-audio&voice=nova`;
-  const audio = new Audio(url);
-  audio.play();
-  addMessage('ai', "[Speaking out loud 🎙️]");
-}
-
 function startListening() {
-  if (!('webkitSpeechRecognition' in window)) {
-    alert('Speech recognition not supported!');
-    return;
-  }
-  recognition = new webkitSpeechRecognition();
-  recognition.continuous = false;
-  recognition.lang = 'en-US';
-  recognition.interimResults = false;
-  recognition.start();
-
-  recognition.onresult = function(event) {
-    const transcript = event.results[0][0].transcript;
-    document.getElementById('prompt').value = transcript;
-  };
-
-  recognition.onerror = function(event) {
-    console.error('Speech Recognition Error:', event.error);
-  };
-}
-
-async function handleImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    const base64Image = e.target.result.split(',')[1];
-    const payload = {
-      model: "openai-large",
-      messages: [{
-        role: "user",
-        content: [
-          { type: "text", text: "Analyze this image:" },
-          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
-        ]
-      }]
+  // Start voice recognition
+  if (!recognition) {
+    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById('prompt').value = transcript;
+      handleInput();
     };
-
-    const res = await fetch("https://text.pollinations.ai/openai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    addMessage('ai', data.choices[0].message.content);
-  };
-  reader.readAsDataURL(file);
+  }
+  recognition.start();
 }
 </script>
-
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>EchoAI</title>
   <style>
-    body {
+     body {
       margin: 0; 
       padding: 0; 
       font-family: 'Segoe UI', sans-serif; 
@@ -142,6 +142,11 @@
       <option value="claude-hybridspace">Claude Hybridspace</option>
       <option value="openai-large">OpenAI Large (Vision)</option>
       <option value="o3-mini">O3 Mini</option>
+      <option value="qwen-coder">Qwen Coder</option>
+      <option value="llama">Llama 3.3</option>
+      <option value="mistral-small">Mistral Small</option>
+      <option value="deepseek">DeepSeek</option>
+      <option value="phi">Phi-4 Instruct</option>
     </select>
     <button id="upload-img" onclick="document.getElementById('imgInput').click()">📷</button>
     <button id="mic" onclick="startListening()">🎙️</button>
@@ -153,23 +158,12 @@
 <script>
 let chatHistory = [];
 let recognition;
+const premiumPassword = "cjownsthis123"; // Hardcoded premium password
 
-// Auto-insert examples
-function quickInsert(type) {
-  const promptInput = document.getElementById('prompt');
-  const modelSelect = document.getElementById('model-select');
-
-  if (type === "Search") {
-    promptInput.value = "Search:";
-    modelSelect.value = "searchgpt";
-  } else if (type === "Reason") {
-    promptInput.value = "Reason:";
-    modelSelect.value = "mistral";
-  } else if (type === "Deep Research") {
-    promptInput.value = "Deep Research:";
-    modelSelect.value = "searchgpt"; // Still searchgpt, but deeper
-  } else if (type === "Create image") {
-    promptInput.value = "Create image:";
+// Function to simulate delay based on user type (free vs premium)
+async function delayExecution(isPremium, delayTime) {
+  if (!isPremium) {
+    await new Promise(resolve => setTimeout(resolve, delayTime)); // Apply delay for free users
   }
 }
 
@@ -183,10 +177,19 @@ async function handleInput() {
   const modelSelect = document.getElementById('model-select');
   let selectedModel = modelSelect.value;
 
+  const passwordInput = promptInput.value.toLowerCase(); // Assume password is part of the prompt
+
+  // Check if the password in the prompt is premium
+  const isPremium = passwordInput === premiumPassword;
+  
+  // If not premium, apply text delay (3 seconds for free)
+  await delayExecution(isPremium, isPremium ? 0 : 3000); // 3 seconds delay for free users
+  
   // Image generation check
   if (/^(create|generate|draw|paint)\s+image/i.test(prompt)) {
-    const cleanedPrompt = prompt.replace(/^(create|generate|draw|paint)\s+image\s*/i, '');
-    return generateImage(cleanedPrompt || "a beautiful scene");
+    const cleanedPrompt = prompt.replace(/^(create|generate|draw|paint)\s*/i, '');
+    await delayExecution(isPremium, isPremium ? 0 : 10000); // 10 seconds delay for free users
+    return generateImage(cleanedPrompt || "a beautiful scene", isPremium);
   }
 
   // Auto-detect if the prompt hints at special handling
@@ -203,13 +206,7 @@ async function handleInput() {
     return generateSpeech(prompt.replace(/^(speak|say)\s*/i, ''));
   }
 
-  // Special case for Deep Research: inject extra prompt boost
-  let userPrompt = prompt;
-  if (/^deep research:/i.test(prompt)) {
-    userPrompt = prompt.replace(/^deep research:/i, '') + " (Respond with thorough research, include sources if possible)";
-  }
-
-  await streamChat(userPrompt, selectedModel);
+  await streamChat(prompt, selectedModel, isPremium);
 }
 
 function addMessage(role, content, isImage = false) {
@@ -225,16 +222,18 @@ function addMessage(role, content, isImage = false) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-async function streamChat(userPrompt, model) {
+async function streamChat(userPrompt, model, isPremium) {
   addMessage('ai', 'Thinking... <span id="loader">. . .</span>'); // show loading spinner
 
   try {
-    const messages = [...chatHistory, {role: "user", content: userPrompt}];
+    const messages = [...chatHistory, { role: "user", content: userPrompt }];
     const payload = {
       model: model,
       messages: messages,
       stream: true
     };
+
+    await delayExecution(isPremium, isPremium ? 0 : 3000); // Apply 3 sec delay for free users
 
     const res = await fetch("https://text.pollinations.ai/openai", {
       method: "POST",
@@ -265,42 +264,58 @@ async function streamChat(userPrompt, model) {
     }
 
     aiDiv.textContent = text;
-    chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: text});
-
-    // Auto summarize long responses
-    if (text.length > 300) {
-      aiDiv.textContent = text.slice(0, 300) + "... (more)";
-    }
+    chatHistory.push({ role: "user", content: userPrompt }, { role: "assistant", content: text });
 
   } catch (error) {
-    addMessage('ai', 'Sorry, something went wrong. Please try again later.');
-    console.error("Error:", error);
+    console.error("Error with chat stream:", error);
+    addMessage('ai', 'Error, please try again.');
   }
 }
 
 function getLoadingDots() {
-  const dots = ". . .";
-  return dots.substring(0, Math.floor(Date.now() / 300) % 4);
+  return "<span class='dot'>.</span><span class='dot'>.</span><span class='dot'>.</span>";
 }
 
-async function generateImage(prompt) {
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
-  addMessage('ai', url, true);
+// Image generation (for image prompts)
+async function generateImage(prompt, isPremium) {
+  addMessage('ai', 'Generating image... <span id="loader">. . .</span>'); // show loading spinner
+
+  await delayExecution(isPremium, isPremium ? 0 : 10000); // 10 seconds delay for free users
+
+  const res = await fetch("https://image.pollinations.ai/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt })
+  });
+
+  const data = await res.json();
+  const imgUrl = data.url;
+
+  addMessage('ai', imgUrl, true); // Display generated image
 }
 
-function startListening() {
-  // Start voice recognition
-  if (!recognition) {
-    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-US";
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      document.getElementById('prompt').value = transcript;
-      handleInput();
-    };
-  }
+async function startListening() {
+  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = 'en-US';
   recognition.start();
+
+  recognition.onresult = function (event) {
+    const transcript = event.results[0][0].transcript;
+    document.getElementById('prompt').value = transcript;
+    handleInput();
+  };
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  const reader = new FileReader();
+  reader.onloadend = function () {
+    addMessage('user', 'Uploaded image');
+    addMessage('ai', reader.result, true); // Display uploaded image
+  };
+  reader.readAsDataURL(file);
 }
 </script>
+
 </body>
 </html>

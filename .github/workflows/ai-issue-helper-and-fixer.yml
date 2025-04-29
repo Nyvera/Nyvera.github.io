@@ -1,43 +1,42 @@
-name: AI Issue Helper
+name: Ai issue helper and fixer
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened]
 
 jobs:
-  ai_commenter:
+  comment:
     runs-on: ubuntu-latest
     steps:
-    - name: Get AI Suggestion
-      id: ai
-      run: |
-        ISSUE_BODY=$(jq -r .issue.body "$GITHUB_EVENT_PATH")
-        ISSUE_TITLE=$(jq -r .issue.title "$GITHUB_EVENT_PATH")
-        
-        echo "Sending to AI..."
-        
-        RESPONSE=$(curl -s -X POST "https://text.pollinations.ai/openai" \
-          -H "Content-Type: application/json" \
-          -d "{\"prompt\": \"You are a helpful GitHub bot. An issue was opened with the title: '${ISSUE_TITLE}' and body: '${ISSUE_BODY}'. Suggest a code fix or improvement.\", \"temperature\": 0.5}")
+      - name: Comment on issue using Pollinations AI
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueTitle = context.payload.issue.title;
+            const issueBody = context.payload.issue.body || '';
+            const prompt = `Write a friendly and helpful reply to this GitHub issue:\nTitle: ${issueTitle}\nDescription: ${issueBody}`;
 
-        CLEAN_RESPONSE=$(echo "$RESPONSE" | jq -r '.choices[0].text')
+            const response = await fetch("https://text.pollinations.ai/openai/", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                model: "openai",
+                messages: [{ role: "user", content: prompt }]
+              })
+            });
 
-        echo "AI Response: $CLEAN_RESPONSE"
+            if (!response.ok) {
+              throw new Error(`Pollinations API error: ${response.statusText}`);
+            }
 
-        # Save response for next step
-        echo "response<<EOF" >> $GITHUB_ENV
-        echo "$CLEAN_RESPONSE" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+            const data = await response.json();
+            const reply = data.choices?.[0]?.message?.content || "🤖 Sorry, I couldn't generate a response.";
 
-    - name: Comment AI Response on Issue
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const issue_number = context.issue.number;
-          const body = process.env.response || "AI could not generate a suggestion.";
-          github.rest.issues.createComment({
-            ...context.repo,
-            issue_number,
-            body: `🤖 **AI Suggestion:**\n\n${body}`
-          });
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reply
+            });

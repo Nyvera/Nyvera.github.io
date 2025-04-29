@@ -4,26 +4,26 @@
   <meta charset="UTF-8" />
   <title>EchoAI</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
   <!-- Primary Meta Tags -->
-<title>EchoAI</title>
-<meta name="title" content="EchoAI" />
-<meta name="description" content="This website is the official EchoAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
+  <meta name="title" content="EchoAI" />
+  <meta name="description" content="This website is the official EchoAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
 
-<!-- Open Graph / Facebook -->
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://3ch0ai.github.io/EchoAI/" />
-<meta property="og:title" content="EchoAI" />
-<meta property="og:description" content="This website is the official EchoAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
-<meta property="og:image" content="https://3ch0ai.github.io/EchoAI/favicon.png" />
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://3ch0ai.github.io/EchoAI/" />
+  <meta property="og:title" content="EchoAI" />
+  <meta property="og:description" content="This website is the official EchoAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
+  <meta property="og:image" content="https://3ch0ai.github.io/EchoAI/favicon.png" />
 
-<!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content="https://3ch0ai.github.io/EchoAI/" />
-<meta property="twitter:title" content="EchoAI" />
-<meta property="twitter:description" content="This website is the official EchoAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
-<meta property="twitter:image" content="https://3ch0ai.github.io/EchoAI/favicon.png" />
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://3ch0ai.github.io/EchoAI/" />
+  <meta property="twitter:title" content="EchoAI" />
+  <meta property="twitter:description" content="This website is the official EchoAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
+  <meta property="twitter:image" content="https://3ch0ai.github.io/EchoAI/favicon.png" />
 
-<!-- Meta Tags Generated with https://metatags.io -->
   <style>
     /* Styles unchanged for brevity */
     body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f9f9f9; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow-x: hidden; }
@@ -85,6 +85,14 @@
 
 <script>
 let isPremium = false;
+let chatHistory = [];
+let recognition;
+
+const offlineReplies = [
+  "I'm offline right now. Try connecting to the internet.",
+  "Even AI needs Wi-Fi sometimes 😅",
+  "Offline mode: engaged. Limited powers active."
+];
 
 function login() {
   const username = document.getElementById("username").value.trim();
@@ -99,11 +107,6 @@ function login() {
     status.textContent = "❌ Wrong credentials";
   }
 }
-
-  
-  
-let chatHistory = [];
-let recognition;
 
 function quickInsert(type) {
   const promptInput = document.getElementById('prompt');
@@ -131,44 +134,43 @@ async function handleInput() {
   addMessage('user', prompt);
   promptInput.value = '';
 
+  if (!navigator.onLine) {
+    const offlineReply = offlineReplies[Math.floor(Math.random() * offlineReplies.length)];
+    addMessage('ai', offlineReply);
+    return;
+  }
+
   let model = document.getElementById('model-select').value;
 
-  // Special handling for certain commands
   if (/^(create|generate|draw|paint)\s+image/i.test(prompt)) {
     const cleaned = prompt.replace(/^(create|generate|draw|paint)\s+image\s*/i, '');
     return generateImage(cleaned || "a beautiful scene");
   }
 
   if (/^search:/i.test(prompt)) {
-    model = "searchgpt";  // Set model to SearchGPT for search queries
-    prompt = prompt.replace(/^search:/i, '').trim(); // Clean up the prompt
+    model = "searchgpt";
+    prompt = prompt.replace(/^search:/i, '').trim();
   }
-
   if (/^reason:/i.test(prompt)) {
-    model = "mistral";  // Set model to Mistral for reasoning queries
-    prompt = prompt.replace(/^reason:/i, '').trim(); // Clean up the prompt
+    model = "mistral";
+    prompt = prompt.replace(/^reason:/i, '').trim();
   }
-
   if (/^deep research:/i.test(prompt)) {
-    model = "searchgpt";  // Set model to SearchGPT for deep research
+    model = "searchgpt";
     prompt = prompt.replace(/^deep research:/i, '').trim() + " (Respond with thorough research, include sources if possible)";
   }
-
   if (/analyze/i.test(prompt)) {
-    model = "openai-large"; // Set model to OpenAI Large for analysis requests
+    model = "openai-large";
   }
-
   if (/speak|say/i.test(prompt)) {
     model = "openai-audio";
     return generateSpeech(prompt.replace(/^(speak|say)\s*/i, ''));
   }
-if (!isPremium) {
-  await new Promise(res => setTimeout(res, 3000)); // 3-second delay
-}
-
+  if (!isPremium) {
+    await new Promise(res => setTimeout(res, 3000));
+  }
   await streamChat(prompt, model);
 }
-
 
 function addMessage(role, content, isImage = false) {
   const chat = document.getElementById('chat');
@@ -209,7 +211,7 @@ async function streamChat(userPrompt, model) {
             const delta = json.choices?.[0]?.delta?.content;
             if (delta) {
               fullText += delta;
-              loaderDiv.textContent = fullText + getLoadingDots();
+              loaderDiv.textContent = fullText;
               loaderDiv.scrollIntoView({ behavior: "smooth", block: "end" });
             }
           } catch (e) {
@@ -228,11 +230,6 @@ async function streamChat(userPrompt, model) {
   }
 }
 
-function getLoadingDots() {
-  const dots = ["", ".", "..", "..."];
-  return dots[Math.floor(Date.now() / 300) % 4];
-}
-
 function generateImage(prompt) {
   const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
   addMessage('ai', url, true);
@@ -249,6 +246,16 @@ function startListening() {
     };
   }
   recognition.start();
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').then(() => {
+      console.log('✅ Service Worker registered');
+    }, err => {
+      console.warn('Service Worker registration failed:', err);
+    });
+  });
 }
 </script>
 <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>

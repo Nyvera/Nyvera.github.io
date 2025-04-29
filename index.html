@@ -1,122 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>EchoAI</title>
   <style>
-    body {
-      margin: 0; 
-      padding: 0; 
-      font-family: 'Segoe UI', sans-serif; 
-      background: #f9f9f9; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      height: 100vh;
-      overflow-x: hidden;
-    }
-    header {
-      margin-top: 50px;
-      font-size: 2rem;
-      font-weight: bold;
-    }
-    #chat-container {
-      width: 90%;
-      max-width: 800px;
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-    }
-    #chat {
-      flex-grow: 1;
-      overflow-y: auto;
-      padding: 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      min-height: 300px;
-      margin-bottom: 20px;
-    }
-    .message {
-      margin-bottom: 15px;
-    }
-    .message.user {
-      text-align: right;
-      font-weight: bold;
-    }
-    .message.ai {
-      text-align: left;
-      color: #333;
-    }
-    .message img {
-      max-width: 250px;
-      border-radius: 10px;
-      margin-top: 5px;
-    }
-    #input-container {
-      display: flex;
-      align-items: center;
-      background: white;
-      border-radius: 30px;
-      padding: 10px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    #prompt {
-      border: none;
-      flex: 1;
-      outline: none;
-      font-size: 1rem;
-    }
-    #model-select {
-      margin-left: 10px;
-      border: none;
-      font-size: 1rem;
-      background: #f0f0f0;
-      padding: 5px;
-      border-radius: 8px;
-    }
-    #send, #mic, #upload-img {
-      background: black;
-      color: white;
-      border: none;
-      padding: 10px;
-      margin-left: 10px;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-    #mic:hover, #send:hover, #upload-img:hover {
-      background: #333;
-    }
-    #loader {
-      display: inline-block;
-    }
-    #loader span {
-      font-size: 1.2rem;
-      animation: blink 1.5s infinite;
-    }
-    @keyframes blink {
-      0% { opacity: 0.2; }
-      20% { opacity: 1; }
-      100% { opacity: 0.2; }
-    }
-    #options {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-    }
-    .option-btn {
-      padding: 8px 12px;
-      background: #eee;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    .option-btn:hover {
-      background: #ddd;
-    }
+    /* Styles unchanged for brevity */
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f9f9f9; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow-x: hidden; }
+    header { margin-top: 50px; font-size: 2rem; font-weight: bold; }
+    #chat-container { width: 90%; max-width: 800px; margin-top: 20px; display: flex; flex-direction: column; }
+    #chat { flex-grow: 1; overflow-y: auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); min-height: 300px; margin-bottom: 20px; }
+    .message { margin-bottom: 15px; }
+    .message.user { text-align: right; font-weight: bold; }
+    .message.ai { text-align: left; color: #333; }
+    .message img { max-width: 250px; border-radius: 10px; margin-top: 5px; }
+    #input-container { display: flex; align-items: center; background: white; border-radius: 30px; padding: 10px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    #prompt { border: none; flex: 1; outline: none; font-size: 1rem; }
+    #model-select { margin-left: 10px; border: none; font-size: 1rem; background: #f0f0f0; padding: 5px; border-radius: 8px; }
+    #send, #mic, #upload-img { background: black; color: white; border: none; padding: 10px; margin-left: 10px; border-radius: 50%; cursor: pointer; }
+    #mic:hover, #send:hover, #upload-img:hover { background: #333; }
+    #loader span { font-size: 1.2rem; animation: blink 1.5s infinite; }
+    @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+    #options { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .option-btn { padding: 8px 12px; background: #eee; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
+    .option-btn:hover { background: #ddd; }
   </style>
 </head>
 <body>
@@ -129,8 +35,8 @@
   <div id="options">
     <button class="option-btn" onclick="quickInsert('Search')">🌐 Search</button>
     <button class="option-btn" onclick="quickInsert('Reason')">💡 Reason</button>
-    <button class="option-btn" onclick="quickInsert('Deep research:')">📚 Deep Research</button>
-    <button class="option-btn" onclick="quickInsert('Generate image of')">🎨 Create Image</button>
+    <button class="option-btn" onclick="quickInsert('Deep research')">📚 Deep Research</button>
+    <button class="option-btn" onclick="quickInsert('Create image')">🎨 Create Image</button>
   </div>
 
   <div id="input-container">
@@ -154,7 +60,6 @@
 let chatHistory = [];
 let recognition;
 
-// Auto-insert examples
 function quickInsert(type) {
   const promptInput = document.getElementById('prompt');
   const modelSelect = document.getElementById('model-select');
@@ -167,7 +72,7 @@ function quickInsert(type) {
     modelSelect.value = "mistral";
   } else if (type === "Deep Research") {
     promptInput.value = "Deep Research:";
-    modelSelect.value = "searchgpt"; // Still searchgpt, but deeper
+    modelSelect.value = "searchgpt";
   } else if (type === "Create image") {
     promptInput.value = "Create image:";
   }
@@ -179,113 +84,99 @@ async function handleInput() {
   if (!prompt) return;
 
   addMessage('user', prompt);
+  promptInput.value = '';
 
-  const modelSelect = document.getElementById('model-select');
-  let selectedModel = modelSelect.value;
+  let model = document.getElementById('model-select').value;
 
-  // Image generation check
   if (/^(create|generate|draw|paint)\s+image/i.test(prompt)) {
-    const cleanedPrompt = prompt.replace(/^(create|generate|draw|paint)\s+image\s*/i, '');
-    return generateImage(cleanedPrompt || "a beautiful scene");
+    const cleaned = prompt.replace(/^(create|generate|draw|paint)\s+image\s*/i, '');
+    return generateImage(cleaned || "a beautiful scene");
   }
 
-  // Auto-detect if the prompt hints at special handling
-  if (/^search:/i.test(prompt)) {
-    selectedModel = "searchgpt";
-  } else if (/^reason:/i.test(prompt)) {
-    selectedModel = "mistral";
-  } else if (/^deep research:/i.test(prompt)) {
-    selectedModel = "searchgpt"; // still searchgpt
-  } else if (/analyze/i.test(prompt)) {
-    selectedModel = "openai-large";
-  } else if (/speak|say/i.test(prompt)) {
-    selectedModel = "openai-audio";
+  if (/^search:/i.test(prompt)) model = "searchgpt";
+  if (/^reason:/i.test(prompt)) model = "mistral";
+  if (/^deep research:/i.test(prompt)) {
+    model = "searchgpt";
+    prompt = prompt.replace(/^deep research:/i, '') + " (Respond with thorough research, include sources if possible)";
+  }
+  if (/analyze/i.test(prompt)) model = "openai-large";
+  if (/speak|say/i.test(prompt)) {
+    model = "openai-audio";
     return generateSpeech(prompt.replace(/^(speak|say)\s*/i, ''));
   }
 
-  // Special case for Deep Research: inject extra prompt boost
-  let userPrompt = prompt;
-  if (/^Deep research:/i.test(prompt)) {
-    userPrompt = prompt.replace(/^Deep research:/i, '') + " (Respond with thorough research, include sources if possible)";
-  }
-
-  await streamChat(userPrompt, selectedModel);
+  await streamChat(prompt, model);
 }
 
 function addMessage(role, content, isImage = false) {
   const chat = document.getElementById('chat');
   const div = document.createElement('div');
   div.className = 'message ' + role;
-  if (isImage) {
-    div.innerHTML = `<img src="${content}" />`;
-  } else {
-    div.textContent = content;
-  }
+  div.innerHTML = isImage ? `<img src="${content}" />` : content;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
 
 async function streamChat(userPrompt, model) {
-  addMessage('ai', 'Thinking...');
+  const loaderDiv = document.createElement('div');
+  loaderDiv.className = 'message ai';
+  loaderDiv.innerHTML = 'Thinking...';
+  document.getElementById('chat').appendChild(loaderDiv);
 
   try {
     const messages = [...chatHistory, {role: "user", content: userPrompt}];
-    const payload = {
-      model: model,
-      messages: messages,
-      stream: true
-    };
-
     const res = await fetch("https://text.pollinations.ai/openai", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ model, messages, stream: true })
     });
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
-    let aiDiv = document.querySelector('.message.ai:last-child');
-    let text = '';
+    let fullText = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       const chunk = decoder.decode(value);
-      chunk.split('\n\n').forEach(line => {
-        if (line.startsWith('data: ')) {
-          const json = JSON.parse(line.slice(6));
-          const delta = json.choices?.[0]?.delta?.content;
-          if (delta) {
-            text += delta;
-            aiDiv.textContent = text + getLoadingDots();
-            aiDiv.scrollIntoView({ behavior: "smooth", block: "end" });
+      const lines = chunk.split('\n\n');
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const json = JSON.parse(line.slice(6));
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullText += delta;
+              loaderDiv.textContent = fullText + getLoadingDots();
+              loaderDiv.scrollIntoView({ behavior: "smooth", block: "end" });
+            }
+          } catch (e) {
+            console.warn("JSON parse error:", e);
           }
         }
-      });
+      }
     }
 
-    aiDiv.textContent = text;
-    chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: text});
+    loaderDiv.textContent = fullText;
+    chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: fullText});
 
-    // Auto summarize long responses
-    if (text.length > 100000) {
-      aiDiv.textContent = text.slice(0, 100000) + "... (more)";
-    }
-
-  } 
-
-function getLoadingDots() {
-  const dots = ". . .";
-  return dots.substring(0, Math.floor(Date.now() / 300) % 4);
+  } catch (error) {
+    loaderDiv.textContent = "❌ Error! Could not get a response.";
+    console.error("Stream error:", error);
+  }
 }
 
-async function generateImage(prompt) {
+function getLoadingDots() {
+  const dots = ["", ".", "..", "..."];
+  return dots[Math.floor(Date.now() / 300) % 4];
+}
+
+function generateImage(prompt) {
   const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
   addMessage('ai', url, true);
 }
 
 function startListening() {
-  // Start voice recognition
   if (!recognition) {
     recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-US";
@@ -298,5 +189,7 @@ function startListening() {
   recognition.start();
 }
 </script>
+
 </body>
 </html>
+

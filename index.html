@@ -80,7 +80,7 @@ function quickInsert(type) {
 
 async function handleInput() {
   const promptInput = document.getElementById('prompt');
-  const prompt = promptInput.value.trim();
+  let prompt = promptInput.value.trim();
   if (!prompt) return;
 
   addMessage('user', prompt);
@@ -88,18 +88,31 @@ async function handleInput() {
 
   let model = document.getElementById('model-select').value;
 
+  // Special handling for certain commands
   if (/^(create|generate|draw|paint)\s+image/i.test(prompt)) {
     const cleaned = prompt.replace(/^(create|generate|draw|paint)\s+image\s*/i, '');
     return generateImage(cleaned || "a beautiful scene");
   }
 
-  if (/^search:/i.test(prompt)) model = "searchgpt";
-  if (/^reason:/i.test(prompt)) model = "mistral";
-  if (/^deep research:/i.test(prompt)) {
-    model = "searchgpt";
-    prompt = prompt.replace(/^deep research:/i, '') + " (Respond with thorough research, include sources if possible)";
+  if (/^search:/i.test(prompt)) {
+    model = "searchgpt";  // Set model to SearchGPT for search queries
+    prompt = prompt.replace(/^search:/i, '').trim(); // Clean up the prompt
   }
-  if (/analyze/i.test(prompt)) model = "openai-large";
+
+  if (/^reason:/i.test(prompt)) {
+    model = "mistral";  // Set model to Mistral for reasoning queries
+    prompt = prompt.replace(/^reason:/i, '').trim(); // Clean up the prompt
+  }
+
+  if (/^deep research:/i.test(prompt)) {
+    model = "searchgpt";  // Set model to SearchGPT for deep research
+    prompt = prompt.replace(/^deep research:/i, '').trim() + " (Respond with thorough research, include sources if possible)";
+  }
+
+  if (/analyze/i.test(prompt)) {
+    model = "openai-large"; // Set model to OpenAI Large for analysis requests
+  }
+
   if (/speak|say/i.test(prompt)) {
     model = "openai-audio";
     return generateSpeech(prompt.replace(/^(speak|say)\s*/i, ''));
@@ -107,6 +120,7 @@ async function handleInput() {
 
   await streamChat(prompt, model);
 }
+
 
 function addMessage(role, content, isImage = false) {
   const chat = document.getElementById('chat');

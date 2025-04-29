@@ -129,8 +129,8 @@
   <div id="options">
     <button class="option-btn" onclick="quickInsert('Search')">🌐 Search</button>
     <button class="option-btn" onclick="quickInsert('Reason')">💡 Reason</button>
-    <button class="option-btn" onclick="quickInsert('Deep research')">📚 Deep Research</button>
-    <button class="option-btn" onclick="quickInsert('Create image')">🎨 Create Image</button>
+    <button class="option-btn" onclick="quickInsert('Deep research:')">📚 Deep Research</button>
+    <button class="option-btn" onclick="quickInsert('Generate image of')">🎨 Create Image</button>
   </div>
 
   <div id="input-container">
@@ -205,8 +205,8 @@ async function handleInput() {
 
   // Special case for Deep Research: inject extra prompt boost
   let userPrompt = prompt;
-  if (/^deep research:/i.test(prompt)) {
-    userPrompt = prompt.replace(/^deep research:/i, '') + " (Respond with thorough research, include sources if possible)";
+  if (/^Deep research:/i.test(prompt)) {
+    userPrompt = prompt.replace(/^Deep research:/i, '') + " (Respond with thorough research, include sources if possible)";
   }
 
   await streamChat(userPrompt, selectedModel);
@@ -226,7 +226,7 @@ function addMessage(role, content, isImage = false) {
 }
 
 async function streamChat(userPrompt, model) {
-  addMessage('ai', 'Thinking... <span id="loader">. . .</span>'); // show loading spinner
+  addMessage('ai', 'Thinking...');
 
   try {
     const messages = [...chatHistory, {role: "user", content: userPrompt}];
@@ -268,15 +268,11 @@ async function streamChat(userPrompt, model) {
     chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: text});
 
     // Auto summarize long responses
-    if (text.length > 300) {
-      aiDiv.textContent = text.slice(0, 300) + "... (more)";
+    if (text.length > 100000) {
+      aiDiv.textContent = text.slice(0, 100000) + "... (more)";
     }
 
-  } catch (error) {
-    addMessage('ai', 'Sorry, something went wrong. Please try again later.');
-    console.error("Error:", error);
-  }
-}
+  } 
 
 function getLoadingDots() {
   const dots = ". . .";

@@ -1,7 +1,7 @@
 # EchoAI
 ## This is EchoAI
 ### What we provide
-#### - Image generation
+#### - Image Generation
 #### - Chat Completion
 #### - Vision
-#### - Voice messaging
+#### - Voice Chatting

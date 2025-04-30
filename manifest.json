@@ -1,6 +1,6 @@
 {
-  "name": "EchoAI",
-  "short_name": "EchoAI",
+  "name": "PrisimAI",
+  "short_name": "PrisimAI",
   "description": "Chat with AI through text, images, voice, and more.",
   "start_url": "/PrisimAI/index.html",
   "display": "standalone",

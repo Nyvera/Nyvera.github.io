@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,25 +7,21 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff">
-
   <!-- Primary Meta Tags -->
   <meta name="title" content="PrisimAI" />
   <meta name="description" content="This website is the official PrisimAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
-
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://prisimai.github.io/PrisimAI" />
   <meta property="og:title" content="PrisimAI" />
   <meta property="og:description" content="This website is the official PrisimAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
-  <meta property="og:image" content="https://prisimai.github.io/PrisimAI/favicon.ico" />
-
+  <meta property="og:image" content="https://prisimai.github.io/PrisimAI/favicon.png" />
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
   <meta property="twitter:url" content="https://prisimai.github.io/PrisimAI" />
   <meta property="twitter:title" content="PrisimAI" />
   <meta property="twitter:description" content="This website is the official PrisimAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
-  <meta property="twitter:image" content="https://prisimai.github.io/PrisimAI/favicon.ico" />
-
+  <meta property="twitter:image" content="https://prisimai.github.io/PrisimAI/favicon.png" />
   <!-- Syntax highlighting for markdown code blocks -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
@@ -36,7 +33,6 @@
       }
     });
   </script>
-
   <style>
     body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f9f9f9; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow-x: hidden; }
     header { margin-top: 50px; font-size: 2rem; font-weight: bold; color: #3a3a7a; letter-spacing: 1px; }
@@ -50,8 +46,8 @@
     #input-container { display: flex; align-items: center; background: white; border-radius: 30px; padding: 10px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     #prompt { border: none; flex: 1; outline: none; font-size: 1rem; }
     #model-select { margin-left: 10px; border: none; font-size: 1rem; background: #f0f0f0; padding: 5px; border-radius: 8px; }
-    #send, #mic, #upload-img { background: #6a6ad6; color: white; border: none; padding: 10px; margin-left: 10px; border-radius: 50%; cursor: pointer; }
-    #mic:hover, #send:hover, #upload-img:hover { background: #3a3a7a; }
+    #send, #mic, #upload-img, #upload-file { background: #6a6ad6; color: white; border: none; padding: 10px; margin-left: 10px; border-radius: 50%; cursor: pointer; }
+    #mic:hover, #send:hover, #upload-img:hover, #upload-file:hover { background: #3a3a7a; }
     #loader span { font-size: 1.2rem; animation: blink 1.5s infinite; }
     @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
     #options { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
@@ -59,30 +55,30 @@
     .option-btn:hover { background: #ddd; }
     pre { background: #f6f8fa; padding: 10px; border-radius: 6px; overflow-x: auto; }
     code { font-family: Consolas, monospace; }
+    iframe {
+      margin: 10px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
-
 <header>Welcome to PrisimAI</header>
 <div id="branding">Your AI assistant for chat, images, voice, and more.</div>
-
 <div id="login-container" style="margin: 20px;">
   <input type="text" id="username" placeholder="Username" />
   <input type="password" id="password" placeholder="Password" />
   <button onclick="login()">Login</button>
   <span id="login-status" style="margin-left: 10px; color: green;"></span>
 </div>
-
 <div id="chat-container">
   <div id="chat"></div>
-
   <div id="options">
     <button class="option-btn" onclick="quickInsert('Search')">🌐 Search</button>
     <button class="option-btn" onclick="quickInsert('Reason')">💡 Reason</button>
     <button class="option-btn" onclick="quickInsert('Deep research')">📚 Deep Research</button>
     <button class="option-btn" onclick="quickInsert('Create image')">🎨 Create Image</button>
   </div>
-
   <div id="input-container">
     <input type="text" id="prompt" placeholder="Ask anything with PrisimAI..." />
     <select id="model-select">
@@ -111,29 +107,29 @@
       <!-- etc... -->
     </select>
     <button id="upload-img" onclick="document.getElementById('imgInput').click()">📷</button>
+    <button id="upload-file" onclick="document.getElementById('fileInput').click()">📁</button>
     <button id="mic" onclick="startListening()">🎙️</button>
     <button id="send" onclick="handleInput()">➤</button>
     <input type="file" id="imgInput" style="display:none" accept="image/*" onchange="handleImageUpload(event)">
+    <input type="file" id="fileInput" style="display:none" 
+           accept="image/*, .txt, .pdf, .doc, .docx" 
+           onchange="handleFileUpload(event)">
   </div>
 </div>
-
 <script>
 let isPremium = false;
 let chatHistory = [];
 let recognition;
-
 const offlineReplies = [
   "I'm offline right now. Try connecting to the internet.",
   "Even AI needs Wi-Fi sometimes 😅",
   "Offline mode: engaged. Limited powers active."
 ];
-
 function login() {
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
   const status = document.getElementById("login-status");
   const modelSelect = document.getElementById("model-select");
-
   if (username === "admin" && password === "secret123") {
     isPremium = true;
     status.style.color = "green";
@@ -145,11 +141,9 @@ function login() {
     modelSelect.disabled = true;
   }
 }
-
 function quickInsert(type) {
   const promptInput = document.getElementById('prompt');
   const modelSelect = document.getElementById('model-select');
-
   if (type === "Search") {
     promptInput.value = "Search:";
     modelSelect.value = "searchgpt";
@@ -163,7 +157,6 @@ function quickInsert(type) {
     promptInput.value = "Create image:";
   }
 }
-
 async function handleInput() {
   const promptInput = document.getElementById('prompt');
   let prompt = promptInput.value.trim();
@@ -175,9 +168,7 @@ async function handleInput() {
     addMessage('ai', offlineReply);
     return;
   }
-
   let model = isPremium ? document.getElementById('model-select').value : 'openai';
-
   if (/^(create|generate|draw|paint)\s+image/i.test(prompt)) {
     const cleaned = prompt.replace(/^(create|generate|draw|paint)\s+image\s*/i, '');
     return generateImage(cleaned || "a beautiful scene");
@@ -206,7 +197,6 @@ async function handleInput() {
   }
   await streamChat(prompt, model);
 }
-
 function addMessage(role, content, isImage = false) {
   const chat = document.getElementById('chat');
   const div = document.createElement('div');
@@ -219,13 +209,11 @@ function addMessage(role, content, isImage = false) {
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
-
 async function streamChat(userPrompt, model) {
   const loaderDiv = document.createElement('div');
   loaderDiv.className = 'message ai';
   loaderDiv.innerHTML = 'Thinking...';
   document.getElementById('chat').appendChild(loaderDiv);
-
   try {
     const messages = [...chatHistory, {role: "user", content: userPrompt}];
     const res = await fetch("https://text.pollinations.ai/openai", {
@@ -233,16 +221,14 @@ async function streamChat(userPrompt, model) {
       headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
       body: JSON.stringify({ model, messages, stream: true })
     });
-
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let fullText = '';
-
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       const chunk = decoder.decode(value);
-      const lines = chunk.split('\n\n');
+      const lines = chunk.split('\n');
       for (const line of lines) {
         if (line.startsWith("data: ")) {
           try {
@@ -259,21 +245,17 @@ async function streamChat(userPrompt, model) {
         }
       }
     }
-
     loaderDiv.innerHTML = marked.parse(fullText);
     chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: fullText});
-
   } catch (error) {
     loaderDiv.textContent = "❌ Error! Could not get a response.";
     console.error("Stream error:", error);
   }
 }
-
 function generateImage(prompt) {
   const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
   addMessage('ai', url, true);
 }
-
 function startListening() {
   if (!recognition) {
     recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -286,7 +268,49 @@ function startListening() {
   }
   recognition.start();
 }
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
 
+  const url = URL.createObjectURL(file);
+  addMessage('user', `Uploaded image: ${file.name}`, true);
+  addMessage('ai', `<img src="${url}" style="max-width: 250px; border-radius: 10px; margin-top: 5px;">`, true);
+}
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const fileName = file.name;
+  const fileType = file.type;
+
+  if (fileType.startsWith('image/')) {
+    const url = URL.createObjectURL(file);
+    addMessage('user', `Uploaded image: ${fileName}`, true);
+    addMessage('ai', `<img src="${url}" style="max-width: 250px; border-radius: 10px; margin-top: 5px;">`, true);
+    
+  } else if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const content = e.target.result;
+      addMessage('user', `File content of "${fileName}":\n${content}`);
+    };
+    reader.readAsText(file);
+    
+  } else if (fileName.endsWith('.pdf') || fileName.endsWith('.docx')) {
+    const url = URL.createObjectURL(file);
+    addMessage('user', `Uploaded document: ${fileName}`, false);
+    addMessage('ai', `
+      <iframe 
+        src="${url}" 
+        style="width: 100%; height: 400px; border: 1px solid #ddd; border-radius: 8px;"
+        frameborder="0">
+      </iframe>
+    `);
+    
+  } else {
+    addMessage('user', `Unsupported file type: ${fileName}`);
+  }
+}
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js').then(() => {

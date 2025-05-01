@@ -60,6 +60,12 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       border-radius: 8px;
     }
+    .think {
+  color: gray;
+  font-style: italic;
+  opacity: 0.6;
+}
+
   </style>
 </head>
 <body>
@@ -245,7 +251,9 @@ async function streamChat(userPrompt, model) {
         }
       }
     }
-    loaderDiv.innerHTML = marked.parse(fullText);
+    let processed = content.replace(/<think>(.*?)<\/think>/gs, '<span class="think">$1</span>');
+div.innerHTML = marked.parse(processed);
+
     chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: fullText});
   } catch (error) {
     loaderDiv.textContent = "❌ Error! Could not get a response.";

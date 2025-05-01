@@ -6,6 +6,7 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff">
+
   <!-- Primary Meta Tags -->
   <meta name="title" content="PrisimAI" />
   <meta name="description" content="This website is the official PrisimAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
@@ -15,17 +16,28 @@
   <meta property="og:url" content="https://prisimai.github.io/PrisimAI" />
   <meta property="og:title" content="PrisimAI" />
   <meta property="og:description" content="This website is the official PrisimAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
-  <meta property="og:image" content="https://prisimai.github.io/PrisimAI/favicon.png" />
+  <meta property="og:image" content="https://prisimai.github.io/PrisimAI/favicon.ico" />
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
   <meta property="twitter:url" content="https://prisimai.github.io/PrisimAI" />
   <meta property="twitter:title" content="PrisimAI" />
   <meta property="twitter:description" content="This website is the official PrisimAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
-  <meta property="twitter:image" content="https://prisimai..github.io/PrisimAI/favicon.png" />
+  <meta property="twitter:image" content="https://prisimai.github.io/PrisimAI/favicon.ico" />
+
+  <!-- Syntax highlighting for markdown code blocks -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    marked.setOptions({
+      highlight: function(code) {
+        return hljs.highlightAuto(code).value;
+      }
+    });
+  </script>
 
   <style>
-    /* Styles unchanged for brevity */
     body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f9f9f9; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow-x: hidden; }
     header { margin-top: 50px; font-size: 2rem; font-weight: bold; color: #3a3a7a; letter-spacing: 1px; }
     #branding { margin-top: 10px; font-size: 1.2rem; color: #6a6ad6; font-weight: 500; }
@@ -45,12 +57,15 @@
     #options { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .option-btn { padding: 8px 12px; background: #eee; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
     .option-btn:hover { background: #ddd; }
+    pre { background: #f6f8fa; padding: 10px; border-radius: 6px; overflow-x: auto; }
+    code { font-family: Consolas, monospace; }
   </style>
 </head>
 <body>
 
 <header>Welcome to PrisimAI</header>
 <div id="branding">Your AI assistant for chat, images, voice, and more.</div>
+
 <div id="login-container" style="margin: 20px;">
   <input type="text" id="username" placeholder="Username" />
   <input type="password" id="password" placeholder="Password" />
@@ -92,6 +107,8 @@
       <option value="deepseek">DeepSeek-V3(UNCENSORED)</option>
       <option value="sur">Sur AI Assistant (Mistral)</option>
       <option value="openai-audio">OpenAI GPT-4o-audio-preview</option>
+      <option value="openai">OpenAI GPT-4.1-mini</option>
+      <!-- etc... -->
     </select>
     <button id="upload-img" onclick="document.getElementById('imgInput').click()">📷</button>
     <button id="mic" onclick="startListening()">🎙️</button>
@@ -121,11 +138,11 @@ function login() {
     isPremium = true;
     status.style.color = "green";
     status.textContent = "✅ PrisimAI Premium unlocked!";
-    modelSelect.disabled = false; // Enable model selection for premium users
+    modelSelect.disabled = false;
   } else {
     status.style.color = "red";
     status.textContent = "❌ Wrong credentials";
-    modelSelect.disabled = true; // Disable model selection for non-premium users
+    modelSelect.disabled = true;
   }
 }
 
@@ -159,7 +176,6 @@ async function handleInput() {
     return;
   }
 
-  // Check if the user is signed in
   let model = isPremium ? document.getElementById('model-select').value : 'openai';
 
   if (/^(create|generate|draw|paint)\s+image/i.test(prompt)) {
@@ -195,7 +211,11 @@ function addMessage(role, content, isImage = false) {
   const chat = document.getElementById('chat');
   const div = document.createElement('div');
   div.className = 'message ' + role;
-  div.innerHTML = isImage ? `<img src="${content}" />` : content;
+  if (isImage) {
+    div.innerHTML = `<img src="${content}" />`;
+  } else {
+    div.innerHTML = marked.parse(content);
+  }
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -230,7 +250,7 @@ async function streamChat(userPrompt, model) {
             const delta = json.choices?.[0]?.delta?.content;
             if (delta) {
               fullText += delta;
-              loaderDiv.textContent = fullText;
+              loaderDiv.innerHTML = marked.parse(fullText);
               loaderDiv.scrollIntoView({ behavior: "smooth", block: "end" });
             }
           } catch (e) {
@@ -240,7 +260,7 @@ async function streamChat(userPrompt, model) {
       }
     }
 
-    loaderDiv.textContent = fullText;
+    loaderDiv.innerHTML = marked.parse(fullText);
     chatHistory.push({role: "user", content: userPrompt}, {role: "assistant", content: fullText});
 
   } catch (error) {
@@ -280,4 +300,3 @@ if ('serviceWorker' in navigator) {
 <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
 </body>
 </html>
-

@@ -62,7 +62,30 @@
       status.style.color = 'green';
       status.textContent = '✅ Registered! Check your email to confirm.';
     }
-  
+  async function loginWithGitHub() {
+  const status = document.getElementById('login-status');
+  const modelSelect = document.getElementById('model-select');
+
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'github'
+  });
+
+  if (error) {
+    status.style.color = 'red';
+    status.textContent = `❌ ${error.message}`;
+    return;
+  }
+
+  // Wait for the session to be established
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session?.user) {
+    isPremium = true;
+    modelSelect.disabled = false;
+    status.style.color = 'green';
+    status.textContent = `✅ Logged in as ${session.user.email}`;
+  }
+}
+
     function quickInsert(type) {
       const promptInput = document.getElementById('prompt');
       const modelSelect = document.getElementById('model-select');

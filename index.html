@@ -67,12 +67,6 @@
 
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const supabase = supabase.createClient(
-  'https://eqszylsxlxprbclrczmt.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxc3p5bHN4bHhwcmJjbHJjem10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxOTIxMTksImV4cCI6MjA2MTc2ODExOX0.pkvCOpgr3pVbVmb4ATgRdZVcP6PIquHQ_XDB7il8gOU'
-);
-</script>
 </head>
 <body>
 <header>Welcome to PrisimAI</header>
@@ -133,7 +127,11 @@ const supabase = supabase.createClient(
 let isPremium = false;
 let chatHistory = [];
 let recognition;
-const offlineReplies = [
+const supabase = supabase.createClient(
+  'https://eqszylsxlxprbclrczmt.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxc3p5bHN4bHhwcmJjbHJjem10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxOTIxMTksImV4cCI6MjA2MTc2ODExOX0.pkvCOpgr3pVbVmb4ATgRdZVcP6PIquHQ_XDB7il8gOU'
+);
+  const offlineReplies = [
   "I'm offline right now. Try connecting to the internet.",
   "Even AI needs Wi-Fi sometimes 😅",
   "Offline mode: engaged. Limited powers active."

@@ -107,21 +107,79 @@ header {
 }
 
 #loader span {
-  font-size: 1.5rem;
-  color: #6a6ad6;
+  font-size: 1.2rem;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+#options {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
 .option-btn {
-  background-color: #6a6ad6;
-  color: white;
-  padding: 5px 10px;
+  padding: 8px 12px;
+  background: #eee;
   border: none;
-  margin: 5px;
-  border-radius: 5px;
+  border-radius: 20px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
 }
 
 .option-btn:hover {
-  background-color: #3a3a7a;
+  background: #ddd;
+}
+
+pre {
+  background: #f6f8fa;
+  padding: 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+code {
+  font-family: Consolas, monospace;
+}
+
+iframe {
+  margin: 10px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.think {
+  color: gray;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+  header {
+    font-size: 1.5rem;
+  }
+  
+  #input-container {
+    flex-direction: column;
+    padding: 10px;
+  }
+  
+  #send, #mic, #upload-img, #upload-file {
+    width: 100%;
+    margin: 5px 0;
+  }
+  
+  #model-select {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 10px;
+  }
 }

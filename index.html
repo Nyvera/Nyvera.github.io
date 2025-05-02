@@ -358,7 +358,16 @@
     }
     status.textContent = '✅ Redirecting to Spotify login...';
   }
-
+async function loginWithDiscord() {
+  const status = document.getElementById('login-status');
+  const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'discord' });
+  if (error) {
+    status.style.color = 'red';
+    status.textContent = `❌ ${error.message}`;
+    return;
+  }
+  status.textContent = '✅ Redirecting to Discord login...';
+}
   function quickInsert(type) {
     const promptInput = document.getElementById('prompt');
     const modelSelect = document.getElementById('model-select');

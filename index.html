@@ -219,7 +219,8 @@
   <header>Welcome to PrisimAI</header>
   <div id="branding">Your AI assistant for chat, images, voice, and more.</div>
   </div>
-  <button id="logout-btn">Logout</button>
+  <button id="logout-btn">Logout</button><img id="profile-pic" style="width: 40px; height: 40px; border-radius: 50%; display: none; margin-top: 10px;" alt="User Profile Picture" />
+
   <div id="chat-container">
     <div id="chat"></div>
     <div id="options">
@@ -281,18 +282,28 @@ let isPremium = false;
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Check user session when the page loads
   document.addEventListener('DOMContentLoaded', async () => {
-    const { data: user } = await supabaseClient.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
-    if (user) {
-      // Show a logged-in user interface if logged in
-      console.log('User is logged in:', user.email);
-      document.getElementById('logout-btn').style.display = 'block'; // Show logout button
-    } else {
-      // Optionally redirect or show login prompt if not logged in
-      console.log('User is not logged in');
-      document.getElementById('logout-btn').style.display = 'none'; // Hide logout button
+  if (user) {
+    console.log('User is logged in:', user.email);
+    document.getElementById('logout-btn').style.display = 'block';
+
+    // Check if user metadata includes an avatar URL
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+
+    if (avatarUrl) {
+      const profilePic = document.getElementById('profile-pic');
+      profilePic.src = avatarUrl;
+      profilePic.style.display = 'inline-block';
     }
-  });
+
+  } else {
+    console.log('User is not logged in');
+    document.getElementById('logout-btn').style.display = 'none';
+    document.getElementById('profile-pic').style.display = 'none';
+  }
+});
+
 
   // Logout function
   document.getElementById('logout-btn')?.addEventListener('click', async () => {

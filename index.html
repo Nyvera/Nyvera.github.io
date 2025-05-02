@@ -6,6 +6,7 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff">
+
   <!-- Primary Meta Tags -->
   <meta name="title" content="PrisimAI" />
   <meta name="description" content="This website is the official PrisimAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
@@ -21,17 +22,16 @@
   <meta property="twitter:title" content="PrisimAI" />
   <meta property="twitter:description" content="This website is the official PrisimAI chat interface website, where you can chat with AI through text, images, voice, and more!" />
   <meta property="twitter:image" content="https://prisimai.github.io/PrisimAI/favicon.png" />
-  <!-- Syntax highlighting for markdown code blocks -->
+  <!-- Highlight.js & Marked for markdown -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     marked.setOptions({
-      highlight: function(code) {
-        return hljs.highlightAuto(code).value;
-      }
+      highlight: code => hljs.highlightAuto(code).value
     });
   </script>
+
   <style>
     body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f9f9f9; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow-x: hidden; }
     header { margin-top: 50px; font-size: 2rem; font-weight: bold; color: #3a3a7a; letter-spacing: 1px; }
@@ -66,36 +66,94 @@
 }
 
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const supabase = supabase.createClient(
-    'https://eqszylsxlxprbclrczmt.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxc3p5bHN4bHhwcmJjbHJjem10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxOTIxMTksImV4cCI6MjA2MTc2ODExOX0.pkvCOpgr3pVbVmb4ATgRdZVcP6PIquHQ_XDB7il8gOU'
-  );
 
-  console.log(supabase); // 👀 Check if it's defined
-</script>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    // ─── Supabase Initialization ───────────────────────────────────────────
+    const SUPABASE_URL = 'https://eqszylsxlxprbclrczmt.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxc3p5bHN4bHhwcmJjbHJjem10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxOTIxMTksImV4cCI6MjA2MTc2ODExOX0.pkvCOpgr3pVbVmb4ATgRdZVcP6PIquHQ_XDB7il8gOU';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let isPremium = false;
+    let chatHistory = [];
+    let recognition;
+    const offlineReplies = [
+      "I'm offline right now. Try connecting to the internet.",
+      "Even AI needs Wi‑Fi sometimes 😅",
+      "Offline mode: engaged. Limited powers active."
+    ];
+
+    // ─── On Load: Restore Session ────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      const modelSelect = document.getElementById('model-select');
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session?.user) {
+        isPremium = true;
+        modelSelect.disabled = false;
+        document.getElementById('login-status').textContent = `✅ Logged in as ${session.user.email}`;
+      } else {
+        modelSelect.disabled = true;
+      }
+    });
+
+    // ─── Authentication Functions ──────────────────────────────────────────
+    async function login() {
+      const email = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const status = document.getElementById('login-status');
+      const modelSelect = document.getElementById('model-select');
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        status.style.color = 'red';
+        status.textContent = `❌ ${error.message}`;
+        return;
+      }
+      isPremium = true;
+      modelSelect.disabled = false;
+      status.style.color = 'green';
+      status.textContent = `✅ Logged in as ${data.user.email}`;
+    }
+
+    async function register() {
+      const email = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const status = document.getElementById('login-status');
+
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        status.style.color = 'red';
+        status.textContent = `❌ ${error.message}`;
+        return;
+      }
+      status.style.color = 'green';
+      status.textContent = '✅ Registered! Check your email to confirm.';
+    }
+  </script>
 </head>
 <body>
-<header>Welcome to PrisimAI</header>
-<div id="branding">Your AI assistant for chat, images, voice, and more.</div>
-<div id="login-container" style="margin: 20px;">
-  <input type="text" id="username" placeholder="Username" />
-  <input type="password" id="password" placeholder="Password" />
-  <button onclick="login()">Login</button> <button onclick="register()">Register</button>
+  <header>Welcome to PrisimAI</header>
+  <div id="branding">Your AI assistant for chat, images, voice, and more.</div>
 
-  <span id="login-status" style="margin-left: 10px; color: green;"></span>
-</div>
-<div id="chat-container">
-  <div id="chat"></div>
-  <div id="options">
-    <button class="option-btn" onclick="quickInsert('Search')">🌐 Search</button>
+  <div id="login-container" style="margin: 20px;">
+    <input type="text"    id="username" placeholder="Email"    />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+    <span id="login-status" style="margin-left:10px;color:green;"></span>
+  </div>
+
+  <div id="chat-container">
+    <div id="chat"></div>
+    <div id="options">
+      <button class="option-btn" onclick="quickInsert('Search')">🌐 Search</button>
     <button class="option-btn" onclick="quickInsert('Reason')">💡 Reason</button>
     <button class="option-btn" onclick="quickInsert('Deep research')">📚 Deep Research</button>
     <button class="option-btn" onclick="quickInsert('Create image')">🎨 Create Image</button>
-  </div>
-  <div id="input-container">
-    <input type="text" id="prompt" placeholder="Ask anything with PrisimAI..." />
+    </div>
+    <div id="input-container">
+      <input type="text" id="prompt" placeholder="Ask anything with PrisimAI..." />
     <select id="model-select">
       <option value="openai">OpenAI GPT-4.1-mini</option>
       <option value="openai-large">OpenAI GPT-4.1</option>
@@ -118,7 +176,6 @@
       <option value="deepseek">DeepSeek-V3(UNCENSORED)</option>
       <option value="sur">Sur AI Assistant (Mistral)</option>
       <option value="openai-audio">OpenAI GPT-4o-audio-preview</option>
-      <option value="openai">OpenAI GPT-4.1-mini</option>
       <!-- etc... -->
     </select>
     <button id="upload-img" onclick="document.getElementById('imgInput').click()">📷</button>
@@ -129,54 +186,12 @@
     <input type="file" id="fileInput" style="display:none" 
            accept="image/*, .txt, .pdf, .doc, .docx" 
            onchange="handleFileUpload(event)">
+    </div>
   </div>
-</div>
-<script>
-let isPremium = false;
-let chatHistory = [];
-let recognition;
-  const offlineReplies = [
-  "I'm offline right now. Try connecting to the internet.",
-  "Even AI needs Wi-Fi sometimes 😅",
-  "Offline mode: engaged. Limited powers active."
-];
-async function login() {
-  const email = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const status = document.getElementById("login-status");
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    status.style.color = "red";
-    status.textContent = "❌ " + error.message;
-    return;
-  }
-async function register() {
-  const email = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const status = document.getElementById("login-status");
-
-  const { data, error } = await supabase.auth.signUp({ email, password });
-
-  if (error) {
-    status.style.color = "red";
-    status.textContent = "❌ " + error.message;
-    return;
-  }
-
-  status.style.color = "green";
-  status.textContent = "✅ Registered! Please check your email to confirm.";
-}
-
-  status.style.color = "green";
-  status.textContent = "✅ Logged in!";
-  isPremium = true;
-  document.getElementById("model-select").disabled = false;
-}
-
-}
-function quickInsert(type) {
+  
+  <script>
+    function quickInsert(type) {
   const promptInput = document.getElementById('prompt');
   const modelSelect = document.getElementById('model-select');
   if (type === "Search") {
@@ -358,6 +373,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-<script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+  <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
 </body>
 </html>
+

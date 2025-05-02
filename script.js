@@ -100,6 +100,24 @@ async function loginWithX() {
 
   status.textContent = '✅ Redirecting to X login...';
 }
+// ─── Spotify Login ─────────────────────────────────────────────────────
+async function loginWithSpotify() {
+  const status = document.getElementById('login-status');
+  const modelSelect = document.getElementById('model-select');
+
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'spotify'
+  });
+
+  if (error) {
+    console.error("Spotify OAuth error:", error);
+    status.style.color = 'red';
+    status.textContent = `❌ ${error.message}`;
+    return;
+  }
+
+  status.textContent = '✅ Redirecting to Spotify login...';
+}
 
 
   // Wait for the session to be established

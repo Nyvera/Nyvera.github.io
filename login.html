@@ -2,75 +2,224 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login - PrisimAI</title>
+  <title>PrisimAI - Login</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="title" content="PrisimAI - Login" />
+  <meta name="description" content="Login to PrisimAI and start chatting with your AI assistant." />
+  
+  <!-- Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #0f0f0f, #1a1a1a);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #333;
     }
 
     .login-container {
-      background-color: #1e1e1e;
+      background: #ffffff;
       padding: 40px;
       border-radius: 10px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
       text-align: center;
-      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
-    input[type="email"],
-    input[type="password"] {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #6366f1;
-      border: none;
-      border-radius: 5px;
+    header {
+      font-size: 2rem;
       font-weight: bold;
+      color: #6a6ad6;
+    }
+
+    #login-container input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
       font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    #login-container button {
+      width: 100%;
+      padding: 12px;
+      background: #6a6ad6;
       color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
       cursor: pointer;
       margin-top: 10px;
-      transition: background 0.2s ease;
+      transition: background 0.3s;
     }
 
-    button:hover {
-      background: #4f46e5;
+    #login-container button:hover {
+      background: #3a3a7a;
     }
 
-    .error {
-      color: #f87171;
+    #login-status {
       margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    .social-login-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .social-login-btns button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      gap: 10px;
+    }
+
+    .github-btn {
+      background: #24292f;
+      color: white;
+    }
+
+    .spotify-btn {
+      background: #1DB954;
+      color: white;
+    }
+
+    .discord-btn {
+      background: #7289da;
+      color: white;
+    }
+
+    .social-login-btns img {
+      width: 20px;
+      height: 20px;
     }
   </style>
 </head>
 <body>
+
   <div class="login-container">
-    <h2>Login to PrisimAI</h2>
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <button onclick="login()">Login</button>
-    <button onclick="signup()">Sign Up</button>
-    <button onclick="loginWithGitHub()">Login with GitHub</button>
-    <button onclick="loginWithSpotify()">Login with Spotify</button>
-    <div class="error" id="error"></div>
+    <header>Login to PrisimAI</header>
+
+    <div id="login-container">
+      <input type="text" id="username" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <button onclick="register()">Register</button>
+      <span id="login-status" style="color: green;"></span>
+
+      <div class="social-login-btns">
+        <button class="github-btn" onclick="loginWithGitHub()">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/a/a1/GitHub_Logo_White.png" alt="GitHub Logo" />
+          Login with GitHub
+        </button>
+        <button class="spotify-btn" onclick="loginWithSpotify()">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify Logo" />
+          Login with Spotify
+        </button>
+        <button class="discord-btn" onclick="loginWithDiscord()">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/Discord_logo_2023.svg" alt="Discord Logo" />
+          Login with Discord
+        </button>
+      </div>
+    </div>
   </div>
-  <script src="script.js"></script>
+
+  <script>
+    const SUPABASE_URL = 'https://eqszylsxlxprbclrczmt.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxc3p5bHN4bHhwcmJjbHJjem10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxOTIxMTksImV4cCI6MjA2MTc2ODExOX0.pkvCOpgr3pVbVmb4ATgRdZVcP6PIquHQ_XDB7il8gOU';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function login() {
+      const email = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const status = document.getElementById('login-status');
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        status.style.color = 'red';
+        status.textContent = `❌ ${error.message}`;
+        return;
+      }
+
+      status.style.color = 'green';
+      status.textContent = `✅ Logged in as ${data.user.email}`;
+    }
+
+    async function register() {
+      const email = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const status = document.getElementById('login-status');
+
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        status.style.color = 'red';
+        status.textContent = `❌ ${error.message}`;
+        return;
+      }
+
+      status.style.color = 'green';
+      status.textContent = '✅ Registered! Check your email to confirm.';
+    }
+
+    async function loginWithGitHub() {
+      const status = document.getElementById('login-status');
+      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'github' });
+      if (error) {
+        status.style.color = 'red';
+        status.textContent = `❌ ${error.message}`;
+        return;
+      }
+      status.textContent = '✅ Redirecting to GitHub login...';
+    }
+
+    async function loginWithSpotify() {
+      const status = document.getElementById('login-status');
+      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'spotify' });
+      if (error) {
+        status.style.color = 'red';
+        status.textContent = `❌ ${error.message}`;
+        return;
+      }
+      status.textContent = '✅ Redirecting to Spotify login...';
+    }
+
+    async function loginWithDiscord() {
+      const status = document.getElementById('login-status');
+      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'discord' });
+      if (error) {
+        status.style.color = 'red';
+        status.textContent = `❌ ${error.message}`;
+        return;
+      }
+      status.textContent = '✅ Redirecting to Discord login...';
+    }
+  </script>
+
 </body>
 </html>

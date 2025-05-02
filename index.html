@@ -267,12 +267,7 @@
       return hljs.highlightAuto(code).value;
     }
   });
-
-  const SUPABASE_URL = 'https://eqszylsxlxprbclrczmt.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxc3p5bHN4bHhwcmJjbHJjem10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxOTIxMTksImV4cCI6MjA2MTc2ODExOX0.pkvCOpgr3pVbVmb4ATgRdZVcP6PIquHQ_XDB7il8gOU';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  let isPremium = false;
+let isPremium = false;
   let chatHistory = [];
   let recognition;
 
@@ -281,21 +276,34 @@
     "Even AI needs Wi-Fi sometimes 😅",
     "Offline mode: engaged. Limited powers active."
   ];
-document.addEventListener('DOMContentLoaded', async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session?.user) {
-        window.location.href = "login.html"; // Redirect to login page if not logged in
-      }
-    });
+  const SUPABASE_URL = 'https://eqszylsxlxprbclrczmt.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxc3p5bHN4bHhwcmJjbHJjem10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxOTIxMTksImV4cCI6MjA2MTc2ODExOX0.pkvCOpgr3pVbVmb4ATgRdZVcP6PIquHQ_XDB7il8gOU';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Check user session when the page loads
   document.addEventListener('DOMContentLoaded', async () => {
-    const modelSelect = document.getElementById('model-select');
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session?.user) {
-      isPremium = true;
-      modelSelect.disabled = false;
-      document.getElementById('login-status').textContent = `✅ Logged in as ${session.user.email}`;
+    const { data: user } = await supabaseClient.auth.getUser();
+
+    if (user) {
+      // Show a logged-in user interface if logged in
+      console.log('User is logged in:', user.email);
+      document.getElementById('logout-btn').style.display = 'block'; // Show logout button
     } else {
-      modelSelect.disabled = true;
+      // Optionally redirect or show login prompt if not logged in
+      console.log('User is not logged in');
+      document.getElementById('logout-btn').style.display = 'none'; // Hide logout button
+    }
+  });
+
+  // Logout function
+  document.getElementById('logout-btn')?.addEventListener('click', async () => {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error);
+    } else {
+      console.log('User logged out');
+      // Hide the logout button and redirect or update UI
+      document.getElementById('logout-btn').style.display = 'none';
+      window.location.href = 'login.html'; // Redirect to the login page
     }
   });
 

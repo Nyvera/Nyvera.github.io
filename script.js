@@ -62,7 +62,8 @@
       status.style.color = 'green';
       status.textContent = '✅ Registered! Check your email to confirm.';
     }
-  async function loginWithGitHub() {
+  // ─── GitHub Login ─────────────────────────────────────────────────────
+async function loginWithGitHub() {
   const status = document.getElementById('login-status');
   const modelSelect = document.getElementById('model-select');
 
@@ -75,35 +76,31 @@
     status.textContent = `❌ ${error.message}`;
     return;
   }
-  }
-// ─── X (Twitter) Login Function ───────────────────────────────────────────
-async function loginWithX() {
-  const status = document.getElementById('login-status');
-  try {
-    const { data, error } = await supabaseClient.auth.signInWithOAuth({
-      provider: 'twitter', // Supabase uses 'twitter' for X login
-    });
-    
-    if (error) {
-      status.style.color = 'red';
-      status.textContent = `❌ ${error.message}`;
-      return;
-    }
-    
-    // Success - user is logged in
-    const { user } = data;
-    status.style.color = 'green';
-    status.textContent = `✅ Logged in with X as ${user.email || user.id}`;
-    
-    // You can now update the UI for a logged-in user
-    isPremium = true;
-    document.getElementById('model-select').disabled = false;
-  } catch (error) {
-    console.error("Error during X login:", error);
-    status.style.color = 'red';
-    status.textContent = `❌ Failed to log in with X`;
-  }
+
+  status.textContent = '✅ Redirecting to GitHub login...';
 }
+
+// ─── X (Twitter) Login ─────────────────────────────────────────────────
+async function loginWithX() {
+  console.log("🚀 X login button clicked"); // DEBUG: Check console when clicking
+
+  const status = document.getElementById('login-status');
+  const modelSelect = document.getElementById('model-select');
+
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'twitter',
+  });
+
+  if (error) {
+    console.error("OAuth error", error);
+    status.style.color = 'red';
+    status.textContent = `❌ ${error.message}`;
+    return;
+  }
+
+  status.textContent = '✅ Redirecting to X login...';
+}
+
 
   // Wait for the session to be established
   const { data: { session } } = await supabaseClient.auth.getSession();

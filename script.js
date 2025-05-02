@@ -75,6 +75,34 @@
     status.textContent = `❌ ${error.message}`;
     return;
   }
+// ─── X (Twitter) Login Function ───────────────────────────────────────────
+async function loginWithX() {
+  const status = document.getElementById('login-status');
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'twitter', // Supabase uses 'twitter' for X login
+    });
+    
+    if (error) {
+      status.style.color = 'red';
+      status.textContent = `❌ ${error.message}`;
+      return;
+    }
+    
+    // Success - user is logged in
+    const { user } = data;
+    status.style.color = 'green';
+    status.textContent = `✅ Logged in with X as ${user.email || user.id}`;
+    
+    // You can now update the UI for a logged-in user
+    isPremium = true;
+    document.getElementById('model-select').disabled = false;
+  } catch (error) {
+    console.error("Error during X login:", error);
+    status.style.color = 'red';
+    status.textContent = `❌ Failed to log in with X`;
+  }
+}
 
   // Wait for the session to be established
   const { data: { session } } = await supabaseClient.auth.getSession();

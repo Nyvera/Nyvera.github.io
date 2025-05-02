@@ -336,6 +336,8 @@ let isPremium = false;
       return;
     }
 
+    let model = isPremium ? document.getElementById('model-select').value : 'openai';
+
     if (/^(create|generate|draw|paint)\s+image/i.test(prompt)) {
       const cleaned = prompt.replace(/^(create|generate|draw|paint)\s+image\s*/i, '');
       return generateImage(cleaned || "a beautiful scene");

@@ -75,6 +75,7 @@
     status.textContent = `❌ ${error.message}`;
     return;
   }
+  }
 // ─── X (Twitter) Login Function ───────────────────────────────────────────
 async function loginWithX() {
   const status = document.getElementById('login-status');

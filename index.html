@@ -218,15 +218,6 @@
 <body>
   <header>Welcome to PrisimAI</header>
   <div id="branding">Your AI assistant for chat, images, voice, and more.</div>
-  <div id="login-container" style="margin: 20px;">
-    <input type="text" id="username" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
-    <button onclick="loginWithGitHub()">Login with GitHub</button>
-    <button onclick="loginWithSpotify()">Login with Spotify</button>
-    <button onclick="loginWithDiscord()">Login with Discord</button>
-    <span id="login-status" style="margin-left: 10px; color: green;"></span>
   </div>
   <div id="chat-container">
     <div id="chat"></div>
@@ -289,7 +280,12 @@
     "Even AI needs Wi-Fi sometimes 😅",
     "Offline mode: engaged. Limited powers active."
   ];
-
+document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session?.user) {
+        window.location.href = "login.html"; // Redirect to login page if not logged in
+      }
+    });
   document.addEventListener('DOMContentLoaded', async () => {
     const modelSelect = document.getElementById('model-select');
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -302,72 +298,6 @@
     }
   });
 
-  async function login() {
-    const email = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const status = document.getElementById('login-status');
-    const modelSelect = document.getElementById('model-select');
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      status.style.color = 'red';
-      status.textContent = `❌ ${error.message}`;
-      return;
-    }
-
-    isPremium = true;
-    modelSelect.disabled = false;
-    status.style.color = 'green';
-    status.textContent = `✅ Logged in as ${data.user.email}`;
-  }
-
-  async function register() {
-    const email = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const status = document.getElementById('login-status');
-
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
-    if (error) {
-      status.style.color = 'red';
-      status.textContent = `❌ ${error.message}`;
-      return;
-    }
-
-    status.style.color = 'green';
-    status.textContent = '✅ Registered! Check your email to confirm.';
-  }
-
-  async function loginWithGitHub() {
-    const status = document.getElementById('login-status');
-    const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'github' });
-    if (error) {
-      status.style.color = 'red';
-      status.textContent = `❌ ${error.message}`;
-      return;
-    }
-    status.textContent = '✅ Redirecting to GitHub login...';
-  }
-
-  async function loginWithSpotify() {
-    const status = document.getElementById('login-status');
-    const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'spotify' });
-    if (error) {
-      status.style.color = 'red';
-      status.textContent = `❌ ${error.message}`;
-      return;
-    }
-    status.textContent = '✅ Redirecting to Spotify login...';
-  }
-async function loginWithDiscord() {
-  const status = document.getElementById('login-status');
-  const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'discord' });
-  if (error) {
-    status.style.color = 'red';
-    status.textContent = `❌ ${error.message}`;
-    return;
-  }
-  status.textContent = '✅ Redirecting to Discord login...';
-}
   function quickInsert(type) {
     const promptInput = document.getElementById('prompt');
     const modelSelect = document.getElementById('model-select');

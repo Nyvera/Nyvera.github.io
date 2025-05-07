@@ -284,18 +284,23 @@ let isPremium = true;
   document.addEventListener('DOMContentLoaded', async () => {
   const { data: { user } } = await supabaseClient.auth.getUser();
 
-  if (user && user.user) {
-  const email = user.user.email;
-  const avatarUrl = user.user.user_metadata?.avatar_url;
+  if (user) {
+    console.log('User is logged in:', user.email);
+    document.getElementById('logout-btn').style.display = 'block';
 
-  const profileDiv = document.getElementById('user-profile');
-  profileDiv.innerHTML = avatarUrl
-    ? `<img src="${avatarUrl}" alt="Profile Picture" style="width:60px; height:60px; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.2);" />`
-    : `<div style="font-weight:bold; color:#444;">${email}</div>`;
+    // Check if user metadata includes an avatar URL
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
 
-  document.getElementById('logout-btn').style.display = 'block';
-}
+    if (avatarUrl) {
+      const profilePic = document.getElementById('profile-pic');
+      profilePic.src = avatarUrl;
+      profilePic.style.display = 'inline-block';
+    }
 
+  } else {
+    console.log('User is not logged in');
+    document.getElementById('logout-btn').style.display = 'none';
+    document.getElementById('profile-pic').style.display = 'none';
   }
 });
 

@@ -44,10 +44,6 @@
   .messages::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.04); border-radius:10px; }
   /* small responsive */
   @media (max-width:700px){ .frame { max-width:100%; border-radius:0; } .logo .brand { font-size:18px; } }
-  
-  /* Supabase Auth CSS */
-  .auth-section { display:flex; align-items:center; gap:10px; }
-  .auth-section form { display: flex; gap: 8px; }
 </style>
 </head>
 <body>
@@ -62,20 +58,6 @@
         </div>
       </div>
 
-      <div class="auth-section">
-        <div id="authContainer">
-            <form id="authForm">
-                <input id="emailInput" type="email" placeholder="Email" class="input-small" autocomplete="off" />
-                <input id="passwordInput" type="password" placeholder="Password" class="input-small" />
-                <button type="submit" id="authBtn" class="send-btn" style="padding: 8px 12px; font-weight:normal;">Sign Up / Log In</button>
-            </form>
-        </div>
-        <div id="userStatus" style="display:none; align-items:center; gap:10px;">
-            <span id="userEmail" style="font-size:13px; color:#9fb5d6;"></span>
-            <button id="signOutBtn" class="btn" style="padding:8px 12px;">Sign Out</button>
-        </div>
-      </div>
-      
       <div class="controls" aria-hidden="false">
         <select id="modelSelect" class="select" title="Model">
           <option value="openai">openai</option>
@@ -117,8 +99,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 /*
   PrismAI - Single-file Chat UI that posts to Pollinations /openai endpoint.
@@ -136,7 +116,6 @@ const modelSelect = document.getElementById('modelSelect');
 const streamToggle = document.getElementById('streamToggle');
 const tokenCountEl = document.getElementById('tokenCount');
 const maxTokensEl = document.getElementById('maxTokens');
-const mainEl = document.querySelector('.main');
 
 let messages = []; // {role: 'user'|'assistant'|'system', content: '...'}
 let isSending = false;
@@ -346,92 +325,17 @@ clearBtn.addEventListener('click', ()=>{
   focusInput();
 });
 
-// --- Supabase Integration ---
-// Replace with your actual project URL and anon key from Supabase
-const SUPABASE_URL = 'https://tucoysycoeqhfrwsbimg.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1Y295c3ljb2VxaGZyd3NiaW1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTUyOTMsImV4cCI6MjA3MjU5MTI5M30.047lzKozbRrqOqlKRjLVeXBHhlOQSZUVZMXRTIQuhg4';
-
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-const authContainerEl = document.getElementById('authContainer');
-const authFormEl = document.getElementById('authForm');
-const emailInputEl = document.getElementById('emailInput');
-const passwordInputEl = document.getElementById('passwordInput');
-const userStatusEl = document.getElementById('userStatus');
-const userEmailEl = document.getElementById('userEmail');
-const signOutBtn = document.getElementById('signOutBtn');
-
-// Handle user sign up / sign in
-authFormEl.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = emailInputEl.value;
-    const password = passwordInputEl.value;
-
-    if (!email || !password) {
-        alert("Please enter both email and password.");
-        return;
-    }
-
-    // Try to sign in first
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (signInError && signInError.message.includes('Invalid login credentials')) {
-        // If sign-in fails, try to sign up
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
-        if (signUpError) {
-            alert('Sign up failed: ' + signUpError.message);
-        } else {
-            alert('Sign up successful! Please check your email for a confirmation link.');
-        }
-    } else if (signInError) {
-        // Other sign-in errors
-        alert('Sign in failed: ' + signInError.message);
-    }
-});
-
-// Handle sign out
-signOutBtn.addEventListener('click', async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        alert('Sign out failed: ' + error.message);
-    }
-});
-
-// Listen for auth state changes
-supabase.auth.onAuthStateChange((event, session) => {
-    if (session) {
-        // User is logged in
-        authContainerEl.style.display = 'none';
-        userStatusEl.style.display = 'flex';
-        userEmailEl.textContent = session.user.email;
-        // Show chat UI
-        mainEl.style.display = 'flex';
-    } else {
-        // User is logged out
-        authContainerEl.style.display = 'flex';
-        userStatusEl.style.display = 'none';
-        // Hide chat UI
-        mainEl.style.display = 'none';
-        // Clear message history when user signs out
-        messages = [];
-        messagesEl.innerHTML = '';
-    }
-});
-
-
 // initial greeting from assistant
 (function init(){
-  // The onAuthStateChange listener will handle the initial UI state
-  // We hide the chat initially and show it on login
-  mainEl.style.display = 'none';
+  addMessage('assistant', 'Hey — PrismAI here. Ask me anything. (Press Enter to send. Shift+Enter for newline.)');
   focusInput();
 })();
 
 /* IMPORTANT NOTES:
-    - Pollinations' /openai endpoint is used directly from the browser in this demo.
-    - If you hit any CORS errors, host this HTML on a server that sets an appropriate Referrer or use a simple proxy.
-    - The API may enforce rate limits (per IP). Keep messages short and avoid rapid-fire requests.
-    - See the Pollinations API docs that came with this project for more options and advanced features. :contentReference[oaicite:1]{index=1}
+   - Pollinations' /openai endpoint is used directly from the browser in this demo.
+   - If you hit any CORS errors, host this HTML on a server that sets an appropriate Referrer or use a simple proxy.
+   - The API may enforce rate limits (per IP). Keep messages short and avoid rapid-fire requests.
+   - See the Pollinations API docs that came with this project for more options and advanced features. :contentReference[oaicite:1]{index=1}
 */
 </script>
 </body>

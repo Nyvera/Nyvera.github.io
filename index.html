@@ -1,158 +1,342 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>PrismAI — Chat</title>
-<style>
-  * { box-sizing: border-box; }
-  html,body { height:100%; margin:0; font-family:Inter,system-ui; background:#0f1724; color:#e6eef8; }
-  .app { display:grid; grid-template-columns:auto 1fr; height:100vh; }
-  .options { width:280px; background:#121e2d; padding:20px; border-right:1px solid rgba(255,255,255,0.05); overflow:auto; }
-  .options h2 { font-size:18px; margin-bottom:12px; color:#9fb5d6; }
-  .options label { display:block; margin-top:10px; font-size:14px; }
-  .options input, .options select { width:100%; margin-top:4px; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.04); background:#0c1420; color:#dcebf8; }
-  .options button { margin-top:16px; width:100%; padding:10px; font-size:14px; border:none; border-radius:6px; background:linear-gradient(90deg,#7c5cff,#3ad0ff); color:#051425; cursor:pointer; }
-  .options button:disabled { opacity:0.5; cursor:not-allowed; }
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%235A4DFF%22/><text x=%2250%25%22 y=%2255%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2250%22>π</text></svg>">
 
-  .chat { display:flex; flex-direction:column; }
-  .topbar { padding:16px; font-size:20px; font-weight:600; border-bottom:1px solid rgba(255,255,255,0.03); background:#071029; color:#f8fbff; }
-  .messages { flex:1; padding:20px; overflow:auto; }
-  .msg { margin-bottom:12px; }
-  .msg.user { text-align:right; }
-  .msg .bubble { display:inline-block; padding:10px 14px; border-radius:14px; max-width:70%; line-height:1.4; }
-  .msg.user .bubble { background:#1b2940; border:1px solid rgba(255,255,255,0.03); }
-  .msg.assist .bubble { background:#0b2736; border:1px solid rgba(255,255,255,0.04); }
-  .input-area { display:flex; padding:12px; border-top:1px solid rgba(255,255,255,0.03); }
-  .input-area [contenteditable] { flex:1; padding:10px; background:#071722; border-radius:8px; border:1px solid rgba(255,255,255,0.03); color:#dff0ff; max-height:150px; overflow:auto; }
-  .input-area button { margin-left:10px; padding:10px 16px; background:linear-gradient(90deg,#7c5cff,#3ad0ff); border:none; border-radius:8px; color:#051425; cursor:pointer; }
+<style>
+  /* Basic reset */
+  * { box-sizing: border-box; }
+  html,body { height:100%; margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background: #0f1724; color:#e6eef8; }
+  /* Layout */
+  .app { display:flex; height:100vh; align-items:stretch; justify-content:center; padding:28px; gap:20px; }
+  .frame { width:100%; max-width:1100px; height:100%; display:flex; flex-direction:column; border-radius:14px; overflow:hidden; box-shadow: 0 10px 30px rgba(2,6,23,0.7); background: linear-gradient(180deg,#071029 0%, #071a2b 60%); border:1px solid rgba(255,255,255,0.03); }
+  .topbar { display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent); }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .brand { font-weight:700; font-size:20px; letter-spacing:0.4px; color: #f8fbff; }
+  .sub { font-size:12px; color:#9fb5d6; opacity:0.85; }
+  .controls { margin-left:auto; display:flex; gap:10px; align-items:center; }
+  .select, .input-small { background:#0c1420; color:#dcebf8; border:1px solid rgba(255,255,255,0.04); padding:8px 10px; border-radius:8px; font-size:13px; }
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .messages { flex:1; padding:24px; overflow:auto; scroll-behavior:smooth; display:flex; flex-direction:column; gap:12px; background:
+    linear-gradient(180deg, rgba(10,20,30,0.02) 0%, rgba(10,20,30,0.02) 100%); }
+  .msg-row { display:flex; gap:12px; align-items:flex-start; }
+  .avatar { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; color:#061024; background:linear-gradient(135deg,#7c5cff,#3ad0ff); flex-shrink:0; }
+  .bubble { max-width:78%; padding:12px 14px; border-radius:12px; line-height:1.45; font-size:14px; }
+  .user .bubble { margin-left:auto; background:linear-gradient(180deg,#1b2940,#122033); border:1px solid rgba(255,255,255,0.03); color:#e6eef8; border-bottom-right-radius:6px; }
+  .assistant .bubble { background:linear-gradient(180deg,#0b2736,#052033); border:1px solid rgba(255,255,255,0.04); color:#e9f1fb; }
+  .meta { font-size:12px; color:#9fb5d6; margin-top:6px; }
+  .input-area { padding:16px; border-top:1px solid rgba(255,255,255,0.03); display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center; background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent); }
+  .prompt { background:#071722; border:1px solid rgba(255,255,255,0.03); color:#dff0ff; padding:12px; border-radius:10px; font-size:14px; min-height:52px; max-height:220px; overflow:auto; }
+  .send-btn { background:linear-gradient(90deg,#7c5cff,#3ad0ff); color:#051425; border:none; padding:12px 18px; border-radius:10px; font-weight:700; cursor:pointer; box-shadow: 0 6px 18px rgba(58,208,255,0.08); }
+  .send-btn[disabled] { opacity:0.5; cursor:not-allowed; }
+  .small-note { font-size:12px; color:#93b6d8; margin-left:8px; }
+  .system-panel { display:flex; gap:10px; align-items:center; padding:12px 20px; border-bottom:1px dashed rgba(255,255,255,0.02); background: linear-gradient(180deg, rgba(255,255,255,0.005), transparent); }
+  .sys-text { flex:1; font-size:13px; color:#cfe8ff; background:#041826; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
+  .status { font-size:13px; color:#9fb5d6; margin-left:10px; }
+  .tiny { font-size:11px; color:#7da6cb; }
+  .controls .btn { background:transparent; border:1px solid rgba(255,255,255,0.03); padding:8px 10px; border-radius:8px; color:#cfe8ff; cursor:pointer; }
+  .hint { padding:12px 20px; font-size:13px; color:#9fb5d6; border-top:1px dashed rgba(255,255,255,0.02); }
+  /* scrollbar */
+  .messages::-webkit-scrollbar { width:10px; }
+  .messages::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.04); border-radius:10px; }
+  /* small responsive */
+  @media (max-width:700px){ .frame { max-width:100%; border-radius:0; } .logo .brand { font-size:18px; } }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="options">
-    <h2>⚙ PrismAI Settings</h2>
-    <label for="modelSelect">Model</label>
-    <select id="modelSelect"><option>Loading models...</option></select>
-    <label for="systemPrompt">System prompt</label>
-    <input type="text" id="systemPrompt" value="You are PrismAI, a little witty and concise.">
-    <label for="maxTokens">Max tokens</label>
-    <input type="number" id="maxTokens" value="800" min="50" step="50">
-    <label for="streamToggle"><input type="checkbox" id="streamToggle" checked> Enable streaming</label>
-    <button id="clearBtn">Clear Conversation</button>
-  </div>
-  <div class="chat">
-    <div class="topbar">PrismAI</div>
-    <div id="messages" class="messages"></div>
-    <div class="input-area">
-      <div id="input" contenteditable="true" placeholder="Type a message..."></div>
-      <button id="sendBtn">Send →</button>
+  <div class="frame" role="main" aria-label="PrismAI chat">
+    <div class="topbar">
+      <div class="logo">
+        <div class="avatar" style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,#00e0ff,#7c5cff);color:#021422;">π</div>
+        <div>
+          <div class="brand">PrismAI</div>
+          <div class="sub">Chat powered by Pollinations.ai</div>
+        </div>
+      </div>
+
+      <div class="controls" aria-hidden="false">
+        <select id="modelSelect" class="select" title="Model">
+          <option value="openai">openai</option>
+          <option value="mistral">mistral</option>
+        </select>
+
+        <input id="maxTokens" class="input-small" type="number" min="50" step="50" value="800" title="Max tokens">
+
+        <button id="clearBtn" class="btn" title="Clear conversation">Clear</button>
+      </div>
+    </div>
+
+    <div class="system-panel">
+      <div style="font-size:13px;color:#9fb5d6;">System prompt</div>
+      <input id="systemPrompt" class="sys-text" value="You are PrismAI, an assistant that is helpful, concise, and a little witty.">
+      <div class="status tiny">Stream: <label style="margin-left:8px"><input type="checkbox" id="streamToggle" checked> ON</label></div>
+    </div>
+
+    <div class="main">
+      <div id="messages" class="messages" aria-live="polite"></div>
+
+      <div class="input-area">
+        <div contenteditable="true" id="input" class="prompt" role="textbox" aria-label="Message input" placeholder="Type a message..."></div>
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+          <div style="display:flex; flex-direction:column; gap:8px; width:160px;">
+            <button id="sendBtn" class="send-btn">Send →</button>
+            <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end;">
+              <div class="tiny">Model tokens</div>
+              <div id="tokenCount" class="tiny">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint">
+        Tip: PrismAI uses Pollinations' OpenAI-compatible `/openai` endpoint for chat (streaming supported). Keep messages short for faster replies.
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-  const modelsUrl = 'https://text.pollinations.ai/models';
-  const messagesEl = document.getElementById('messages');
-  const inputEl = document.getElementById('input');
-  const sendBtn = document.getElementById('sendBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const modelSelect = document.getElementById('modelSelect');
-  const systemPromptEl = document.getElementById('systemPrompt');
-  const maxTokensEl = document.getElementById('maxTokens');
-  const streamToggle = document.getElementById('streamToggle');
+/*
+  PrismAI - Single-file Chat UI that posts to Pollinations /openai endpoint.
+  - Uses streaming when "Stream" checkbox is checked (SSE-like chunks).
+  - Minimal message history in-memory; no server required.
+  - NOTE: If Pollinations blocks CORS in your browser, you'll need to run via a proxy or host on a server.
+*/
 
-  let history = [], sending = false;
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const clearBtn = document.getElementById('clearBtn');
+const systemPromptEl = document.getElementById('systemPrompt');
+const modelSelect = document.getElementById('modelSelect');
+const streamToggle = document.getElementById('streamToggle');
+const tokenCountEl = document.getElementById('tokenCount');
+const maxTokensEl = document.getElementById('maxTokens');
 
-  // Fetch models and populate the select
-  fetch(modelsUrl)
-    .then(res => res.text())
-    .then(txt => {
-      const lines = txt.split('\\n').filter(l => l.startsWith('Model:'));
-      modelSelect.innerHTML = lines.map(l => {
-        const model = l.split('Model:')[1].trim();
-        return `<option value="${model}">${model}</option>`;
-      }).join('');
-    })
-    .catch(err => {
-      console.error('Model list fetch failed:', err);
-      modelSelect.innerHTML = '<option value="openai">openai</option><option value="mistral">mistral</option>';
-    });
+let messages = []; // {role: 'user'|'assistant'|'system', content: '...'}
+let isSending = false;
 
-  function appendMessage(role, text){
-    const div = document.createElement('div');
-    div.className = 'msg ' + (role==='user'?'user':'assist');
-    const span = document.createElement('span');
-    span.className = 'bubble';
-    span.textContent = text;
-    div.appendChild(span);
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
+// Helper: create message DOM
+function addMessage(role, text, streaming=false){
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + (role === 'user' ? 'user' : 'assistant');
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.style.background = role === 'user' ? 'linear-gradient(135deg,#0ea5a3,#7c5cff)' : 'linear-gradient(135deg,#1f6feb,#07c7b7)';
+  avatar.textContent = role === 'user' ? 'YOU' : 'AI';
+  const bubbleWrap = document.createElement('div');
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = escapeHtml(text || '');
+  bubbleWrap.appendChild(bubble);
 
-  async function send(){
-    if (sending) return;
-    const txt = inputEl.innerText.trim(); if (!txt) return;
-    sending = true; sendBtn.disabled = true;
-    appendMessage('user', txt);
-    history.push({role:'user', content:txt});
-    inputEl.innerText = '';
+  row.appendChild(avatar);
+  row.appendChild(bubbleWrap);
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 
-    const payload = {
-      model: modelSelect.value,
-      messages: [{role:'system', content:systemPromptEl.value}, ...history],
-      max_tokens: +maxTokensEl.value,
-      stream: streamToggle.checked
-    };
+  return {row, bubble};
+}
 
-    const url = 'https://text.pollinations.ai/openai';
-    appendMessage('assist', '…'); // placeholder
+function escapeHtml(s){
+  return s
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('\\n','<br/>')
+    .replaceAll('\n','<br/>');
+}
 
-    try {
-      if (payload.stream) {
-        const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json','Accept':'text/event-stream'}, body:JSON.stringify(payload)});
-        const reader = res.body.getReader(), decoder = new TextDecoder(), bubble = messagesEl.lastChild.querySelector('.bubble');
-        let buffer = '';
-        while(true) {
-          const {done,value} = await reader.read(); if(done) break;
-          buffer += decoder.decode(value, {stream:true});
-          const parts = buffer.split('\\n\\n');
-          buffer = parts.pop();
-          for (const part of parts) {
-            if (!part.startsWith('data: ')) continue;
-            const data = part.slice(6);
-            if (data === '[DONE]') break;
+function setStatusTokens(count){
+  tokenCountEl.textContent = count ? String(count) : '—';
+}
+
+// Send flow
+async function sendMessage(){
+  if(isSending) return;
+  const text = inputEl.innerText.trim();
+  if(!text) return;
+  isSending = true;
+  sendBtn.disabled = true;
+  addUserMessageToHistory(text);
+  inputEl.innerHTML = '';
+  focusInput();
+
+  const assistantDom = addMessage('assistant',''); // placeholder bubble
+  const assistantBubble = assistantDom.bubble;
+  // Prepare payload
+  const systemMsg = systemPromptEl.value || '';
+  const payload = {
+    model: modelSelect.value || 'openai',
+    messages: [
+      { role: 'system', content: systemMsg },
+      // include entire conversation for context
+      ...messages.map(m => ({ role: m.role, content: m.content }))
+    ],
+    stream: streamToggle.checked,
+    // optional: tokens - docs mention seed/private etc. We'll include nothing fancy
+  };
+
+  // set optional params
+  const maxTokens = parseInt(maxTokensEl.value || '800', 10);
+  if(!isNaN(maxTokens)) payload.max_tokens = maxTokens;
+
+  try {
+    if(streamToggle.checked){
+      // Streaming path: fetch + ReadableStream
+      const url = 'https://text.pollinations.ai/openai';
+      const controller = new AbortController();
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      if(!res.ok){
+        const errText = await res.text();
+        throw new Error('HTTP ' + res.status + ': ' + errText);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      assistantBubble.innerHTML = ''; // ensure empty
+      while(true){
+        const {done, value} = await reader.read();
+        if(done) break;
+        buffer += decoder.decode(value, {stream:true});
+        // SSE style data: lines "data: {...}\n\n"
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop(); // leftover
+        for(const part of parts){
+          const line = part.trim();
+          if(!line) continue;
+          // handle lines that may be "data: [DONE]" or "data: {...}"
+          const dataPrefix = 'data: ';
+          if(line.startsWith(dataPrefix)){
+            const dataStr = line.slice(dataPrefix.length).trim();
+            if(dataStr === '[DONE]') {
+              // finished
+              break;
+            }
+            let chunk;
             try {
-              const json = JSON.parse(data);
-              const content = json.choices?.[0]?.delta?.content;
-              if (content) bubble.textContent += content;
+              chunk = JSON.parse(dataStr);
+            } catch(e){
+              // Not JSON? append raw
+              assistantBubble.innerHTML += escapeHtml(dataStr);
+              messagesEl.scrollTop = messagesEl.scrollHeight;
+              continue;
+            }
+            // Chunk format mirrors OpenAI streaming: choices[0].delta.content
+            const content = chunk?.choices?.[0]?.delta?.content;
+            if(content){
+              // append content safely (convert newlines)
+              assistantBubble.innerHTML += escapeHtml(content);
+              messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+            // if chunk includes usage or token info (non-stream), update token hint (guard)
+            if(chunk?.usage?.total_tokens) setStatusTokens(chunk.usage.total_tokens);
+          } else {
+            // if it's not prefixed (some servers send raw JSON chunks), try parse
+            try {
+              const obj = JSON.parse(line);
+              const content = obj?.choices?.[0]?.delta?.content || obj?.choices?.[0]?.message?.content;
+              if(content) assistantBubble.innerHTML += escapeHtml(content);
             } catch(e){}
           }
         }
-        history.push({role:'assistant', content: bubble.textContent});
-      } else {
-        const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-        const json = await res.json();
-        const msg = json.choices?.[0]?.message?.content || '';
-        messagesEl.lastChild.querySelector('.bubble').textContent = msg;
-        history.push({role:'assistant', content:msg});
       }
-    } catch(err) {
-      console.error(err);
-      messagesEl.lastChild.querySelector('.bubble').textContent = 'Error: ' + err.message;
-      history.push({role:'assistant', content:'[Error] '+err.message});
-    } finally {
-      sending = false; sendBtn.disabled = false;
+      // after stream ends, try to parse final JSON? Some APIs don't send it; we already appended content.
+      // Save assistant content to history
+      const finalText = assistantBubble.innerText || assistantBubble.textContent || '';
+      appendAssistantToHistory(finalText);
+    } else {
+      // Non-streaming path
+      const resp = await fetch('https://text.pollinations.ai/openai', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if(!resp.ok){
+        const errText = await resp.text();
+        throw new Error('HTTP ' + resp.status + ': ' + errText);
+      }
+      const data = await resp.json();
+      const assistantText = data?.choices?.[0]?.message?.content || JSON.stringify(data, null, 2);
+      assistantBubble.innerHTML = escapeHtml(assistantText);
+      appendAssistantToHistory(assistantText);
+      if(data?.usage?.total_tokens) setStatusTokens(data.usage.total_tokens);
     }
+  } catch(err){
+    console.error(err);
+    assistantBubble.innerHTML = '<span style="color:#ffb4b4">Error: '+ escapeHtml(err.message || String(err)) +'</span>';
+    appendAssistantToHistory('[Error] ' + (err.message||String(err)));
+  } finally {
+    isSending = false;
+    sendBtn.disabled = false;
   }
+}
 
-  sendBtn.addEventListener('click', send);
-  inputEl.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-  clearBtn.addEventListener('click', () => { history=[]; messagesEl.innerHTML=''; });
+function addUserMessageToHistory(text){
+  messages.push({ role: 'user', content: text });
+  const userDom = addMessage('user', text);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 
-  // Initial assistant greeting
-  appendMessage('assist', 'Hey—I’m PrismAI. All systems in the options panel. Type something!');
-  inputEl.focus();
+function appendAssistantToHistory(text){
+  messages.push({ role: 'assistant', content: text });
+  // update token count lightly (we don't have exact usage unless API returns it)
+}
+
+// Utilities
+function focusInput(){ inputEl.focus(); placeCaretAtEnd(inputEl); }
+function placeCaretAtEnd(el){
+  el.focus();
+  if (typeof window.getSelection !== "undefined"
+      && typeof document.createRange !== "undefined") {
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+// Event bindings
+sendBtn.addEventListener('click', sendMessage);
+inputEl.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendMessage();
+  }
+});
+clearBtn.addEventListener('click', ()=>{
+  messages = [];
+  messagesEl.innerHTML = '';
+  setStatusTokens(null);
+  inputEl.innerHTML = '';
+  focusInput();
+});
+
+// initial greeting from assistant
+(function init(){
+  addMessage('assistant', 'Hey — PrismAI here. Ask me anything. (Press Enter to send. Shift+Enter for newline.)');
+  focusInput();
+})();
+
+/* IMPORTANT NOTES:
+   - Pollinations' /openai endpoint is used directly from the browser in this demo.
+   - If you hit any CORS errors, host this HTML on a server that sets an appropriate Referrer or use a simple proxy.
+   - The API may enforce rate limits (per IP). Keep messages short and avoid rapid-fire requests.
+   - See the Pollinations API docs that came with this project for more options and advanced features. :contentReference[oaicite:1]{index=1}
+*/
 </script>
 </body>
 </html>

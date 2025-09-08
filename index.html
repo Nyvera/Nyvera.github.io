@@ -3,340 +3,337 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PrismAI — Chat</title>
+<title>PrismAI — Upgraded</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%235A4DFF%22/><text x=%2250%25%22 y=%2255%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2250%22>π</text></svg>">
 
+<!-- External libs (CDN) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
 <style>
-  /* Basic reset */
-  * { box-sizing: border-box; }
-  html,body { height:100%; margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background: #0f1724; color:#e6eef8; }
-  /* Layout */
-  .app { display:flex; height:100vh; align-items:stretch; justify-content:center; padding:28px; gap:20px; }
-  .frame { width:100%; max-width:1100px; height:100%; display:flex; flex-direction:column; border-radius:14px; overflow:hidden; box-shadow: 0 10px 30px rgba(2,6,23,0.7); background: linear-gradient(180deg,#071029 0%, #071a2b 60%); border:1px solid rgba(255,255,255,0.03); }
-  .topbar { display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent); }
-  .logo { display:flex; align-items:center; gap:12px; }
-  .brand { font-weight:700; font-size:20px; letter-spacing:0.4px; color: #f8fbff; }
-  .sub { font-size:12px; color:#9fb5d6; opacity:0.85; }
-  .controls { margin-left:auto; display:flex; gap:10px; align-items:center; }
-  .select, .input-small { background:#0c1420; color:#dcebf8; border:1px solid rgba(255,255,255,0.04); padding:8px 10px; border-radius:8px; font-size:13px; }
-  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-  .messages { flex:1; padding:24px; overflow:auto; scroll-behavior:smooth; display:flex; flex-direction:column; gap:12px; background:
-    linear-gradient(180deg, rgba(10,20,30,0.02) 0%, rgba(10,20,30,0.02) 100%); }
-  .msg-row { display:flex; gap:12px; align-items:flex-start; }
-  .avatar { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; color:#061024; background:linear-gradient(135deg,#7c5cff,#3ad0ff); flex-shrink:0; }
-  .bubble { max-width:78%; padding:12px 14px; border-radius:12px; line-height:1.45; font-size:14px; }
-  .user .bubble { margin-left:auto; background:linear-gradient(180deg,#1b2940,#122033); border:1px solid rgba(255,255,255,0.03); color:#e6eef8; border-bottom-right-radius:6px; }
-  .assistant .bubble { background:linear-gradient(180deg,#0b2736,#052033); border:1px solid rgba(255,255,255,0.04); color:#e9f1fb; }
-  .meta { font-size:12px; color:#9fb5d6; margin-top:6px; }
-  .input-area { padding:16px; border-top:1px solid rgba(255,255,255,0.03); display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center; background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent); }
-  .prompt { background:#071722; border:1px solid rgba(255,255,255,0.03); color:#dff0ff; padding:12px; border-radius:10px; font-size:14px; min-height:52px; max-height:220px; overflow:auto; }
-  .send-btn { background:linear-gradient(90deg,#7c5cff,#3ad0ff); color:#051425; border:none; padding:12px 18px; border-radius:10px; font-weight:700; cursor:pointer; box-shadow: 0 6px 18px rgba(58,208,255,0.08); }
-  .send-btn[disabled] { opacity:0.5; cursor:not-allowed; }
-  .small-note { font-size:12px; color:#93b6d8; margin-left:8px; }
-  .system-panel { display:flex; gap:10px; align-items:center; padding:12px 20px; border-bottom:1px dashed rgba(255,255,255,0.02); background: linear-gradient(180deg, rgba(255,255,255,0.005), transparent); }
-  .sys-text { flex:1; font-size:13px; color:#cfe8ff; background:#041826; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
-  .status { font-size:13px; color:#9fb5d6; margin-left:10px; }
-  .tiny { font-size:11px; color:#7da6cb; }
-  .controls .btn { background:transparent; border:1px solid rgba(255,255,255,0.03); padding:8px 10px; border-radius:8px; color:#cfe8ff; cursor:pointer; }
-  .hint { padding:12px 20px; font-size:13px; color:#9fb5d6; border-top:1px dashed rgba(255,255,255,0.02); }
-  /* scrollbar */
-  .messages::-webkit-scrollbar { width:10px; }
-  .messages::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.04); border-radius:10px; }
-  /* small responsive */
-  @media (max-width:700px){ .frame { max-width:100%; border-radius:0; } .logo .brand { font-size:18px; } }
+  :root{
+    --bg:#0f1724; --panel:#071029; --muted:#9fb5d6; --text:#e6eef8; --accent1:#7c5cff; --accent2:#3ad0ff;
+  }
+  [data-theme="light"]{ --bg:#f6f8fb; --panel:#ffffff; --muted:#4b6b86; --text:#071022; }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text)}
+  .app{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:28px}
+  .frame{width:100%;max-width:1100px;height:88vh;display:flex;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(2,6,23,0.6);background:linear-gradient(180deg,var(--panel) 0%, #071a2b 70%);border:1px solid rgba(255,255,255,0.03)}
+  .sidebar{width:300px;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+  .content{flex:1;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  .logo{display:flex;align-items:center;gap:12px}
+  .brand{font-weight:700;font-size:20px;color:var(--text)}
+  .sub{font-size:12px;color:var(--muted)}
+  .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .select,.input-small,.btn{background:#0c1420;color:var(--text);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;font-size:13px}
+  .btn{cursor:pointer}
+  .messages{flex:1;padding:20px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+  .msg-row{display:flex;gap:12px;align-items:flex-start}
+  .avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#061024;background:linear-gradient(135deg,var(--accent1),var(--accent2));flex-shrink:0}
+  .bubble{max-width:78%;padding:12px 14px;border-radius:12px;line-height:1.45;font-size:14px;background:linear-gradient(180deg,#0b2736,#052033);border:1px solid rgba(255,255,255,0.04)}
+  .user{justify-content:flex-end}
+  .user .bubble{background:linear-gradient(180deg,#122033,#0b1a2a);border-bottom-right-radius:6px}
+  .meta{font-size:12px;color:var(--muted);margin-top:6px}
+  .input-area{padding:12px;border-top:1px solid rgba(255,255,255,0.03);display:grid;grid-template-columns:1fr 220px;gap:12px;align-items:center}
+  .prompt{background:#071722;border:1px solid rgba(255,255,255,0.03);color:var(--text);padding:12px;border-radius:10px;font-size:14px;min-height:64px;max-height:260px;overflow:auto}
+  .send-controls{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .send-btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#051425;border:none;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(58,208,255,0.08);transition:transform .12s}
+  .send-btn:hover{transform:scale(1.03)}
+  .small-note{font-size:12px;color:var(--muted);margin-left:8px}
+  .sidebar .panel{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.02)}
+  .chat-list{padding:8px;display:flex;flex-direction:column;gap:8px;overflow:auto}
+  .chat-item{padding:10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);cursor:pointer}
+  .muted{color:var(--muted)}
+  .toast{position:fixed;right:20px;bottom:20px;padding:12px 16px;border-radius:8px;background:#0b2535;color:var(--text);box-shadow:0 8px 30px rgba(2,6,23,0.5)}
+  .controls-row{display:flex;gap:8px;align-items:center}
+  .file-input{display:none}
+  .typing{font-style:italic;color:var(--muted)}
+  .theme-toggle{border:none;background:transparent;color:var(--muted);cursor:pointer}
+  /* responsive */
+  @media (max-width:900px){.sidebar{display:none}.frame{max-width:100%;border-radius:0;height:100vh}}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="frame" role="main" aria-label="PrismAI chat">
-    <div class="topbar">
-      <div class="logo">
-        <div class="avatar" style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,#00e0ff,#7c5cff);color:#021422;">π</div>
+  <div class="frame" role="main" aria-label="PrismAI upgraded">
+    <div class="sidebar" aria-hidden="false">
+      <div class="panel" style="display:flex;align-items:center;gap:10px">
+        <div class="avatar" style="width:44px;height:44px;border-radius:10px;">π</div>
         <div>
           <div class="brand">PrismAI</div>
-          <div class="sub">Chat powered by Pollinations.ai</div>
+          <div class="sub">Upgraded — Pollinations integration</div>
         </div>
       </div>
 
-      <div class="controls" aria-hidden="false">
-        <select id="modelSelect" class="select" title="Model">
-          <option value="openai">openai</option>
-          <option value="mistral">mistral</option>
-        </select>
-
-        <input id="maxTokens" class="input-small" type="number" min="50" step="50" value="800" title="Max tokens">
-
-        <button id="clearBtn" class="btn" title="Clear conversation">Clear</button>
+      <div class="panel">
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="modelSelect" class="select" aria-label="Model select"><option>loading...</option></select>
+          <button id="refreshModels" class="btn" title="Refresh models">⟳</button>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <input id="maxTokens" class="input-small" type="number" min="50" step="50" value="800" title="Max tokens">
+          <label class="muted"><input type="checkbox" id="privateToggle"> private</label>
+        </div>
       </div>
+
+      <div class="panel">
+        <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+          <div class="muted">Referrer</div>
+          <input id="referrer" class="input-small" placeholder="app-name or url" style="width:140px">
+        </div>
+      </div>
+
+      <div class="panel" style="flex:1;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="muted">Saved chats</div>
+          <div style="display:flex;gap:8px"><button id="newChat" class="btn">+ New</button><button id="exportBtn" class="btn">Export</button></div>
+        </div>
+        <div id="chatList" class="chat-list"></div>
+      </div>
+
+      <div class="panel" style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+        <div class="muted">Theme</div>
+        <div>
+          <button id="themeBtn" class="theme-toggle" title="Toggle theme">🌗</button>
+        </div>
+      </div>
+
     </div>
 
-    <div class="system-panel">
-      <div style="font-size:13px;color:#9fb5d6;">System prompt</div>
-      <input id="systemPrompt" class="sys-text" value="You are PrismAI, an assistant that is helpful, concise, and a little witty.">
-      <div class="status tiny">Stream: <label style="margin-left:8px"><input type="checkbox" id="streamToggle" checked> ON</label></div>
-    </div>
+    <div class="content">
+      <div class="topbar">
+        <div class="logo"><div class="avatar" style="width:40px;height:40px;border-radius:9px;">π</div><div><div class="brand">PrismAI</div><div class="sub">Chat • Image • Audio</div></div></div>
+        <div class="controls">
+          <label class="muted">Stream<input type="checkbox" id="streamToggle" checked style="margin-left:8px"></label>
+          <button id="clearBtn" class="btn">Clear</button>
+        </div>
+      </div>
 
-    <div class="main">
       <div id="messages" class="messages" aria-live="polite"></div>
 
       <div class="input-area">
         <div contenteditable="true" id="input" class="prompt" role="textbox" aria-label="Message input" placeholder="Type a message..."></div>
-        <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-          <div style="display:flex; flex-direction:column; gap:8px; width:160px;">
+
+        <div class="send-controls">
+          <div style="width:100%;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+            <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;align-items:center">
+              <input id="fileImage" class="file-input" type="file" accept="image/*">
+              <button id="attachImage" class="btn">🖼️ Image</button>
+              <input id="fileAudio" class="file-input" type="file" accept="audio/*">
+              <button id="attachAudio" class="btn">🎤 Audio</button>
+            </div>
+
             <button id="sendBtn" class="send-btn">Send →</button>
-            <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end;">
-              <div class="tiny">Model tokens</div>
-              <div id="tokenCount" class="tiny">—</div>
+            <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;width:100%">
+              <div class="muted">Model tokens</div>
+              <div id="tokenCount" class="muted">—</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="hint">
-        Tip: PrismAI uses Pollinations' OpenAI-compatible `/openai` endpoint for chat (streaming supported). Keep messages short for faster replies.
-      </div>
     </div>
   </div>
 </div>
 
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 <script>
-/*
-  PrismAI - Single-file Chat UI that posts to Pollinations /openai endpoint.
-  - Uses streaming when "Stream" checkbox is checked (SSE-like chunks).
-  - Minimal message history in-memory; no server required.
-  - NOTE: If Pollinations blocks CORS in your browser, you'll need to run via a proxy or host on a server.
-*/
+// --- Utility helpers ---
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
 
-const messagesEl = document.getElementById('messages');
-const inputEl = document.getElementById('input');
-const sendBtn = document.getElementById('sendBtn');
-const clearBtn = document.getElementById('clearBtn');
-const systemPromptEl = document.getElementById('systemPrompt');
-const modelSelect = document.getElementById('modelSelect');
-const streamToggle = document.getElementById('streamToggle');
-const tokenCountEl = document.getElementById('tokenCount');
-const maxTokensEl = document.getElementById('maxTokens');
+// DOM elements
+const messagesEl = $('#messages');
+const inputEl = $('#input');
+const sendBtn = $('#sendBtn');
+const clearBtn = $('#clearBtn');
+const modelSelect = $('#modelSelect');
+const streamToggle = $('#streamToggle');
+const tokenCountEl = $('#tokenCount');
+const maxTokensEl = $('#maxTokens');
+const refreshModelsBtn = $('#refreshModels');
+const chatListEl = $('#chatList');
+const newChatBtn = $('#newChat');
+const exportBtn = $('#exportBtn');
+const privateToggle = $('#privateToggle');
+const referrerEl = $('#referrer');
+const attachImageBtn = $('#attachImage');
+const fileImage = $('#fileImage');
+const attachAudioBtn = $('#attachAudio');
+const fileAudio = $('#fileAudio');
+const themeBtn = $('#themeBtn');
 
-let messages = []; // {role: 'user'|'assistant'|'system', content: '...'}
+// State
+let chats = {}; // id -> {name, messages: [{role,content}], created}
+let currentChatId = null;
 let isSending = false;
+let modelsCache = [];
 
-// Helper: create message DOM
-function addMessage(role, text, streaming=false){
-  const row = document.createElement('div');
-  row.className = 'msg-row ' + (role === 'user' ? 'user' : 'assistant');
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar';
-  avatar.style.background = role === 'user' ? 'linear-gradient(135deg,#0ea5a3,#7c5cff)' : 'linear-gradient(135deg,#1f6feb,#07c7b7)';
-  avatar.textContent = role === 'user' ? 'YOU' : 'AI';
-  const bubbleWrap = document.createElement('div');
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  bubble.innerHTML = escapeHtml(text || '');
-  bubbleWrap.appendChild(bubble);
+// Init marked for markdown + highlight
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+  highlight: function(code){ try{ return hljs.highlightAuto(code).value }catch(e){return code} }
+});
 
-  row.appendChild(avatar);
-  row.appendChild(bubbleWrap);
-  messagesEl.appendChild(row);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+function toast(msg, ms=3000){ const t = document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), ms); }
 
-  return {row, bubble};
+// --- Persistence ---
+function saveAll(){ localStorage.setItem('prism_chats_v1', JSON.stringify(chats)); localStorage.setItem('prism_theme', document.documentElement.getAttribute('data-theme')||'dark'); }
+function loadAll(){ const raw = localStorage.getItem('prism_chats_v1'); try{ chats = raw ? JSON.parse(raw) : {}; }catch(e){ chats={}; } const theme = localStorage.getItem('prism_theme') || 'dark'; document.documentElement.setAttribute('data-theme', theme); renderChatList(); }
+
+// --- Chat management ---
+function renderChatList(){ chatListEl.innerHTML=''; Object.keys(chats).reverse().forEach(id=>{ const c = chats[id]; const el = document.createElement('div'); el.className='chat-item'; el.textContent = c.name || ('Chat ' + id.substring(0,5)); el.onclick = ()=>openChat(id); chatListEl.appendChild(el); }); }
+function newChat(){ const id = String(Date.now()); chats[id] = { name: 'Chat ' + Object.keys(chats).length + 1, messages: [], created: new Date().toISOString() }; currentChatId = id; saveAll(); renderChatList(); renderMessages(); }
+function openChat(id){ currentChatId = id; renderMessages(); }
+function exportCurrent(){ if(!currentChatId) return toast('No chat'); const data = chats[currentChatId]; const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=(data.name||'chat')+'.json'; a.click(); URL.revokeObjectURL(url); }
+
+// --- Render messages ---
+function addMessageToDOM(role, content, meta={}){
+  const row = document.createElement('div'); row.className = 'msg-row ' + (role==='user' ? 'user' : 'assistant');
+  const avatar = document.createElement('div'); avatar.className='avatar'; avatar.textContent = role==='user' ? 'YOU' : 'AI';
+  const bubble = document.createElement('div'); bubble.className='bubble';
+  // content can be text, html, or {type:'image',src}
+  if(typeof content === 'string'){
+    // render markdown for assistant, plain text for user
+    if(role==='assistant') bubble.innerHTML = marked.parse(content);
+    else bubble.innerHTML = escapeHtml(content).replace(/\n/g,'<br/>');
+  } else if(content && content.type === 'image'){
+    bubble.innerHTML = `<img src='${content.src}' alt='image' style='max-width:420px;border-radius:8px'/>`;
+  } else if(content && content.type === 'audio'){
+    bubble.innerHTML = `<audio controls src='${content.src}'></audio>`;
+  }
+  row.appendChild(avatar); row.appendChild(bubble); messagesEl.appendChild(row); messagesEl.scrollTop = messagesEl.scrollHeight; // run highlight on any code
+  $$('pre code', row).forEach((b)=>hljs.highlightElement(b));
 }
 
-function escapeHtml(s){
-  return s
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('\\n','<br/>')
-    .replaceAll('\n','<br/>');
+function renderMessages(){ messagesEl.innerHTML=''; if(!currentChatId) return; const m = chats[currentChatId].messages || []; m.forEach(msg=> addMessageToDOM(msg.role, msg.content)); }
+
+function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+// --- Pollinations helpers ---
+async function fetchModels(){ try{ modelSelect.innerHTML = '<option>loading...</option>'; const res = await fetch('https://text.pollinations.ai/models'); if(!res.ok) throw new Error('Failed to fetch models'); const data = await res.json(); // data may be array or object
+    modelsCache = Array.isArray(data) ? data : Object.keys(data||{});
+    modelSelect.innerHTML = ''; modelsCache.forEach(m=> modelSelect.add(new Option(m,m)) );
+    toast('Models loaded');
+  } catch(e){ console.error(e); modelSelect.innerHTML = '<option>openai</option><option>mistral</option>'; toast('Failed to load models'); }
 }
 
-function setStatusTokens(count){
-  tokenCountEl.textContent = count ? String(count) : '—';
-}
+// --- Send message ---
+function appendToChat(role, content){ if(!currentChatId) newChat(); chats[currentChatId].messages.push({role,content}); saveAll(); renderMessages(); }
 
-// Send flow
-async function sendMessage(){
-  if(isSending) return;
-  const text = inputEl.innerText.trim();
-  if(!text) return;
-  isSending = true;
-  sendBtn.disabled = true;
-  addUserMessageToHistory(text);
-  inputEl.innerHTML = '';
-  focusInput();
-
-  const assistantDom = addMessage('assistant',''); // placeholder bubble
-  const assistantBubble = assistantDom.bubble;
-  // Prepare payload
-  const systemMsg = systemPromptEl.value || '';
+async function sendMessage(){ if(isSending) return; const text = inputEl.innerText.trim(); if(!text) return; isSending=true; sendBtn.disabled=true; appendToChat('user', text); inputEl.innerHTML=''; focusInput(); // placeholder assistant
+  appendToChat('assistant', ''); // placeholder - we'll replace last assistant message with streaming content
+  const assistantIndex = chats[currentChatId].messages.length -1;
+  const systemMsg = `You are PrismAI, helpful, concise, and slightly witty.`;
   const payload = {
     model: modelSelect.value || 'openai',
-    messages: [
-      { role: 'system', content: systemMsg },
-      // include entire conversation for context
-      ...messages.map(m => ({ role: m.role, content: m.content }))
-    ],
+    messages: [ {role:'system', content: systemMsg}, ...chats[currentChatId].messages.filter(m=>m.role!=='assistant') ],
     stream: streamToggle.checked,
-    // optional: tokens - docs mention seed/private etc. We'll include nothing fancy
+    private: !!privateToggle.checked,
+    referrer: referrerEl.value || undefined
   };
+  const maxTok = parseInt(maxTokensEl.value||'800',10); if(!isNaN(maxTok)) payload.max_tokens = maxTok;
 
-  // set optional params
-  const maxTokens = parseInt(maxTokensEl.value || '800', 10);
-  if(!isNaN(maxTokens)) payload.max_tokens = maxTokens;
-
-  try {
-    if(streamToggle.checked){
-      // Streaming path: fetch + ReadableStream
-      const url = 'https://text.pollinations.ai/openai';
-      const controller = new AbortController();
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-
-      if(!res.ok){
-        const errText = await res.text();
-        throw new Error('HTTP ' + res.status + ': ' + errText);
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      assistantBubble.innerHTML = ''; // ensure empty
-      while(true){
-        const {done, value} = await reader.read();
-        if(done) break;
-        buffer += decoder.decode(value, {stream:true});
-        // SSE style data: lines "data: {...}\n\n"
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop(); // leftover
-        for(const part of parts){
-          const line = part.trim();
-          if(!line) continue;
-          // handle lines that may be "data: [DONE]" or "data: {...}"
-          const dataPrefix = 'data: ';
-          if(line.startsWith(dataPrefix)){
-            const dataStr = line.slice(dataPrefix.length).trim();
-            if(dataStr === '[DONE]') {
-              // finished
-              break;
-            }
-            let chunk;
-            try {
-              chunk = JSON.parse(dataStr);
-            } catch(e){
-              // Not JSON? append raw
-              assistantBubble.innerHTML += escapeHtml(dataStr);
-              messagesEl.scrollTop = messagesEl.scrollHeight;
-              continue;
-            }
-            // Chunk format mirrors OpenAI streaming: choices[0].delta.content
-            const content = chunk?.choices?.[0]?.delta?.content;
-            if(content){
-              // append content safely (convert newlines)
-              assistantBubble.innerHTML += escapeHtml(content);
-              messagesEl.scrollTop = messagesEl.scrollHeight;
-            }
-            // if chunk includes usage or token info (non-stream), update token hint (guard)
-            if(chunk?.usage?.total_tokens) setStatusTokens(chunk.usage.total_tokens);
+  try{
+    if(payload.stream){
+      const res = await fetch('https://text.pollinations.ai/openai', { method:'POST', headers:{'Content-Type':'application/json','Accept':'text/event-stream'}, body: JSON.stringify(payload) });
+      if(!res.ok){ const err = await res.text(); throw new Error(err||res.statusText); }
+      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buffer=''; let assembled='';
+      while(true){ const {done, value} = await reader.read(); if(done) break; buffer += decoder.decode(value, {stream:true}); const parts = buffer.split('\n\n'); buffer = parts.pop(); for(const part of parts){ const line = part.trim(); if(!line) continue; if(line.startsWith('data: ')){
+            const dataStr = line.slice(6).trim(); if(dataStr==='[DONE]') { continue; }
+            let chunk; try{ chunk = JSON.parse(dataStr); }catch(e){ assembled += dataStr; updateAssistantBubble(assembled); continue; }
+            const delta = chunk?.choices?.[0]?.delta?.content; if(delta){ assembled += delta; updateAssistantBubble(assembled); }
+            if(chunk?.usage?.total_tokens) tokenCountEl.textContent = chunk.usage.total_tokens;
           } else {
-            // if it's not prefixed (some servers send raw JSON chunks), try parse
-            try {
-              const obj = JSON.parse(line);
-              const content = obj?.choices?.[0]?.delta?.content || obj?.choices?.[0]?.message?.content;
-              if(content) assistantBubble.innerHTML += escapeHtml(content);
-            } catch(e){}
-          }
-        }
+            // try parse raw
+            try{ const obj = JSON.parse(line); const c = obj?.choices?.[0]?.delta?.content || obj?.choices?.[0]?.message?.content; if(c){ assembled += c; updateAssistantBubble(assembled); } }catch(e){}
+          } }
       }
-      // after stream ends, try to parse final JSON? Some APIs don't send it; we already appended content.
-      // Save assistant content to history
-      const finalText = assistantBubble.innerText || assistantBubble.textContent || '';
-      appendAssistantToHistory(finalText);
+      // finalize
+      chats[currentChatId].messages[assistantIndex].content = assembled; saveAll(); renderMessages();
     } else {
-      // Non-streaming path
-      const resp = await fetch('https://text.pollinations.ai/openai', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      if(!resp.ok){
-        const errText = await resp.text();
-        throw new Error('HTTP ' + resp.status + ': ' + errText);
-      }
-      const data = await resp.json();
-      const assistantText = data?.choices?.[0]?.message?.content || JSON.stringify(data, null, 2);
-      assistantBubble.innerHTML = escapeHtml(assistantText);
-      appendAssistantToHistory(assistantText);
-      if(data?.usage?.total_tokens) setStatusTokens(data.usage.total_tokens);
+      const res = await fetch('https://text.pollinations.ai/openai', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if(!res.ok){ const err = await res.text(); throw new Error(err||res.statusText); }
+      const data = await res.json(); const assistantText = data?.choices?.[0]?.message?.content || JSON.stringify(data, null, 2);
+      chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = assistantText; if(data?.usage?.total_tokens) tokenCountEl.textContent = data.usage.total_tokens; saveAll(); renderMessages();
     }
-  } catch(err){
-    console.error(err);
-    assistantBubble.innerHTML = '<span style="color:#ffb4b4">Error: '+ escapeHtml(err.message || String(err)) +'</span>';
-    appendAssistantToHistory('[Error] ' + (err.message||String(err)));
-  } finally {
-    isSending = false;
-    sendBtn.disabled = false;
-  }
+  }catch(err){ console.error(err); chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = '[Error] '+ (err.message||String(err)); saveAll(); renderMessages(); toast('Request failed'); }
+  finally{ isSending=false; sendBtn.disabled=false; }
 }
 
-function addUserMessageToHistory(text){
-  messages.push({ role: 'user', content: text });
-  const userDom = addMessage('user', text);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
+function updateAssistantBubble(text){ // replace last assistant bubble in DOM without re-rendering everything
+  if(!currentChatId) return; const lastIdx = chats[currentChatId].messages.length-1; chats[currentChatId].messages[lastIdx].content = text; // update DOM node
+  // hacky: re-render messages container (fast enough)
+  renderMessages(); }
 
-function appendAssistantToHistory(text){
-  messages.push({ role: 'assistant', content: text });
-  // update token count lightly (we don't have exact usage unless API returns it)
-}
+// --- Attach image / vision ---
+attachImageBtn.addEventListener('click', ()=>fileImage.click());
+fileImage.addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if(!f) return; const dataUrl = await fileToDataURL(f);
+  // show preview in chat
+  appendToChat('user', '[Image attached]'); appendToChat('assistant', 'Processing image...');
+  // call Pollinations vision endpoint
+  try{
+    const payload = { model: modelSelect.value||'openai', messages: [ {role:'user', content:[ {type:'text', text:'Describe this image:'}, {type:'image_url', image_url: {url: dataUrl}} ] } ], private: !!privateToggle.checked };
+    const res = await fetch('https://text.pollinations.ai/openai', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    if(!res.ok) throw new Error(await res.text()); const data = await res.json(); const text = data?.choices?.[0]?.message?.content || JSON.stringify(data);
+    // replace last assistant
+    chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = text; saveAll(); renderMessages();
+  }catch(e){ console.error(e); chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = '[Image error] '+ (e.message||String(e)); saveAll(); renderMessages(); }
+});
 
-// Utilities
+// --- Attach audio (STT) ---
+attachAudioBtn.addEventListener('click', ()=>fileAudio.click());
+fileAudio.addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if(!f) return; const base64 = await fileToBase64(f);
+  appendToChat('user', '[Audio attached]'); appendToChat('assistant', 'Transcribing audio...');
+  try{
+    const payload = { model: 'openai-audio', messages: [ {role:'user', content:[ {type:'text', text':'Transcribe this audio'}, {type:'input_audio', input_audio:{ data: base64, format: f.name.split('.').pop() }} ] } ], private: !!privateToggle.checked };
+    const res = await fetch('https://text.pollinations.ai/openai', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    if(!res.ok) throw new Error(await res.text()); const data = await res.json(); const text = data?.choices?.[0]?.message?.content || JSON.stringify(data);
+    chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = text; saveAll(); renderMessages();
+  }catch(e){ console.error(e); chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = '[Audio error] '+ (e.message||String(e)); saveAll(); renderMessages(); }
+});
+
+// --- TTS playback for assistant messages (on click) ---
+messagesEl.addEventListener('click', async (e)=>{
+  const el = e.target.closest('.bubble'); if(!el) return; // determine message index by counting
+  const nodes = Array.from(messagesEl.querySelectorAll('.bubble')); const idx = nodes.indexOf(el); if(idx===-1) return; const msg = chats[currentChatId].messages[idx]; if(!msg || msg.role !== 'assistant') return;
+  // generate audio for this message via GET TTS for short answers
+  try{
+    const text = encodeURIComponent(msg.content.slice(0,1000)); const voice = 'nova'; const url = `https://text.pollinations.ai/${text}?model=openai-audio&voice=${voice}`;
+    const audio = new Audio(url); audio.play();
+  }catch(e){ console.error(e); toast('TTS failed'); }
+});
+
+// --- Helpers ---
+function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+function fileToBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>{ res(r.result.split(',')[1]); }; r.onerror=rej; r.readAsDataURL(file); }); }
+
+// --- UI helpers ---
 function focusInput(){ inputEl.focus(); placeCaretAtEnd(inputEl); }
-function placeCaretAtEnd(el){
-  el.focus();
-  if (typeof window.getSelection !== "undefined"
-      && typeof document.createRange !== "undefined") {
-    var range = document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-}
+function placeCaretAtEnd(el){ el.focus(); if(window.getSelection && document.createRange){ var range=document.createRange(); range.selectNodeContents(el); range.collapse(false); var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range); } }
 
-// Event bindings
+// --- Events ---
 sendBtn.addEventListener('click', sendMessage);
-inputEl.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter' && !e.shiftKey){
-    e.preventDefault();
-    sendMessage();
-  }
-});
-clearBtn.addEventListener('click', ()=>{
-  messages = [];
-  messagesEl.innerHTML = '';
-  setStatusTokens(null);
-  inputEl.innerHTML = '';
-  focusInput();
-});
+inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
+clearBtn.addEventListener('click', ()=>{ if(!currentChatId) return; chats[currentChatId].messages=[]; saveAll(); renderMessages(); tokenCountEl.textContent='—'; });
+refreshModelsBtn.addEventListener('click', fetchModels);
+newChatBtn.addEventListener('click', ()=>{ newChat(); renderMessages(); });
+exportBtn.addEventListener('click', exportCurrent);
+themeBtn.addEventListener('click', ()=>{ const cur = document.documentElement.getAttribute('data-theme')||'dark'; const next = cur==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('prism_theme', next); toast('Theme: '+next); });
 
-// initial greeting from assistant
-(function init(){
-  addMessage('assistant', 'Hey — PrismAI here. Ask me anything. (Press Enter to send. Shift+Enter for newline.)');
-  focusInput();
-})();
+// --- Boot ---
+loadAll(); if(Object.keys(chats).length===0) newChat(); fetchModels(); focusInput();
 
-/* IMPORTANT NOTES:
-   - Pollinations' /openai endpoint is used directly from the browser in this demo.
-   - If you hit any CORS errors, host this HTML on a server that sets an appropriate Referrer or use a simple proxy.
-   - The API may enforce rate limits (per IP). Keep messages short and avoid rapid-fire requests.
-   - See the Pollinations API docs that came with this project for more options and advanced features. :contentReference[oaicite:1]{index=1}
-*/
+// Accessibility: placeholder for contenteditable
+inputEl.addEventListener('focus', ()=>{ if(inputEl.innerText.trim()==='') inputEl.setAttribute('data-placeholder','true'); });
+
+// Informational: update tokenCount periodically (best effort)
+setInterval(()=>{ /* placeholder for token usage fetch if API gives it */ }, 30000);
+
 </script>
 </body>
 </html>

@@ -312,7 +312,6 @@
                 "stream": true,
                 "private": false,
                 "referrer": referrer,
-                "api_key": apiKey
             };
             
             try {
@@ -409,7 +408,7 @@
         }
 
         async function handleImageResponse(prompt) {
-            const imageUrl = `${imageApiUrl}${encodeURIComponent(prompt)}?key=${apiKey}&referrer=${referrer}`;
+            const imageUrl = `${imageApiUrl}${encodeURIComponent(prompt)}?referrer=${referrer}`;
             
             const loadingIndicator = showLoadingIndicator();
 

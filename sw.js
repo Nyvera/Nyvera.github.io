@@ -1,4 +1,4 @@
-const CACHE_NAME = "prisimai-cache-v3";
+const CACHE_NAME = "prisimai-cache-v4";
 
 // Core files + offline fallback
 const ASSETS = [
@@ -6,8 +6,17 @@ const ASSETS = [
   "/index.html",
   "/offline.html",
   "/manifest.json",
+
+  // PWA icons
   "/icons/icon-192.png",
   "/icons/icon-512.png",
+
+  // Apple & favicons
+  "/apple-touch-icon.png",
+  "/favicon-32x32.png",
+  "/favicon-16x16.png",
+
+  // External dependencies
   "https://cdn.tailwindcss.com",
   "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
 ];
@@ -32,7 +41,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Pollinations API → network first, fallback to cache
+  // Pollinations API → network first
   if (url.hostname.includes("pollinations.ai")) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))

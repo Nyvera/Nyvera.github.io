@@ -1,339 +1,260 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PrismAI — Upgraded</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%235A4DFF%22/><text x=%2250%25%22 y=%2255%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2250%22>π</text></svg>">
-
-<!-- External libs (CDN) -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
-<style>
-  :root{
-    --bg:#0f1724; --panel:#071029; --muted:#9fb5d6; --text:#e6eef8; --accent1:#7c5cff; --accent2:#3ad0ff;
-  }
-  [data-theme="light"]{ --bg:#f6f8fb; --panel:#ffffff; --muted:#4b6b86; --text:#071022; }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text)}
-  .app{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:28px}
-  .frame{width:100%;max-width:1100px;height:88vh;display:flex;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(2,6,23,0.6);background:linear-gradient(180deg,var(--panel) 0%, #071a2b 70%);border:1px solid rgba(255,255,255,0.03)}
-  .sidebar{width:300px;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
-  .content{flex:1;display:flex;flex-direction:column}
-  .topbar{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.03)}
-  .logo{display:flex;align-items:center;gap:12px}
-  .brand{font-weight:700;font-size:20px;color:var(--text)}
-  .sub{font-size:12px;color:var(--muted)}
-  .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
-  .select,.input-small,.btn{background:#0c1420;color:var(--text);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;font-size:13px}
-  .btn{cursor:pointer}
-  .messages{flex:1;padding:20px;overflow:auto;display:flex;flex-direction:column;gap:12px}
-  .msg-row{display:flex;gap:12px;align-items:flex-start}
-  .avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#061024;background:linear-gradient(135deg,var(--accent1),var(--accent2));flex-shrink:0}
-  .bubble{max-width:78%;padding:12px 14px;border-radius:12px;line-height:1.45;font-size:14px;background:linear-gradient(180deg,#0b2736,#052033);border:1px solid rgba(255,255,255,0.04)}
-  .user{justify-content:flex-end}
-  .user .bubble{background:linear-gradient(180deg,#122033,#0b1a2a);border-bottom-right-radius:6px}
-  .meta{font-size:12px;color:var(--muted);margin-top:6px}
-  .input-area{padding:12px;border-top:1px solid rgba(255,255,255,0.03);display:grid;grid-template-columns:1fr 220px;gap:12px;align-items:center}
-  .prompt{background:#071722;border:1px solid rgba(255,255,255,0.03);color:var(--text);padding:12px;border-radius:10px;font-size:14px;min-height:64px;max-height:260px;overflow:auto}
-  .send-controls{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-  .send-btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#051425;border:none;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(58,208,255,0.08);transition:transform .12s}
-  .send-btn:hover{transform:scale(1.03)}
-  .small-note{font-size:12px;color:var(--muted);margin-left:8px}
-  .sidebar .panel{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.02)}
-  .chat-list{padding:8px;display:flex;flex-direction:column;gap:8px;overflow:auto}
-  .chat-item{padding:10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);cursor:pointer}
-  .muted{color:var(--muted)}
-  .toast{position:fixed;right:20px;bottom:20px;padding:12px 16px;border-radius:8px;background:#0b2535;color:var(--text);box-shadow:0 8px 30px rgba(2,6,23,0.5)}
-  .controls-row{display:flex;gap:8px;align-items:center}
-  .file-input{display:none}
-  .typing{font-style:italic;color:var(--muted)}
-  .theme-toggle{border:none;background:transparent;color:var(--muted);cursor:pointer}
-  /* responsive */
-  @media (max-width:900px){.sidebar{display:none}.frame{max-width:100%;border-radius:0;height:100vh}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrisimAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
-<body>
-<div class="app">
-  <div class="frame" role="main" aria-label="PrismAI upgraded">
-    <div class="sidebar" aria-hidden="false">
-      <div class="panel" style="display:flex;align-items:center;gap:10px">
-        <div class="avatar" style="width:44px;height:44px;border-radius:10px;">π</div>
-        <div>
-          <div class="brand">PrismAI</div>
-          <div class="sub">Upgraded — Pollinations integration</div>
-        </div>
-      </div>
+<body class="bg-white text-gray-800 antialiased flex h-screen overflow-hidden">
 
-      <div class="panel">
-        <div style="display:flex;gap:8px;align-items:center">
-          <select id="modelSelect" class="select" aria-label="Model select"><option>loading...</option></select>
-          <button id="refreshModels" class="btn" title="Refresh models">⟳</button>
-        </div>
-        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-          <input id="maxTokens" class="input-small" type="number" min="50" step="50" value="800" title="Max tokens">
-          <label class="muted"><input type="checkbox" id="privateToggle"> private</label>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
-          <div class="muted">Referrer</div>
-          <input id="referrer" class="input-small" placeholder="app-name or url" style="width:140px">
-        </div>
-      </div>
-
-      <div class="panel" style="flex:1;display:flex;flex-direction:column">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="muted">Saved chats</div>
-          <div style="display:flex;gap:8px"><button id="newChat" class="btn">+ New</button><button id="exportBtn" class="btn">Export</button></div>
-        </div>
-        <div id="chatList" class="chat-list"></div>
-      </div>
-
-      <div class="panel" style="display:flex;gap:8px;align-items:center;justify-content:space-between">
-        <div class="muted">Theme</div>
-        <div>
-          <button id="themeBtn" class="theme-toggle" title="Toggle theme">🌗</button>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="content">
-      <div class="topbar">
-        <div class="logo"><div class="avatar" style="width:40px;height:40px;border-radius:9px;">π</div><div><div class="brand">PrismAI</div><div class="sub">Chat • Image • Audio</div></div></div>
-        <div class="controls">
-          <label class="muted">Stream<input type="checkbox" id="streamToggle" checked style="margin-left:8px"></label>
-          <button id="clearBtn" class="btn">Clear</button>
-        </div>
-      </div>
-
-      <div id="messages" class="messages" aria-live="polite"></div>
-
-      <div class="input-area">
-        <div contenteditable="true" id="input" class="prompt" role="textbox" aria-label="Message input" placeholder="Type a message..."></div>
-
-        <div class="send-controls">
-          <div style="width:100%;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-            <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;align-items:center">
-              <input id="fileImage" class="file-input" type="file" accept="image/*">
-              <button id="attachImage" class="btn">🖼️ Image</button>
-              <input id="fileAudio" class="file-input" type="file" accept="audio/*">
-              <button id="attachAudio" class="btn">🎤 Audio</button>
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-50 border-r border-gray-200 flex flex-col justify-between p-4 hidden sm:flex">
+        <div class="space-y-4">
+            <!-- Header section -->
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-600">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+                <span class="font-semibold text-lg text-gray-700">PrisimAI</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
             </div>
-
-            <button id="sendBtn" class="send-btn">Send →</button>
-            <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;width:100%">
-              <div class="muted">Model tokens</div>
-              <div id="tokenCount" class="muted">—</div>
+            <!-- Search and new chat -->
+            <div class="space-y-2">
+                <button class="w-full flex items-center justify-between px-4 py-2 bg-gray-200 rounded-lg text-gray-500 hover:bg-gray-300">
+                    <span class="flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        <span>New chat(COMING SOON)</span>
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                </button>
             </div>
-          </div>
+            <!-- Sidebar navigation -->
+            <nav>
+                <ul class="space-y-1">
+                    <li class="flex items-center space-x-2 p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.75a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                        </svg>
+                        <span>All GPTs(COMING SOON)</span>
+                    </li>
+                    <li class="flex items-center space-x-2 p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5h.008v.008h-.008V7.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                        </svg>
+                        <span>Explore GPTs(COMING SOON)</span>
+                    </li>
+                    <li class="flex items-center space-x-2 p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75a3 3 0 1 0 0 6h.001a3 3 0 0 0 0-6Zm-9 6h16.5" />
+                        </svg>
+                        <span>History(COMING SOON)</span>
+                    </li>
+                    <li class="flex items-center space-x-2 p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                        </svg>
+                        <span>Settings(COMING SOON)</span>
+                    </li>
+                </ul>
+            </nav>
         </div>
-      </div>
+        <!-- Profile section -->
+        <div class="flex items-center space-x-2 p-2 border-t border-gray-200 mt-4">
+            <div class="w-8 h-8 bg-gray-400 rounded-full"></div>
+            <span class="text-sm font-medium text-gray-700">User(COMING SOON)</span>
+        </div>
+    </aside>
 
-    </div>
-  </div>
-</div>
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col items-center justify-between p-4 relative">
+        <!-- Header -->
+        <header class="absolute top-4 right-4 flex items-center space-x-4">
+            <a href="#" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 bg-white hover:bg-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75V12A2.25 2.25 0 0 1 6.75 9.75h10.5A2.25 2.25 0 0 1 19.5 12v.75m-15 0h.008v.008h-.008V12.75Z" />
+                </svg>
+                Upgrade your plan(COMING SOON)
+            </a>
+            <div class="w-8 h-8 bg-gray-400 rounded-full"></div>
+        </header>
 
-<!-- Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-<script>
-// --- Utility helpers ---
-const $ = sel => document.querySelector(sel);
-const $$ = sel => Array.from(document.querySelectorAll(sel));
+        <!-- Chat History -->
+        <div id="chat-history" class="flex-1 overflow-y-auto w-full max-w-2xl mt-20 mb-4 px-4 md:px-0">
+            <div class="flex flex-col items-center justify-center h-full">
+                <h1 class="text-2xl sm:text-3xl font-normal text-gray-900 mb-8 sm:mb-12">What can I help with?</h1>
+            </div>
+        </div>
 
-// DOM elements
-const messagesEl = $('#messages');
-const inputEl = $('#input');
-const sendBtn = $('#sendBtn');
-const clearBtn = $('#clearBtn');
-const modelSelect = $('#modelSelect');
-const streamToggle = $('#streamToggle');
-const tokenCountEl = $('#tokenCount');
-const maxTokensEl = $('#maxTokens');
-const refreshModelsBtn = $('#refreshModels');
-const chatListEl = $('#chatList');
-const newChatBtn = $('#newChat');
-const exportBtn = $('#exportBtn');
-const privateToggle = $('#privateToggle');
-const referrerEl = $('#referrer');
-const attachImageBtn = $('#attachImage');
-const fileImage = $('#fileImage');
-const attachAudioBtn = $('#attachAudio');
-const fileAudio = $('#fileAudio');
-const themeBtn = $('#themeBtn');
+        <!-- Input container -->
+        <div class="w-full max-w-2xl px-4 md:px-0 mb-4">
+            <div class="relative w-full">
+                <div class="flex items-center border border-gray-300 rounded-xl shadow-lg focus-within:border-gray-500">
+                    <div class="relative">
+                        <!-- Plus button -->
+                        <button id="add-button" class="p-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                        </button>
+                        <!-- Dropdown menu -->
+                        <div id="dropdown-menu" class="absolute bottom-12 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-10 hidden p-2">
+                            <ul class="space-y-1">
+                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.19m0 0a1.5 1.5 0 0 0-1.06-2.06l-4.72-2.36c-.4-.2-.8-.4-1.2-.4s-.8-.2-.8-.4a1.5 1.5 0 0 0-1.06-2.06L4.72 2.36a1.5 1.5 0 0 0-1.06-2.06L.54 0Z" />
+                                    </svg>
+                                    <span>Add photos & files(COMING SOON)</span>
+                                </li>
+                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12a1.5 1.5 0 0 1 1.5-1.5h16.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-16.5a1.5 1.5 0 0 1-1.5-1.5v-3Z" />
+                                    </svg>
+                                    <span>Add from OneDrive(COMING SOON)</span>
+                                </li>
+                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    <span>Study and learn(COMING SOON)</span>
+                                </li>
+                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18h12M6 6h12M6 12h12" />
+                                    </svg>
+                                    <span>Create image(COMING SOON)</span>
+                                </li>
+                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    <span>Think longer(COMING SOON)</span>
+                                </li>
+                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                                    </svg>
+                                    <span>Deep research(COMING SOON)</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <input id="chat-input" type="text" placeholder="Ask anything" class="flex-1 px-4 py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none">
+                    <button class="p-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6.75 6.75 0 1 0 0-13.5 6.75 6.75 0 0 0 0 13.5Z" />
+                        </svg>
+                    </button>
+                    <button class="p-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6.75 6.75 0 1 0 0-13.5 6.75 6.75 0 0 0 0 13.5Z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
 
-// State
-let chats = {}; // id -> {name, messages: [{role,content}], created}
-let currentChatId = null;
-let isSending = false;
-let modelsCache = [];
+    <script>
+        const addButton = document.getElementById('add-button');
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        const chatInput = document.getElementById('chat-input');
+        const chatHistory = document.getElementById('chat-history');
+        
+        addButton.addEventListener('click', () => {
+            dropdownMenu.classList.toggle('hidden');
+        });
 
-// Init marked for markdown + highlight
-marked.setOptions({
-  gfm: true,
-  breaks: true,
-  highlight: function(code){ try{ return hljs.highlightAuto(code).value }catch(e){return code} }
-});
+        document.addEventListener('click', (event) => {
+            if (!addButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                dropdownMenu.classList.add('hidden');
+            }
+        });
 
-function toast(msg, ms=3000){ const t = document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), ms); }
+        // Function to add a message to the chat history
+        function addMessage(text, isUser) {
+            // Remove the "What can I help with?" title if it's the first message
+            const titleElement = chatHistory.querySelector('h1');
+            if (titleElement) {
+                titleElement.remove();
+            }
 
-// --- Persistence ---
-function saveAll(){ localStorage.setItem('prism_chats_v1', JSON.stringify(chats)); localStorage.setItem('prism_theme', document.documentElement.getAttribute('data-theme')||'dark'); }
-function loadAll(){ const raw = localStorage.getItem('prism_chats_v1'); try{ chats = raw ? JSON.parse(raw) : {}; }catch(e){ chats={}; } const theme = localStorage.getItem('prism_theme') || 'dark'; document.documentElement.setAttribute('data-theme', theme); renderChatList(); }
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('flex', 'space-x-4', 'mb-4');
+            if (isUser) {
+                messageContainer.classList.add('justify-end');
+            } else {
+                messageContainer.classList.add('justify-start');
+            }
 
-// --- Chat management ---
-function renderChatList(){ chatListEl.innerHTML=''; Object.keys(chats).reverse().forEach(id=>{ const c = chats[id]; const el = document.createElement('div'); el.className='chat-item'; el.textContent = c.name || ('Chat ' + id.substring(0,5)); el.onclick = ()=>openChat(id); chatListEl.appendChild(el); }); }
-function newChat(){ const id = String(Date.now()); chats[id] = { name: 'Chat ' + Object.keys(chats).length + 1, messages: [], created: new Date().toISOString() }; currentChatId = id; saveAll(); renderChatList(); renderMessages(); }
-function openChat(id){ currentChatId = id; renderMessages(); }
-function exportCurrent(){ if(!currentChatId) return toast('No chat'); const data = chats[currentChatId]; const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=(data.name||'chat')+'.json'; a.click(); URL.revokeObjectURL(url); }
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add(
+                'rounded-xl',
+                'p-4',
+                'max-w-xl',
+                'shadow-md',
+                isUser ? 'bg-blue-500' : 'bg-gray-200',
+                isUser ? 'text-white' : 'text-gray-800'
+            );
+            messageBubble.textContent = text;
+            
+            messageContainer.appendChild(messageBubble);
+            chatHistory.appendChild(messageContainer);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
 
-// --- Render messages ---
-function addMessageToDOM(role, content, meta={}){
-  const row = document.createElement('div'); row.className = 'msg-row ' + (role==='user' ? 'user' : 'assistant');
-  const avatar = document.createElement('div'); avatar.className='avatar'; avatar.textContent = role==='user' ? 'YOU' : 'AI';
-  const bubble = document.createElement('div'); bubble.className='bubble';
-  // content can be text, html, or {type:'image',src}
-  if(typeof content === 'string'){
-    // render markdown for assistant, plain text for user
-    if(role==='assistant') bubble.innerHTML = marked.parse(content);
-    else bubble.innerHTML = escapeHtml(content).replace(/\n/g,'<br/>');
-  } else if(content && content.type === 'image'){
-    bubble.innerHTML = `<img src='${content.src}' alt='image' style='max-width:420px;border-radius:8px'/>`;
-  } else if(content && content.type === 'audio'){
-    bubble.innerHTML = `<audio controls src='${content.src}'></audio>`;
-  }
-  row.appendChild(avatar); row.appendChild(bubble); messagesEl.appendChild(row); messagesEl.scrollTop = messagesEl.scrollHeight; // run highlight on any code
-  $$('pre code', row).forEach((b)=>hljs.highlightElement(b));
-}
+        // Function to handle the chat logic
+        async function handleChat() {
+            const userMessage = chatInput.value.trim();
+            if (userMessage === '') return;
 
-function renderMessages(){ messagesEl.innerHTML=''; if(!currentChatId) return; const m = chats[currentChatId].messages || []; m.forEach(msg=> addMessageToDOM(msg.role, msg.content)); }
+            // Display user message
+            addMessage(userMessage, true);
+            chatInput.value = '';
 
-function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+            try {
+                // Display a loading indicator
+                const loadingMessage = document.createElement('div');
+                loadingMessage.classList.add('flex', 'space-x-4', 'mb-4', 'justify-start');
+                loadingMessage.innerHTML = `<div class="p-4 rounded-xl max-w-xl shadow-md bg-gray-200 text-gray-800 animate-pulse">Thinking...</div>`;
+                chatHistory.appendChild(loadingMessage);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
 
-// --- Pollinations helpers ---
-async function fetchModels(){ try{ modelSelect.innerHTML = '<option>loading...</option>'; const res = await fetch('https://text.pollinations.ai/models'); if(!res.ok) throw new Error('Failed to fetch models'); const data = await res.json(); // data may be array or object
-    modelsCache = Array.isArray(data) ? data : Object.keys(data||{});
-    modelSelect.innerHTML = ''; modelsCache.forEach(m=> modelSelect.add(new Option(m,m)) );
-    toast('Models loaded');
-  } catch(e){ console.error(e); modelSelect.innerHTML = '<option>openai</option><option>mistral</option>'; toast('Failed to load models'); }
-}
+                const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(userMessage)}`);
+                const botResponse = await response.text();
 
-// --- Send message ---
-function appendToChat(role, content){ if(!currentChatId) newChat(); chats[currentChatId].messages.push({role,content}); saveAll(); renderMessages(); }
+                // Remove the loading indicator
+                loadingMessage.remove();
 
-async function sendMessage(){ if(isSending) return; const text = inputEl.innerText.trim(); if(!text) return; isSending=true; sendBtn.disabled=true; appendToChat('user', text); inputEl.innerHTML=''; focusInput(); // placeholder assistant
-  appendToChat('assistant', ''); // placeholder - we'll replace last assistant message with streaming content
-  const assistantIndex = chats[currentChatId].messages.length -1;
-  const systemMsg = `You are PrismAI, helpful, concise, and slightly witty.`;
-  const payload = {
-    model: modelSelect.value || 'openai',
-    messages: [ {role:'system', content: systemMsg}, ...chats[currentChatId].messages.filter(m=>m.role!=='assistant') ],
-    stream: streamToggle.checked,
-    private: !!privateToggle.checked,
-    referrer: referrerEl.value || undefined
-  };
-  const maxTok = parseInt(maxTokensEl.value||'800',10); if(!isNaN(maxTok)) payload.max_tokens = maxTok;
+                // Display bot response
+                addMessage(botResponse, false);
 
-  try{
-    if(payload.stream){
-      const res = await fetch('https://text.pollinations.ai/openai', { method:'POST', headers:{'Content-Type':'application/json','Accept':'text/event-stream'}, body: JSON.stringify(payload) });
-      if(!res.ok){ const err = await res.text(); throw new Error(err||res.statusText); }
-      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buffer=''; let assembled='';
-      while(true){ const {done, value} = await reader.read(); if(done) break; buffer += decoder.decode(value, {stream:true}); const parts = buffer.split('\n\n'); buffer = parts.pop(); for(const part of parts){ const line = part.trim(); if(!line) continue; if(line.startsWith('data: ')){
-            const dataStr = line.slice(6).trim(); if(dataStr==='[DONE]') { continue; }
-            let chunk; try{ chunk = JSON.parse(dataStr); }catch(e){ assembled += dataStr; updateAssistantBubble(assembled); continue; }
-            const delta = chunk?.choices?.[0]?.delta?.content; if(delta){ assembled += delta; updateAssistantBubble(assembled); }
-            if(chunk?.usage?.total_tokens) tokenCountEl.textContent = chunk.usage.total_tokens;
-          } else {
-            // try parse raw
-            try{ const obj = JSON.parse(line); const c = obj?.choices?.[0]?.delta?.content || obj?.choices?.[0]?.message?.content; if(c){ assembled += c; updateAssistantBubble(assembled); } }catch(e){}
-          } }
-      }
-      // finalize
-      chats[currentChatId].messages[assistantIndex].content = assembled; saveAll(); renderMessages();
-    } else {
-      const res = await fetch('https://text.pollinations.ai/openai', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-      if(!res.ok){ const err = await res.text(); throw new Error(err||res.statusText); }
-      const data = await res.json(); const assistantText = data?.choices?.[0]?.message?.content || JSON.stringify(data, null, 2);
-      chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = assistantText; if(data?.usage?.total_tokens) tokenCountEl.textContent = data.usage.total_tokens; saveAll(); renderMessages();
-    }
-  }catch(err){ console.error(err); chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = '[Error] '+ (err.message||String(err)); saveAll(); renderMessages(); toast('Request failed'); }
-  finally{ isSending=false; sendBtn.disabled=false; }
-}
+            } catch (error) {
+                console.error('API Error:', error);
+                addMessage('Sorry, I couldn\'t get a response. Please try again.', false);
+            }
+        }
 
-function updateAssistantBubble(text){ // replace last assistant bubble in DOM without re-rendering everything
-  if(!currentChatId) return; const lastIdx = chats[currentChatId].messages.length-1; chats[currentChatId].messages[lastIdx].content = text; // update DOM node
-  // hacky: re-render messages container (fast enough)
-  renderMessages(); }
-
-// --- Attach image / vision ---
-attachImageBtn.addEventListener('click', ()=>fileImage.click());
-fileImage.addEventListener('change', async (e)=>{
-  const f = e.target.files[0]; if(!f) return; const dataUrl = await fileToDataURL(f);
-  // show preview in chat
-  appendToChat('user', '[Image attached]'); appendToChat('assistant', 'Processing image...');
-  // call Pollinations vision endpoint
-  try{
-    const payload = { model: modelSelect.value||'openai', messages: [ {role:'user', content:[ {type:'text', text:'Describe this image:'}, {type:'image_url', image_url: {url: dataUrl}} ] } ], private: !!privateToggle.checked };
-    const res = await fetch('https://text.pollinations.ai/openai', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-    if(!res.ok) throw new Error(await res.text()); const data = await res.json(); const text = data?.choices?.[0]?.message?.content || JSON.stringify(data);
-    // replace last assistant
-    chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = text; saveAll(); renderMessages();
-  }catch(e){ console.error(e); chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = '[Image error] '+ (e.message||String(e)); saveAll(); renderMessages(); }
-});
-
-// --- Attach audio (STT) ---
-attachAudioBtn.addEventListener('click', ()=>fileAudio.click());
-fileAudio.addEventListener('change', async (e)=>{
-  const f = e.target.files[0]; if(!f) return; const base64 = await fileToBase64(f);
-  appendToChat('user', '[Audio attached]'); appendToChat('assistant', 'Transcribing audio...');
-  try{
-    const payload = { model: 'openai-audio', messages: [ {role:'user', content:[ {type:'text', text':'Transcribe this audio'}, {type:'input_audio', input_audio:{ data: base64, format: f.name.split('.').pop() }} ] } ], private: !!privateToggle.checked };
-    const res = await fetch('https://text.pollinations.ai/openai', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-    if(!res.ok) throw new Error(await res.text()); const data = await res.json(); const text = data?.choices?.[0]?.message?.content || JSON.stringify(data);
-    chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = text; saveAll(); renderMessages();
-  }catch(e){ console.error(e); chats[currentChatId].messages[chats[currentChatId].messages.length-1].content = '[Audio error] '+ (e.message||String(e)); saveAll(); renderMessages(); }
-});
-
-// --- TTS playback for assistant messages (on click) ---
-messagesEl.addEventListener('click', async (e)=>{
-  const el = e.target.closest('.bubble'); if(!el) return; // determine message index by counting
-  const nodes = Array.from(messagesEl.querySelectorAll('.bubble')); const idx = nodes.indexOf(el); if(idx===-1) return; const msg = chats[currentChatId].messages[idx]; if(!msg || msg.role !== 'assistant') return;
-  // generate audio for this message via GET TTS for short answers
-  try{
-    const text = encodeURIComponent(msg.content.slice(0,1000)); const voice = 'nova'; const url = `https://text.pollinations.ai/${text}?model=openai-audio&voice=${voice}`;
-    const audio = new Audio(url); audio.play();
-  }catch(e){ console.error(e); toast('TTS failed'); }
-});
-
-// --- Helpers ---
-function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
-function fileToBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>{ res(r.result.split(',')[1]); }; r.onerror=rej; r.readAsDataURL(file); }); }
-
-// --- UI helpers ---
-function focusInput(){ inputEl.focus(); placeCaretAtEnd(inputEl); }
-function placeCaretAtEnd(el){ el.focus(); if(window.getSelection && document.createRange){ var range=document.createRange(); range.selectNodeContents(el); range.collapse(false); var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range); } }
-
-// --- Events ---
-sendBtn.addEventListener('click', sendMessage);
-inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
-clearBtn.addEventListener('click', ()=>{ if(!currentChatId) return; chats[currentChatId].messages=[]; saveAll(); renderMessages(); tokenCountEl.textContent='—'; });
-refreshModelsBtn.addEventListener('click', fetchModels);
-newChatBtn.addEventListener('click', ()=>{ newChat(); renderMessages(); });
-exportBtn.addEventListener('click', exportCurrent);
-themeBtn.addEventListener('click', ()=>{ const cur = document.documentElement.getAttribute('data-theme')||'dark'; const next = cur==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('prism_theme', next); toast('Theme: '+next); });
-
-// --- Boot ---
-loadAll(); if(Object.keys(chats).length===0) newChat(); fetchModels(); focusInput();
-
-// Accessibility: placeholder for contenteditable
-inputEl.addEventListener('focus', ()=>{ if(inputEl.innerText.trim()==='') inputEl.setAttribute('data-placeholder','true'); });
-
-// Informational: update tokenCount periodically (best effort)
-setInterval(()=>{ /* placeholder for token usage fetch if API gives it */ }, 30000);
-
-</script>
+        // Event listener for the input field
+        chatInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                handleChat();
+            }
+        });
+    </script>
 </body>
 </html>

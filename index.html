@@ -97,7 +97,7 @@
                 <!-- Chat input area -->
                 <div class="p-4 bg-white border-t border-gray-200">
                     <form id="chat-form" class="flex items-center space-x-4">
-                        <input type="text" id="chat-input" placeholder="Message PrisimAI..." class="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="chat-input" placeholder="Message PrisimAI ✨..." class="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <button type="submit" class="p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.769 59.769 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
@@ -115,6 +115,34 @@
         const chatForm = document.getElementById('chat-form');
         const welcomeMessage = document.getElementById('welcome-message');
         const newChatBtn = document.getElementById('new-chat-btn');
+
+        // Gemini API configuration
+        const apiKey = "";
+        const textModel = 'gemini-2.5-flash-preview-05-20';
+        const imageModel = 'imagen-3.0-generate-002';
+        const ttsModel = 'gemini-2.5-flash-preview-tts';
+
+        // Helper functions
+        async function fetchWithExponentialBackoff(apiCall) {
+            let delay = 1000;
+            const maxRetries = 5;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await apiCall();
+                    if (response.ok) return response;
+                    if (response.status === 429) {
+                        console.warn(`Rate limit exceeded. Retrying in ${delay / 1000}s...`);
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2;
+                        continue;
+                    }
+                    throw new Error(`API returned status code ${response.status}`);
+                } catch (error) {
+                    throw error;
+                }
+            }
+            throw new Error('Max retries exceeded.');
+        }
 
         // --- Core Functions ---
         
@@ -196,19 +224,26 @@
             chatHistory.classList.add('hidden');
         }
 
-        // --- API & Chat Logic ---
+        // --- Gemini API Call Functions ---
+        const systemPrompt = "You are a helpful and encouraging assistant named PrisimAI, designed for a middle school student. Keep your responses concise, easy to understand, and engaging. Encourage curiosity and learning.";
+        
+        async function streamGeminiResponse(prompt) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${textModel}:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
 
-        /**
-         * Streams the API response for text generation.
-         * @param {string} prompt - The user's prompt.
-         * @returns {Promise<void>}
-         */
-        async function streamTextResponse(prompt) {
-            const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
+            const response = await fetchWithExponentialBackoff(() => fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }));
+            
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error('Failed to get streaming response from Gemini API.');
             }
-
+            
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let result = '';
@@ -219,17 +254,176 @@
                 if (done) break;
 
                 const chunk = decoder.decode(value);
-                result += chunk;
-                loadingMessage.innerHTML = `<p>${result}</p>`;
-                chatHistory.scrollTop = chatHistory.scrollHeight;
+                const jsonChunks = chunk.split('\n').filter(Boolean).map(s => JSON.parse(s));
+                for (const json of jsonChunks) {
+                    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                    if (text) {
+                        result += text;
+                        loadingMessage.innerHTML = `<p>${result}</p>`;
+                        chatHistory.scrollTop = chatHistory.scrollHeight;
+                    }
+                }
             }
 
             saveChatHistory();
         }
+        
+        async function streamGroundedResponse(prompt) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${textModel}:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+            
+            const loadingMessage = addMessage('', false);
+            let result = '';
 
-        /**
-         * Handles chat submission and calls the appropriate API.
-         */
+            const response = await fetchWithExponentialBackoff(() => fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }));
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const jsonChunks = chunk.split('\n').filter(Boolean).map(s => JSON.parse(s));
+                for (const json of jsonChunks) {
+                    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                    if (text) {
+                        result += text;
+                        loadingMessage.innerHTML = `<p>${result}</p>`;
+                        chatHistory.scrollTop = chatHistory.scrollHeight;
+                    }
+                }
+            }
+            
+            saveChatHistory();
+        }
+
+        async function generateImage(prompt) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${imageModel}:predict?key=${apiKey}`;
+            const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1 } };
+            
+            const loadingMessage = addMessage('Generating image...', false);
+
+            const response = await fetchWithExponentialBackoff(() => fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }));
+
+            const result = await response.json();
+            const base64Data = result?.predictions?.[0]?.bytesBase64Encoded;
+            
+            if (base64Data) {
+                const imageUrl = `data:image/png;base64,${base64Data}`;
+                loadingMessage.remove();
+                addMessage(imageUrl, false, 'image');
+                saveChatHistory();
+            } else {
+                loadingMessage.remove();
+                addMessage('Sorry, I couldn\'t generate an image. Please try again.', false);
+                saveChatHistory();
+            }
+        }
+
+        async function generateTTS(prompt) {
+            // Helper functions for audio processing
+            function base64ToArrayBuffer(base64) {
+                const binaryString = atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            function pcmToWav(pcmData, sampleRate) {
+                const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+                const view = new DataView(buffer);
+
+                // WAV header
+                writeString(view, 0, 'RIFF'); // RIFF identifier
+                view.setUint32(4, 36 + pcmData.length * 2, true); // file length
+                writeString(view, 8, 'WAVE'); // RIFF type
+                writeString(view, 12, 'fmt '); // format chunk identifier
+                view.setUint32(16, 16, true); // format chunk length
+                view.setUint16(20, 1, true); // sample format (1 = PCM)
+                view.setUint16(22, 1, true); // channel count
+                view.setUint32(24, sampleRate, true); // sample rate
+                view.setUint32(28, sampleRate * 2, true); // byte rate (sample rate * block align)
+                view.setUint16(32, 2, true); // block align (channels * bits per sample / 8)
+                view.setUint16(34, 16, true); // bits per sample
+                writeString(view, 36, 'data'); // data chunk identifier
+                view.setUint32(40, pcmData.length * 2, true); // data chunk length
+
+                // PCM data
+                let offset = 44;
+                for (let i = 0; i < pcmData.length; i++) {
+                    view.setInt16(offset, pcmData[i], true);
+                    offset += 2;
+                }
+                return new Blob([view], { type: 'audio/wav' });
+            }
+
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${ttsModel}:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Kore" }
+                        }
+                    }
+                },
+                model: ttsModel
+            };
+
+            const loadingMessage = addMessage('Generating audio...', false);
+            
+            const response = await fetchWithExponentialBackoff(() => fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }));
+
+            const result = await response.json();
+            const part = result?.candidates?.[0]?.content?.parts?.[0];
+            const audioData = part?.inlineData?.data;
+            const mimeType = part?.inlineData?.mimeType;
+
+            if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)[1], 10);
+                const pcmData = base64ToArrayBuffer(audioData);
+                const pcm16 = new Int16Array(pcmData);
+                const wavBlob = pcmToWav(pcm16, sampleRate);
+                const audioUrl = URL.createObjectURL(wavBlob);
+                loadingMessage.remove();
+                addMessage(audioUrl, false, 'audio');
+                saveChatHistory();
+            } else {
+                loadingMessage.remove();
+                addMessage('Sorry, I couldn\'t generate audio. Please try again.', false);
+                saveChatHistory();
+            }
+        }
+
+        // --- Event Listeners and Core Logic ---
         async function handleChat() {
             const userMessage = chatInput.value.trim();
             if (userMessage === '') return;
@@ -238,25 +432,19 @@
             chatInput.value = '';
 
             try {
-                // Check for commands
                 const lowerMessage = userMessage.toLowerCase();
                 if (lowerMessage.startsWith('/image')) {
                     const prompt = userMessage.substring(6).trim();
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
-                    addMessage(imageUrl, false, 'image');
-                    saveChatHistory();
+                    await generateImage(prompt);
                 } else if (lowerMessage.startsWith('/search')) {
                     const prompt = userMessage.substring(7).trim();
-                    await streamTextResponse(prompt + '?model=searchgpt');
+                    await streamGroundedResponse(prompt);
                 } else if (lowerMessage.startsWith('/audio')) {
                     const prompt = userMessage.substring(6).trim();
-                    const audioUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai-audio&voice=nova`;
-                    addMessage(audioUrl, false, 'audio');
-                    saveChatHistory();
+                    await generateTTS(prompt);
                 } else {
-                    await streamTextResponse(userMessage);
+                    await streamGeminiResponse(userMessage);
                 }
-
             } catch (error) {
                 console.error('API Error:', error);
                 const errorMessage = addMessage('Sorry, I couldn\'t get a response. Please try again.', false);
@@ -264,7 +452,6 @@
             }
         }
 
-        // --- Event Listeners ---
         chatForm.addEventListener('submit', (event) => {
             event.preventDefault();
             handleChat();

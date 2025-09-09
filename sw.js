@@ -3,18 +3,18 @@ const CACHE_NAME = "prisimai-cache-v4";
 // Core files + offline fallback
 const ASSETS = [
   "/",
-  "/index.html",
-  "/offline.html",
-  "/manifest.json",
+  "https://prisimai.github.io/PrisimAI/index.html",
+  "https://prisimai.github.io/PrisimAI/offline.html",
+  "https://prisimai.github.io/PrisimAI/manifest.json",
 
   // PWA icons
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
+  "https://prisimai.github.io/PrisimAI/icons/icon-192.png",
+  "https://prisimai.github.io/PrisimAI/icons/icon-512.png",
 
   // Apple & favicons
-  "/apple-touch-icon.png",
-  "/favicon-32x32.png",
-  "/favicon-16x16.png",
+  "https://prisimai.github.io/PrisimAI/apple-touch-icon.png",
+  "https://prisimai.github.io/PrisimAI/favicon-32x32.png",
+  "https://prisimai.github.io/PrisimAI/favicon-16x16.png",
 
   // External dependencies
   "https://cdn.tailwindcss.com",

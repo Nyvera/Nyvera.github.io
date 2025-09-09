@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PrisimAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -16,232 +17,185 @@
 </head>
 <body class="bg-white text-gray-800 antialiased flex h-screen overflow-hidden">
 
-    <!-- Sidebar -->
     <aside class="w-64 bg-gray-50 border-r border-gray-200 flex flex-col justify-between p-4 hidden sm:flex">
         <div class="space-y-4">
-            <!-- Header section -->
             <div class="flex items-center space-x-2">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-600">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9.206 13.91a4.992 4.992 0 0 0-1.745-1.924c-.394-.287-.803-.524-1.229-.715L5 10.985a2.25 2.25 0 0 1-.585-2.023c.31-.617.915-1.054 1.558-1.127l.799-.089a5.002 5.002 0 0 1 4.71-2.903c.369.043.737.087 1.106.131L15 8.169a2.25 2.25 0 0 1 2.023.585c.617.31 1.054.915 1.127 1.558l.089.799a5.002 5.002 0 0 1-2.903 4.71c-.043.369-.087.737-.131 1.106l-1.996 4.99a2.25 2.25 0 0 1-2.023.585c-.617-.31-1.054-.915-1.127-1.558l-.089-.799a5.002 5.002 0 0 1-4.71-2.903c-.043-.369-.087-.737-.131-1.106l-1.996-4.99a2.25 2.25 0 0 1-2.023-.585c-.617-.31-1.054-.915-1.127-1.558l-.089-.799a5.002 5.002 0 0 1-2.903-4.71z" />
                 </svg>
-                <span class="font-semibold text-lg text-gray-700">PrisimAI</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                </svg>
+                <h1 class="text-xl font-bold text-gray-900">PrisimAI</h1>
             </div>
-            <!-- Search and new chat -->
+            <button class="w-full p-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition duration-200 text-center">
+                + New Chat
+            </button>
             <div class="space-y-2">
-                <button class="w-full flex items-center justify-between px-4 py-2 bg-gray-200 rounded-lg text-gray-500 hover:bg-gray-300">
-                    <span class="flex items-center space-x-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        <span>New chat(COMING SOON)</span>
-                    </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    </svg>
-                </button>
+                <a href="#" class="block p-2 rounded-lg bg-gray-300 text-gray-900 font-medium">Chat 1</a>
+                <a href="#" class="block p-2 rounded-lg hover:bg-gray-200 transition duration-200">Chat 2</a>
+                <a href="#" class="block p-2 rounded-lg hover:bg-gray-200 transition duration-200">Chat 3</a>
             </div>
-            <!-- Sidebar navigation -->
-            <nav>
-                <ul class="space-y-1">
-                    <li class="flex items-center space-x-2 p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.75a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-                        </svg>
-                        <span>All GPTs(COMING SOON)</span>
-                    </li>
-                    <li class="flex items-center space-x-2 p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5h.008v.008h-.008V7.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                        </svg>
-                        <span>Explore GPTs(COMING SOON)</span>
-                    </li>
-                    <li class="flex items-center space-x-2 p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75a3 3 0 1 0 0 6h.001a3 3 0 0 0 0-6Zm-9 6h16.5" />
-                        </svg>
-                        <span>History(COMING SOON)</span>
-                    </li>
-                    <li class="flex items-center space-x-2 p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                        </svg>
-                        <span>Settings(COMING SOON)</span>
-                    </li>
-                </ul>
-            </nav>
         </div>
-        <!-- Profile section -->
-        <div class="flex items-center space-x-2 p-2 border-t border-gray-200 mt-4">
-            <div class="w-8 h-8 bg-gray-400 rounded-full"></div>
-            <span class="text-sm font-medium text-gray-700">User(COMING SOON)</span>
+        <div class="mt-4">
+            <div class="flex items-center space-x-2 p-2 hover:bg-gray-200 rounded-lg transition duration-200">
+                <img src="https://via.placeholder.com/32" alt="Profile" class="w-8 h-8 rounded-full">
+                <div>
+                    <div class="font-medium text-gray-900">CJ</div>
+                    <div class="text-sm text-gray-500">7th Grade</div>
+                </div>
+            </div>
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col items-center justify-between p-4 relative">
-        <!-- Header -->
-        <header class="absolute top-4 right-4 flex items-center space-x-4">
-            <a href="#" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 bg-white hover:bg-gray-100">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75V12A2.25 2.25 0 0 1 6.75 9.75h10.5A2.25 2.25 0 0 1 19.5 12v.75m-15 0h.008v.008h-.008V12.75Z" />
-                </svg>
-                Upgrade your plan(COMING SOON)
-            </a>
-            <div class="w-8 h-8 bg-gray-400 rounded-full"></div>
-        </header>
-
-        <!-- Chat History -->
-        <div id="chat-history" class="flex-1 overflow-y-auto w-full max-w-2xl mt-20 mb-4 px-4 md:px-0">
-            <div class="flex flex-col items-center justify-center h-full">
-                <h1 class="text-2xl sm:text-3xl font-normal text-gray-900 mb-8 sm:mb-12">What can I help with?</h1>
+    <main class="flex-1 flex flex-col relative bg-gray-100">
+        <div class="flex-1 flex flex-col justify-between" id="chat-container">
+            <div id="auth-ui" class="flex justify-center items-center h-full flex-col space-y-4">
+                <h2 class="text-2xl font-semibold">Sign Up or Log In</h2>
+                <form id="auth-form" class="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm space-y-4">
+                    <input type="email" id="email" placeholder="Email" class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500" required>
+                    <input type="password" id="password" placeholder="Password" class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500" required>
+                    <button type="submit" id="auth-button" class="w-full p-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition duration-200">Sign Up</button>
+                    <button type="button" id="toggle-auth" class="w-full text-blue-600 hover:underline">Already have an account? Log In</button>
+                    <div id="auth-message" class="text-red-500 text-sm text-center"></div>
+                </form>
             </div>
-        </div>
+            <button id="logout-button" class="absolute top-4 right-4 p-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition duration-200 hidden">Log Out</button>
 
-        <!-- Input container -->
-        <div class="w-full max-w-2xl px-4 md:px-0 mb-4">
-            <div class="relative w-full">
-                <div class="flex items-center border border-gray-300 rounded-xl shadow-lg focus-within:border-gray-500">
-                    <div class="relative">
-                        <!-- Plus button -->
-                        <button id="add-button" class="p-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            <div id="chat-area" class="flex-1 flex flex-col hidden">
+                <div id="chat-history" class="flex-1 overflow-y-auto p-8 space-y-4">
+                    </div>
+
+                <div class="p-4 bg-white border-t border-gray-200">
+                    <form id="chat-form" class="flex items-center space-x-4">
+                        <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" class="p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.769 59.769 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                             </svg>
                         </button>
-                        <!-- Dropdown menu -->
-                        <div id="dropdown-menu" class="absolute bottom-12 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-10 hidden p-2">
-                            <ul class="space-y-1">
-                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.19m0 0a1.5 1.5 0 0 0-1.06-2.06l-4.72-2.36c-.4-.2-.8-.4-1.2-.4s-.8-.2-.8-.4a1.5 1.5 0 0 0-1.06-2.06L4.72 2.36a1.5 1.5 0 0 0-1.06-2.06L.54 0Z" />
-                                    </svg>
-                                    <span>Add photos & files(COMING SOON)</span>
-                                </li>
-                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12a1.5 1.5 0 0 1 1.5-1.5h16.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-16.5a1.5 1.5 0 0 1-1.5-1.5v-3Z" />
-                                    </svg>
-                                    <span>Add from OneDrive(COMING SOON)</span>
-                                </li>
-                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                    <span>Study and learn(COMING SOON)</span>
-                                </li>
-                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18h12M6 6h12M6 12h12" />
-                                    </svg>
-                                    <span>Create image(COMING SOON)</span>
-                                </li>
-                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                    </svg>
-                                    <span>Think longer(COMING SOON)</span>
-                                </li>
-                                <li class="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12 17.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                                    </svg>
-                                    <span>Deep research(COMING SOON)</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <input id="chat-input" type="text" placeholder="Ask anything" class="flex-1 px-4 py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none">
-                    <button class="p-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6.75 6.75 0 1 0 0-13.5 6.75 6.75 0 0 0 0 13.5Z" />
-                        </svg>
-                    </button>
-                    <button class="p-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6.75 6.75 0 1 0 0-13.5 6.75 6.75 0 0 0 0 13.5Z" />
-                        </svg>
-                    </button>
+                    </form>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        const addButton = document.getElementById('add-button');
-        const dropdownMenu = document.getElementById('dropdown-menu');
-        const chatInput = document.getElementById('chat-input');
+        // Supabase setup - replace with your actual keys
+        const SUPABASE_URL = 'https://tucoysycoeqhfrwsbimg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1Y295c3ljb2VxaGZyd3NiaW1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTUyOTMsImV4cCI6MjA3MjU5MTI5M30.047lzKozbRrqOqlKRjLVeXBHhlOQSZUVZMXRTIQuhg4';
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const chatHistory = document.getElementById('chat-history');
-        
-        addButton.addEventListener('click', () => {
-            dropdownMenu.classList.toggle('hidden');
-        });
+        const chatInput = document.getElementById('chat-input');
+        const chatForm = document.getElementById('chat-form');
+        const authUi = document.getElementById('auth-ui');
+        const authForm = document.getElementById('auth-form');
+        const authButton = document.getElementById('auth-button');
+        const toggleAuth = document.getElementById('toggle-auth');
+        const logoutButton = document.getElementById('logout-button');
+        const chatArea = document.getElementById('chat-area');
+        const authMessage = document.getElementById('auth-message');
 
-        document.addEventListener('click', (event) => {
-            if (!addButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
-                dropdownMenu.classList.add('hidden');
-            }
-        });
+        let isLogin = false;
 
-        // Function to add a message to the chat history
-        function addMessage(text, isUser) {
-            // Remove the "What can I help with?" title if it's the first message
-            const titleElement = chatHistory.querySelector('h1');
-            if (titleElement) {
-                titleElement.remove();
-            }
-
-            const messageContainer = document.createElement('div');
-            messageContainer.classList.add('flex', 'space-x-4', 'mb-4');
-            if (isUser) {
-                messageContainer.classList.add('justify-end');
+        // Function to check and display current user status
+        async function checkUser() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // User is logged in, show chat and hide auth
+                authUi.classList.add('hidden');
+                chatArea.classList.remove('hidden');
+                logoutButton.classList.remove('hidden');
+                console.log("User is logged in:", user);
             } else {
-                messageContainer.classList.add('justify-start');
+                // User is logged out, show auth and hide chat
+                authUi.classList.remove('hidden');
+                chatArea.classList.add('hidden');
+                logoutButton.classList.add('hidden');
+                console.log("User is logged out.");
             }
+        }
 
-            const messageBubble = document.createElement('div');
-            messageBubble.classList.add(
-                'rounded-xl',
-                'p-4',
-                'max-w-xl',
-                'shadow-md',
-                isUser ? 'bg-blue-500' : 'bg-gray-200',
-                isUser ? 'text-white' : 'text-gray-800'
-            );
-            messageBubble.textContent = text;
-            
-            messageContainer.appendChild(messageBubble);
-            chatHistory.appendChild(messageContainer);
+        // Handle user signup or login
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            authMessage.textContent = '';
+
+            let { data, error } = isLogin ? 
+                await supabase.auth.signInWithPassword({ email, password }) :
+                await supabase.auth.signUp({ email, password });
+
+            if (error) {
+                authMessage.textContent = error.message;
+            } else if (data.user) {
+                authMessage.textContent = 'Success! Check your email for a confirmation link.';
+                if (isLogin) {
+                    checkUser();
+                }
+            } else if (data.session) {
+                checkUser();
+            }
+        });
+
+        // Toggle between login and signup
+        toggleAuth.addEventListener('click', () => {
+            isLogin = !isLogin;
+            authButton.textContent = isLogin ? 'Log In' : 'Sign Up';
+            toggleAuth.textContent = isLogin ? 'Need an account? Sign Up' : 'Already have an account? Log In';
+        });
+
+        // Handle logout
+        logoutButton.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut();
+            if (!error) {
+                checkUser();
+            }
+        });
+
+        // Initial check on page load
+        checkUser();
+
+        // Chat functionality
+        function addMessage(message, isUser) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('flex', 'space-x-4', 'mb-4', isUser ? 'justify-end' : 'justify-start');
+            messageWrapper.innerHTML = `
+                <div class="p-4 rounded-xl max-w-xl shadow-md ${isUser ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}">
+                    ${message}
+                </div>
+            `;
+            chatHistory.appendChild(messageWrapper);
             chatHistory.scrollTop = chatHistory.scrollHeight;
         }
 
-        // Function to handle the chat logic
         async function handleChat() {
             const userMessage = chatInput.value.trim();
             if (userMessage === '') return;
 
-            // Display user message
             addMessage(userMessage, true);
             chatInput.value = '';
 
             try {
-                // Display a loading indicator
+                // Display loading indicator
                 const loadingMessage = document.createElement('div');
                 loadingMessage.classList.add('flex', 'space-x-4', 'mb-4', 'justify-start');
                 loadingMessage.innerHTML = `<div class="p-4 rounded-xl max-w-xl shadow-md bg-gray-200 text-gray-800 animate-pulse">Thinking...</div>`;
                 chatHistory.appendChild(loadingMessage);
                 chatHistory.scrollTop = chatHistory.scrollHeight;
+                
+                let responseText = '';
+                // Check for image generation request
+                if (userMessage.toLowerCase().startsWith('/image')) {
+                    const prompt = userMessage.substring(6).trim();
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+                    responseText = `<img src="${imageUrl}" alt="Generated image" class="rounded-xl w-full max-w-sm">`;
+                } else {
+                    const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(userMessage)}`);
+                    responseText = await response.text();
+                }
 
-                const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(userMessage)}`);
-                const botResponse = await response.text();
-
-                // Remove the loading indicator
                 loadingMessage.remove();
-
-                // Display bot response
-                addMessage(botResponse, false);
+                addMessage(responseText, false);
 
             } catch (error) {
                 console.error('API Error:', error);
@@ -249,11 +203,9 @@
             }
         }
 
-        // Event listener for the input field
-        chatInput.addEventListener('keyup', (event) => {
-            if (event.key === 'Enter') {
-                handleChat();
-            }
+        chatForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            handleChat();
         });
     </script>
 </body>

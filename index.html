@@ -43,12 +43,12 @@
             animation: bounce-dot 1.4s infinite ease-in-out both;
         }
     </style>
-    <link rel="apple-touch-icon" sizes="180x180" href="/PrisimAI/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/PrisimAI/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/PrisimAI/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 
 <!-- PWA manifest -->
-<link rel="manifest" href="/PrisimAI/manifest.json">
+<link rel="manifest" href="manifest.json">
 
 <!-- Theme color for status bars -->
 <meta name="theme-color" content="#2563eb">
@@ -480,7 +480,7 @@
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("PrisimAI/sw.js")
+      .register("sw.js")
       .then(registration => {
         console.log("✅ Service Worker registered:", registration);
       })

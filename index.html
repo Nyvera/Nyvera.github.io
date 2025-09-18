@@ -132,7 +132,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5a6 6 0 1 0-12 0v1.5a6 6 0 0 0 6 6zM12 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
                     </svg>
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Hello there, CJ!</h2>
-                    <p class="text-lg">What can I help you with today?</p>
+                    <p class="text-lg">What can I help you with today? Try typing something in the box below.</p>
                 </div>
 
                 <!-- Chat History -->
@@ -177,12 +177,15 @@
         const modelSelector = document.getElementById('model-selector');
 
         let chatMessages = [];
+        const apiKey = 'ScdTyGr9t5KJxW_c';
+        const referrer = 'https://prisimai.github.io/PrisimAI';
+        const textApiUrl = 'https://text.pollinations.ai/openai';
+        const imageApiUrl = 'https://image.pollinations.ai/prompt/';
 
         // Add message to chat
         function addMessage(message, role, type = 'text') {
             welcomeMessage.classList.add('hidden');
             chatHistory.classList.remove('hidden');
-
             const isUser = role === 'user';
             const messageWrapper = document.createElement('div');
             messageWrapper.classList.add('flex', 'space-x-4', 'mb-4', 'fade-in', isUser ? 'justify-end' : 'justify-start');
@@ -251,7 +254,7 @@
         // Fetch models
         async function fetchModels() {
             const models = [
-                { name: "gemini", description: "Gemini 2.5 Flash Lite" },
+                { name: "gemini", description: "Gemini 2.5 Flash Lite (api.navy)" },
                 { name: "openai", description: "OpenAI GPT-5 Nano" },
                 { name: "openai-fast", description: "OpenAI GPT-4.1 Nano" },
                 { name: "openai-large", description: "OpenAI GPT-4.1" },
@@ -270,26 +273,125 @@
             modelSelector.value = 'openai';
         }
 
+        // Stream text response
+        async function streamTextResponse() {
+            const loadingIndicator = showLoadingIndicator();
+            const messageWrapper = addMessage('', 'assistant');
+            const messageContent = messageWrapper.querySelector('div p');
+            const selectedModel = modelSelector.value;
+
+            const requestBody = {
+                model: selectedModel,
+                messages: chatMessages,
+                stream: true,
+                private: false,
+                referrer: referrer,
+                api_key: apiKey
+            };
+
+            try {
+                const response = await fetch(textApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.body) throw new Error('ReadableStream not supported');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let accumulatedContent = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const jsonStrings = chunk.split('data:').filter(s => s.trim() !== '');
+
+                    for (const jsonStr of jsonStrings) {
+                        const trimmedStr = jsonStr.trim();
+                        if (trimmedStr === '[DONE]') break;
+
+                        try {
+                            const data = JSON.parse(trimmedStr);
+                            const deltaContent = data.choices?.[0]?.delta?.content;
+                            const fullContent = data.choices?.[0]?.message?.content;
+
+                            if (deltaContent !== undefined) {
+                                accumulatedContent += deltaContent;
+                            } else if (fullContent !== undefined) {
+                                accumulatedContent = fullContent;
+                                break;
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse JSON chunk:", e);
+                        }
+                    }
+
+                    messageContent.textContent = accumulatedContent;
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                }
+
+                messageContent.textContent = accumulatedContent;
+                loadingIndicator.remove();
+
+                if (accumulatedContent.trim() !== '') {
+                    chatMessages[chatMessages.length - 1].content = accumulatedContent;
+                } else {
+                    const errorMessage = 'Sorry, the model returned an empty response. Please try a different model.';
+                    messageContent.textContent = errorMessage;
+                    chatMessages[chatMessages.length - 1].content = errorMessage;
+                }
+
+                saveChatHistory();
+            } catch (error) {
+                console.error('API Error:', error);
+                loadingIndicator.remove();
+                const errorMessage = 'Sorry, I couldn\'t get a response. Please try again.';
+                messageContent.textContent = errorMessage;
+                chatMessages[chatMessages.length - 1].content = errorMessage;
+                saveChatHistory();
+            }
+        }
+
+        // Handle image response
+        async function handleImageResponse(prompt) {
+            const imageUrl = `${imageApiUrl}${encodeURIComponent(prompt)}?key=${apiKey}&referrer=${referrer}`;
+            const loadingIndicator = showLoadingIndicator();
+
+            try {
+                const response = await fetch(imageUrl);
+                if (response.ok) {
+                    loadingIndicator.remove();
+                    addMessage(imageUrl, 'assistant', 'image');
+                    saveChatHistory();
+                } else {
+                    throw new Error(`Failed to generate image. Status: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                loadingIndicator.remove();
+                addMessage('Sorry, I couldn\'t generate an image. Please try again.', 'assistant');
+                saveChatHistory();
+            }
+        }
+
         // Handle chat submission
         async function handleChat() {
             const userMessage = chatInput.value.trim();
-            if (!userMessage) return;
+            if (userMessage === '') return;
 
             addMessage(userMessage, 'user');
             chatInput.value = '';
             resizeTextarea();
 
-            const loadingIndicator = showLoadingIndicator();
-            try {
-                // Simulate API call (replace with actual fetch)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                loadingIndicator.remove();
-                addMessage("Here's a response from PrisimAI!", 'assistant');
-                saveChatHistory();
-            } catch (error) {
-                loadingIndicator.remove();
-                addMessage("Sorry, I couldn't get a response. Try again.", 'assistant');
-                saveChatHistory();
+            const lowerMessage = userMessage.toLowerCase();
+            if (lowerMessage.startsWith('/image')) {
+                const prompt = userMessage.substring(6).trim();
+                await handleImageResponse(prompt);
+            } else {
+                await streamTextResponse();
             }
         }
 

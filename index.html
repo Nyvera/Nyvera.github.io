@@ -53,50 +53,57 @@
 <!-- Theme color for status bars -->
 <meta name="theme-color" content="#2563eb">
 </head>
-<body class="bg-white text-gray-800 antialiased flex h-screen overflow-hidden">
+<body class="bg-white text-gray-800 antialiased flex h-screen overflow-hidden dark:bg-gray-900 dark:text-gray-100">
 
     <!-- Sidebar -->
-    <aside class="w-64 bg-gray-50 border-r border-gray-200 flex-shrink-0 flex flex-col justify-between p-4 sm:flex">
-        <div class="space-y-4">
+    <aside class="w-64 bg-white/80 dark:bg-gray-900/70 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col justify-between p-6 sm:flex shadow-xl rounded-r-3xl backdrop-blur-md relative">
+        <div class="space-y-6">
+            <!-- Dark mode toggle button -->
+            <button id="dark-mode-toggle" class="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400" title="Toggle dark mode">
+                <svg id="dark-mode-icon" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path id="sun-icon" class="block dark:hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.07l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.93l-.71-.71M12 7a5 5 0 100 10 5 5 0 000-10z" />
+                    <path id="moon-icon" class="hidden dark:block" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+                </svg>
+            </button>
             <!-- Header section -->
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-3 mb-6">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-600">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9.206 13.91a4.992 4.992 0 0 0-1.745-1.924c-.394-.287-.803-.524-1.229-.715L5 10.985a2.25 2.25 0 0 1-.585-2.023c.31-.617.915-1.054 1.558-1.127l.799-.089a5.002 5.002 0 0 1 4.71-2.903c.369.043.737.087 1.106.131L15 8.169a2.25 2.25 0 0 1 2.023.585c.617.31 1.054.915 1.127 1.558l.089.799a5.002 5.002 0 0 1-2.903 4.71c-.043.369-.087.737-.131 1.106l-1.996 4.99a2.25 2.25 0 0 1-2.023.585c-.617-.31-1.054-.915-1.127-1.558l-.089-.799a5.002 5.002 0 0 1-4.71-2.903c-.043-.369-.087-.737-.131-1.106l-1.996-4.99a2.25 2.25 0 0 1-2.023-.585c-.617-.31-1.054-.915-1.127-1.558l-.089-.799a5.002 5.002 0 0 1-2.903-4.71z" />
                 </svg>
                 <h1 class="text-xl font-bold text-gray-900">PrisimAI</h1>
             </div>
             <!-- New Chat button -->
-            <button id="new-chat-btn" class="w-full p-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition duration-200 text-center">
+            <button id="new-chat-btn" class="w-full p-2 rounded-xl bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 font-semibold shadow hover:bg-blue-200 dark:hover:bg-blue-800 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 text-center">
                 + New Chat
             </button>
             
             <!-- Model selector -->
-            <div class="space-y-2">
+            <div class="space-y-2 mt-8">
                 <label for="model-selector" class="text-sm font-medium text-gray-700">Select Model</label>
-                <select id="model-selector" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="model-selector" class="w-full p-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow hover:border-blue-400 transition-all duration-200">
                     <option value="" disabled selected>Loading models...</option>
                 </select>
             </div>
         </div>
         <!-- Profile/Settings section -->
-        <div class="mt-4">
-            <div class="flex items-center space-x-2 p-2 hover:bg-gray-200 rounded-lg transition duration-200">
-                <img src="https://placehold.co/32x32" alt="Profile" class="w-8 h-8 rounded-full">
+        <div class="mt-8">
+            <div class="flex items-center space-x-3 p-3 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-xl transition-all duration-200 cursor-pointer active:scale-95">
+                <img src="https://placehold.co/40x40" alt="Profile" class="w-10 h-10 rounded-full border-2 border-blue-200 dark:border-blue-800 shadow">
                 <div>
-                    <div class="font-medium text-gray-900">CJ</div>
-                    <div class="text-sm text-gray-500">7th Grade</div>
+                    <div class="font-semibold text-gray-900 dark:text-gray-100">CJ</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">7th Grade</div>
                 </div>
             </div>
         </div>
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col relative bg-gray-100">
+    <main class="flex-1 flex flex-col relative bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <!-- Main chat container -->
-        <div class="flex-1 flex flex-col justify-between" id="chat-container">
+        <div class="flex-1 flex flex-col justify-between items-center" id="chat-container">
             <!-- Chat Area -->
             <!-- The parent container for chat history and welcome message is now relative -->
-            <div id="chat-area" class="flex-1 relative">
+            <div id="chat-area" class="flex-1 relative w-full max-w-2xl mx-auto my-8 rounded-3xl bg-white/70 dark:bg-gray-800/60 shadow-2xl backdrop-blur-md border border-gray-200 dark:border-gray-700 transition-all duration-300">
                 <!-- Both welcome and chat history are absolutely positioned to fill the parent,
                          which ensures the chat history container has a fixed height and can scroll. -->
                 <div id="welcome-message" class="absolute inset-0 flex flex-col justify-center items-center text-center p-8 space-y-4 text-gray-500">
@@ -116,8 +123,8 @@
                 <div class="absolute bottom-0 inset-x-0 p-4 bg-white border-t border-gray-200">
                     <form id="chat-form" class="flex items-end space-x-4">
                         <!-- Changed to a textarea for multi-line support with a custom JS function to resize -->
-                        <textarea id="chat-input" placeholder="Message PrisimAI ✨..." rows="1" class="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-                        <button type="submit" class="p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition duration-200">
+                        <textarea id="chat-input" placeholder="Message PrisimAI ✨..." rows="1" class="flex-1 p-3 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow"></textarea>
+                        <button type="submit" class="p-3 rounded-2xl bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:bg-blue-800 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.769 59.769 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                             </svg>
@@ -129,6 +136,27 @@
     </main>
 
     <script>
+        // Dark mode toggle logic
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.classList.contains('dark')) {
+                    html.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+            // On load, set theme from localStorage
+            if (localStorage.getItem('theme') === 'dark' ||
+                (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
         const chatHistory = document.getElementById('chat-history');
         const chatInput = document.getElementById('chat-input');
         const chatForm = document.getElementById('chat-form');

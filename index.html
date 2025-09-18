@@ -9,17 +9,18 @@
 </head>
 <body class="bg-gray-100 transition-colors duration-300">
 
-<div id="loginScreen" class="flex items-center justify-center h-screen w-screen bg-gray-200">
-  <div class="p-6 bg-white rounded shadow-lg">
+<!-- Login Modal -->
+<div id="loginModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded shadow-lg w-80">
     <h2 class="text-xl font-bold mb-4">Login</h2>
-    <input id="username" placeholder="Username" class="border p-1 mb-2 w-full"/>
-    <input id="password" type="password" placeholder="Password" class="border p-1 mb-2 w-full"/>
-    <button id="loginBtn" class="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 w-full">Login</button>
-    <div id="loginMsg" class="text-red-500 mt-2"></div>
+    <input id="username" type="text" placeholder="Username" class="w-full p-2 mb-2 border rounded"/>
+    <input id="password" type="password" placeholder="Password" class="w-full p-2 mb-4 border rounded"/>
+    <button id="loginBtn" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
+    <p id="loginError" class="text-red-500 mt-2 hidden">Invalid credentials</p>
   </div>
 </div>
 
-<div id="mainUI" class="hidden flex h-screen overflow-hidden">
+<div id="mainApp" class="flex h-screen overflow-hidden hidden">
 
   <!-- Sidebar -->
   <aside id="sidebar" class="w-72 bg-white/70 backdrop-blur-md p-4 flex flex-col transition-all duration-300">
@@ -74,28 +75,29 @@
 </div>
 
 <script>
-const API_KEY = '8OtDWHGDeNs7rpQxRoYSSMjDjoP6utZr';
-const API_URL = 'https://api.mistral.ai/v1/agents/completions';
-const FREE_DELAY_MS = 10000; // 10s delay
-const FREE_MAX_PER_HOUR = 20;
-
-let isPremium = false;
-let lastMessageTime = 0;
-let messagesSent = 0;
-
 const md = window.markdownit();
-let currentModel = {id:'Mistral-8B', name:'Mistral-8B'};
-const models = [currentModel];
 
-let chatHistory = JSON.parse(localStorage.getItem('chatHistory')||'[]');
+// ======= Variables =======
+const MISTRAL_KEY = "8OtDWHGDeNs7rpQxRoYSSMjDjoP6utZr";
+const MODELS_URL = "https://api.mistral.ai/v1/models";
+const CHAT_URL = "https://api.mistral.ai/v1/chat/completions";
+
+let models = [];
+let currentModel = null;
+let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+let lastMessageTime = 0;
+const FREE_DELAY = 3000;
+const MAX_MSGS_PER_MIN = 5;
+let msgCount = 0;
+let isPremium = false;
 
 // ======= Elements =======
-const loginScreen = document.getElementById('loginScreen');
-const mainUI = document.getElementById('mainUI');
-const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
+const loginModal = document.getElementById('loginModal');
+const mainApp = document.getElementById('mainApp');
+const username = document.getElementById('username');
+const password = document.getElementById('password');
 const loginBtn = document.getElementById('loginBtn');
-const loginMsg = document.getElementById('loginMsg');
+const loginError = document.getElementById('loginError');
 const sidebar = document.getElementById('sidebar');
 const toggleSidebar = document.getElementById('toggleSidebar');
 const modelDropdown = document.getElementById('modelDropdown');
@@ -115,141 +117,140 @@ const themeSelect = document.getElementById('themeSelect');
 const voiceToggle = document.getElementById('voiceToggle');
 const throttleInfo = document.getElementById('throttleInfo');
 
-// ======= Functions =======
-function saveHistory(){localStorage.setItem('chatHistory',JSON.stringify(chatHistory));}
+// ======= Login =======
+loginBtn.onclick = ()=>{
+  if(username.value === "guest" && password.value==="guest123"){
+    isPremium = true;
+    loginModal.classList.add('hidden');
+    mainApp.classList.remove('hidden');
+  } else {
+    loginError.classList.remove('hidden');
+  }
+}
+
+// ======= Utils =======
+function saveHistory(){ localStorage.setItem('chatHistory', JSON.stringify(chatHistory)); }
 function renderChat(){
-  messagesDiv.innerHTML='';
+  messagesDiv.innerHTML = '';
   chatHistory.forEach(msg=>{
-    const div=document.createElement('div');
-    div.className='p-2 rounded '+(msg.role==='user'?'bg-blue-100 self-end':'bg-gray-200 self-start');
-    div.innerHTML=md.render(msg.content);
+    const div = document.createElement('div');
+    div.className = 'p-2 rounded '+(msg.role==='user'?'bg-blue-100 self-end':'bg-gray-200 self-start');
+    div.innerHTML = md.render(msg.content);
     messagesDiv.appendChild(div);
   });
-  messagesDiv.scrollTop=messagesDiv.scrollHeight;
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
-function renderHistory(){
-  chatHistoryDiv.innerHTML='';
-  chatHistory.forEach((chat,idx)=>{
-    const div=document.createElement('div');
-    div.className='p-1 border-b cursor-pointer hover:bg-gray-100 flex justify-between';
-    div.innerHTML=`<span>${chat.title||'Chat '+(idx+1)}</span>
-      <span>
-        <button onclick="deleteChat(${idx})">🗑️</button>
-        <button onclick="renameChat(${idx})">✏️</button>
-        <button onclick="starChat(${idx})">⭐</button>
-      </span>`;
-    div.onclick=()=>loadChat(idx);
-    chatHistoryDiv.appendChild(div);
-  });
+function addMessage(role, content){
+  chatHistory.push({role, content});
+  saveHistory();
+  renderChat();
 }
-function loadChat(idx){
-  chatHistory=[chatHistory[idx]];renderChat();
-}
-function deleteChat(idx){chatHistory.splice(idx,1);saveHistory();renderHistory();}
-function renameChat(idx){const n=prompt("New name:",chatHistory[idx].title||"Chat");if(n){chatHistory[idx].title=n;saveHistory();renderHistory();}}
-function starChat(idx){chatHistory[idx].starred=!chatHistory[idx].starred;saveHistory();renderHistory();}
-function renderModels(){
-  modelDropdown.innerHTML='';
-  models.forEach((m,i)=>{const opt=document.createElement('option');opt.value=i;opt.textContent=m.name;modelDropdown.appendChild(opt);});
-  modelTiles.innerHTML='';
-  models.forEach((m,i)=>{
-    const tile=document.createElement('div');
-    tile.className='p-2 border rounded hover:bg-gray-100 cursor-pointer';
-    tile.innerHTML=`<strong>${m.name}</strong>`;
-    tile.onclick=()=>{currentModel=m;alert("Switched to "+m.name);}
-    modelTiles.appendChild(tile);
-  });
-}
-function addMessage(role,content){chatHistory.push({role,content});saveHistory();renderChat();}
-function checkThrottle(){ 
+
+// ======= Throttling =======
+function canSend(){
   if(isPremium) return true;
-  const now=Date.now();
-  if(now-lastMessageTime<FREE_DELAY_MS) return false;
-  if(messagesSent>=FREE_MAX_PER_HOUR){throttleInfo.textContent='Message limit reached!';return false;}
+  const now = Date.now();
+  if(now - lastMessageTime < FREE_DELAY) return false;
+  if(msgCount >= MAX_MSGS_PER_MIN){
+    throttleInfo.textContent = "Throttled: wait 1 minute";
+    setTimeout(()=>{ msgCount=0; throttleInfo.textContent='No active throttles'; },60000);
+    return false;
+  }
+  lastMessageTime = now;
+  msgCount++;
   return true;
 }
 
-// ======= Streaming =======
-async function sendMessage(message){
-  if(!checkThrottle()){alert('You are throttled or delayed!');return;}
-  lastMessageTime=Date.now();messagesSent++;
-  addMessage('user',message);
-  typingIndicator.classList.remove('hidden');
-
-  const body={
-    agent_id: currentModel.id,
-    messages:[{role:'user',content:message}],
-    max_tokens:500,
-    stream:true
-  };
-  const res = await fetch(API_URL,{
-    method:'POST',
-    headers:{
-      'Authorization':'ApiKey '+API_KEY,
-      'Content-Type':'application/json'
-    },
-    body: JSON.stringify(body)
+// ======= Fetch Models =======
+async function fetchModels(){
+  const res = await fetch(MODELS_URL,{headers:{'Authorization':'Bearer '+MISTRAL_KEY}});
+  const data = await res.json();
+  models = data.models || [];
+  if(models.length>0) currentModel=models[0];
+  renderModels();
+}
+function renderModels(){
+  modelDropdown.innerHTML=''; modelTiles.innerHTML='';
+  models.forEach((m,i)=>{
+    const opt=document.createElement('option'); opt.value=i; opt.textContent=m.name;
+    modelDropdown.appendChild(opt);
+    const tile=document.createElement('div');
+    tile.className='p-2 border rounded hover:bg-gray-100 cursor-pointer';
+    tile.innerHTML=`<strong>${m.name}</strong><br/><small>${m.description||''}</small>`;
+    tile.onclick = ()=>{ currentModel=m; alert("Switched to "+m.name);}
+    modelTiles.appendChild(tile);
   });
-  if(!res.body){typingIndicator.classList.add('hidden');return;}
-  const reader=res.body.getReader();
-  const decoder=new TextDecoder();
-  let done=false;
-  let assistantDiv=document.createElement('div');
-  assistantDiv.className='p-2 rounded bg-gray-200 self-start';
-  messagesDiv.appendChild(assistantDiv);
+}
+modelDropdown.onchange = e=>{ currentModel=models[e.target.value]; }
 
-  while(!done){
-    const {value,done:doneReading}=await reader.read();
-    done=doneReading;
-    const chunk=decoder.decode(value);
-    const lines=chunk.split('\n');
-    lines.forEach(line=>{
-      if(line.startsWith('data:')){
-        const data=line.replace('data:','').trim();
-        if(data==='[DONE]') done=true;
-        else{
-          try{
-            const parsed=JSON.parse(data);
-            if(parsed?.prediction?.content) assistantDiv.innerHTML+=md.render(parsed.prediction.content);
-          }catch(e){}
-        }
-      }
-    });
-    messagesDiv.scrollTop=messagesDiv.scrollHeight;
+// ======= Send Message =======
+sendBtn.onclick = async ()=>{
+  const msg = chatInput.value.trim();
+  if(!msg) return;
+  if(!canSend()) return;
+  addMessage('user', msg);
+  chatInput.value='';
+  await sendToMistral(msg);
+}
+
+// ======= Attachments =======
+attachBtn.onclick = ()=> fileInput.click();
+fileInput.onchange = (e)=>{
+  const file=e.target.files[0];
+  if(file){
+    const reader=new FileReader();
+    reader.onload=()=> addMessage('user', `![attachment](${reader.result})`);
+    reader.readAsDataURL(file);
   }
-  typingIndicator.classList.add('hidden');
 }
 
-// ======= Event Listeners =======
-loginBtn.onclick=()=>{
-  const u=usernameInput.value.trim(),p=passwordInput.value.trim();
-  if(u==='guest'&&p==='guest123'){isPremium=true;loginScreen.style.display='none';mainUI.classList.remove('hidden');} 
-  else{loginMsg.textContent='Invalid credentials';}
-}
-
-toggleSidebar.onclick=()=>sidebar.classList.toggle('-translate-x-full');
-modelDropdown.onchange=e=>currentModel=models[e.target.value];
-sendBtn.onclick=()=>sendMessage(chatInput.value.trim());
-attachBtn.onclick=()=>fileInput.click();
-fileInput.onchange=e=>{const file=e.target.files[0];if(file){const reader=new FileReader();reader.onload=()=>addMessage('user',`![attachment](${reader.result})`);reader.readAsDataURL(file);}}
-voiceBtn.onclick=()=>{
+// ======= Voice Input =======
+voiceBtn.onclick = ()=>{
   if(!voiceToggle.checked) return alert("Voice disabled");
-  const recognition=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
-  recognition.onresult=(event)=>{chatInput.value=event.results[0][0].transcript;}
+  const recognition = new (window.SpeechRecognition||window.webkitSpeechRecognition)();
+  recognition.onresult = e=>{ chatInput.value = e.results[0][0].transcript; }
   recognition.start();
 }
-settingsBtn.onclick=()=>settingsPanel.classList.remove('translate-x-full');
-closeSettings.onclick=()=>settingsPanel.classList.add('translate-x-full');
-themeSelect.onchange=()=>{
+
+// ======= Settings =======
+toggleSidebar.onclick = ()=> sidebar.classList.toggle('-translate-x-full');
+settingsBtn.onclick = ()=> settingsPanel.classList.remove('translate-x-full');
+closeSettings.onclick = ()=> settingsPanel.classList.add('translate-x-full');
+themeSelect.onchange = ()=>{
   document.body.className='';
   if(themeSelect.value==='dark') document.body.classList.add('bg-gray-800','text-white');
   else if(themeSelect.value==='glass') document.body.classList.add('bg-white/30','backdrop-blur-md');
   else document.body.classList.add('bg-gray-100');
 }
 
-// ======= Init =======
-renderModels();renderHistory();renderChat();
+// ======= Streaming Mistral =======
+async function sendToMistral(message){
+  if(!currentModel) return alert("No model selected");
+  typingIndicator.classList.remove('hidden');
+  const payload = {
+    model: currentModel.name,
+    input: message,
+    max_output_tokens: 500
+  };
+  try{
+    const res = await fetch(CHAT_URL,{
+      method:'POST',
+      headers:{
+        'Authorization':'Bearer '+MISTRAL_KEY,
+        'Content-Type':'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    const output = data?.output?.[0]?.content || "No response";
+    addMessage('assistant', output);
+  }catch(e){ addMessage('assistant', 'Error: '+e.message);}
+  typingIndicator.classList.add('hidden');
+}
 
+// ======= Init =======
+fetchModels();
+renderChat();
 </script>
 </body>
 </html>

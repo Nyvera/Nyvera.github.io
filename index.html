@@ -4,18 +4,62 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PrisimAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-  body {margin:0;height:100vh;display:flex;justify-content:center;align-items:center;font-family:sans-serif;background:linear-gradient(135deg,#dfe9f3,#ffffff);}
-  .glass{width:90%;max-width:600px;height:80%;display:flex;flex-direction:column;backdrop-filter:blur(20px) saturate(180%);background-color:rgba(255,255,255,0.25);border-radius:20px;border:1px solid rgba(255,255,255,0.3);box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:20px;}
-  h1{text-align:center;color:#333;margin:0 0 15px;font-weight:700;}
-  #chat{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;}
-  .msg{padding:12px 16px;border-radius:14px;max-width:75%;word-wrap:break-word;font-size:15px;}
-  .user{align-self:flex-end;background:rgba(255,255,255,0.6);color:#111;border:1px solid rgba(0,0,0,0.05);}
-  .ai{align-self:flex-start;background:rgba(255,255,255,0.4);color:#111;border:1px solid rgba(0,0,0,0.1);}
-  form{display:flex;gap:10px;margin-top:10px;}
-  input{flex:1;padding:12px;border-radius:12px;border:none;outline:none;font-size:15px;background:rgba(255,255,255,0.6);box-shadow:inset 0 2px 4px rgba(0,0,0,0.1);}
-  button{padding:12px 18px;border-radius:12px;border:none;cursor:pointer;background:rgba(255,255,255,0.8);font-weight:600;transition:all 0.2s ease;}
-  button:hover{background:rgba(255,255,255,1);transform:scale(1.05);}
+  html, body {margin:0;padding:0;height:100%;font-family: 'Inter', sans-serif;overflow:hidden;}
+  body {
+    display:flex;justify-content:center;align-items:center;
+    background: radial-gradient(circle at 20% 20%, rgba(80,120,255,0.12), transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(200,100,255,0.08), transparent 40%),
+                #0f1724;
+  }
+  .glass {
+    width:90%;max-width:700px;height:85%;
+    display:flex;flex-direction:column;
+    backdrop-filter:blur(25px) saturate(200%);
+    -webkit-backdrop-filter:blur(25px) saturate(200%);
+    background-color:rgba(255,255,255,0.05);
+    border-radius:25px;border:1px solid rgba(255,255,255,0.1);
+    box-shadow:0 10px 40px rgba(0,0,0,0.25);
+    padding:20px;
+    overflow:hidden;
+    transition: all 0.3s ease;
+  }
+  h1 {
+    text-align:center;color:#fff;margin:0 0 15px;font-weight:700;text-shadow:0 0 8px rgba(255,255,255,0.2);
+  }
+  #chat {
+    flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:12px;
+    scrollbar-width: thin;scrollbar-color: rgba(255,255,255,0.3) transparent;
+  }
+  #chat::-webkit-scrollbar {width:6px;}
+  #chat::-webkit-scrollbar-thumb {background:rgba(255,255,255,0.3);border-radius:3px;}
+  .msg {
+    padding:12px 16px;border-radius:16px;max-width:70%;font-size:15px;
+    word-wrap:break-word;backdrop-filter:blur(5px);transition: all 0.2s ease;
+  }
+  .user {
+    align-self:flex-end;background:rgba(255,255,255,0.25);color:#111;
+    border:1px solid rgba(255,255,255,0.2);box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  }
+  .ai {
+    align-self:flex-start;background:rgba(255,255,255,0.15);color:#fff;
+    border:1px solid rgba(255,255,255,0.1);box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  }
+  .msg.ai span {animation: blink 1s step-end infinite;}
+  @keyframes blink {50% {opacity:0;}}
+  form {
+    display:flex;gap:12px;margin-top:12px;
+  }
+  input {
+    flex:1;padding:12px;border-radius:14px;border:none;outline:none;
+    font-size:15px;background:rgba(255,255,255,0.1);color:#fff;
+  }
+  button {
+    padding:12px 18px;border-radius:14px;border:none;cursor:pointer;
+    background:rgba(255,255,255,0.2);color:#fff;font-weight:600;transition:0.2s;
+  }
+  button:hover {background:rgba(255,255,255,0.4);}
 </style>
 </head>
 <body>
@@ -27,6 +71,7 @@
     <button type="submit">Send</button>
   </form>
 </div>
+
 <script>
 const API_URL = "https://api.mistral.ai/v1/agents/completions";
 const API_KEY = "Uhk3m4xQ1m3MeyJD8G2hUXV9CUPia9AE";
@@ -39,58 +84,78 @@ const input = document.getElementById("input");
 function addMessage(role, text) {
   const div = document.createElement("div");
   div.className = "msg " + role;
-  div.textContent = text;
+  if(role==="ai") {
+    const span = document.createElement("span");
+    span.textContent = text;
+    div.appendChild(span);
+  } else {
+    div.textContent = text;
+  }
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
+  return div;
 }
 
 async function sendMessage(text) {
   addMessage("user", text);
   input.value = "";
 
+  const aiDiv = addMessage("ai", "");
   try {
     const res = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + API_KEY,
-        "Content-Type": "application/json"
-      },
+      method:"POST",
+      headers:{"Authorization":"Bearer "+API_KEY,"Content-Type":"application/json"},
       body: JSON.stringify({
         agent_id: AGENT_ID,
-        messages: [{ role: "user", content: text }],
-        max_tokens: 512,
-        n: 1,
-        stream: false
+        messages:[{role:"user",content:text}],
+        max_tokens:512,
+        n:1,
+        stream:true
       })
     });
 
-    if (!res.ok) {
+    if(!res.ok) {
       const err = await res.text();
-      addMessage("ai", `Error ${res.status}: ${err}`);
+      aiDiv.textContent = `Error ${res.status}: ${err}`;
       return;
     }
 
-    const data = await res.json();
-    // Mistral returns an array of completions under data.choices
-    let reply = "";
-    if (data.choices && data.choices.length && data.choices[0].message) {
-      reply = data.choices[0].message.content;
-    } else if (data.output) {
-      reply = data.output;
-    } else {
-      reply = JSON.stringify(data);
+    // Stream via Server-Sent Events
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let done = false;
+    let aiText = "";
+    while(!done) {
+      const {value, done:doneReading} = await reader.read();
+      done = doneReading;
+      if(value) {
+        const chunk = decoder.decode(value, {stream:true});
+        // Parse chunk lines starting with data:
+        const lines = chunk.split("\n").filter(l=>l.startsWith("data:"));
+        lines.forEach(line=>{
+          const json = line.replace("data:","").trim();
+          if(json && json!=="[DONE]") {
+            try {
+              const parsed = JSON.parse(json);
+              if(parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                aiText += parsed.choices[0].delta.content;
+                aiDiv.textContent = aiText;
+                chat.scrollTop = chat.scrollHeight;
+              }
+            } catch(e){}
+          }
+        });
+      }
     }
-
-    addMessage("ai", reply);
-  } catch (err) {
-    addMessage("ai", "Error: " + err.message);
+  } catch(err) {
+    aiDiv.textContent = "Error: "+err.message;
   }
 }
 
-form.addEventListener("submit", e => {
+form.addEventListener("submit",e=>{
   e.preventDefault();
   const text = input.value.trim();
-  if (text) sendMessage(text);
+  if(text) sendMessage(text);
 });
 </script>
 </body>

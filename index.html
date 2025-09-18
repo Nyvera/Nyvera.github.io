@@ -39,15 +39,16 @@ canvas#bgCanvas {
   background-color: rgba(255,255,255,0.08);
   border-radius: 0px;
   border: 1px solid rgba(255,255,255,0.15);
-  padding: 20px;
+  padding: 0;
   overflow: hidden;
 }
 
 h1 {
   text-align: center;
   color: #fff;
-  margin: 0 0 15px;
+  margin: 15px 0;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 #chat {
@@ -115,10 +116,15 @@ h1 {
   40% { opacity: 1; }
 }
 
-form {
+#chat-form {
   display: flex;
   gap: 12px;
-  margin-top: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.15);
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
 }
 
 input, select {
@@ -152,6 +158,8 @@ button:hover {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  padding: 20px;
+  flex-shrink: 0;
 }
 </style>
 </head>
@@ -178,6 +186,7 @@ button:hover {
   </div>
 
   <div id="chat" style="display:none;"></div>
+
   <form id="chat-form" style="display:none;">
     <input type="text" id="input" placeholder="Type a message..." required/>
     <button type="submit">Send</button>

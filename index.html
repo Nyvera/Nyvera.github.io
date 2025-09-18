@@ -6,34 +6,153 @@
 <title>PrisimAI</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-html, body {margin:0;padding:0;height:100%;font-family:'Inter',sans-serif;display:flex;justify-content:center;align-items:center;overflow:hidden;background:#0f1724;}
-canvas#bgCanvas {position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;}
-.glass {
-  position:relative;z-index:1;width:90%;max-width:700px;height:85%;
-  display:flex;flex-direction:column;
-  backdrop-filter:blur(25px) saturate(200%);
-  -webkit-backdrop-filter:blur(25px) saturate(200%);
-  background-color:rgba(255,255,255,0.05);
-  border-radius:25px;border:1px solid rgba(255,255,255,0.1);
-  box-shadow:0 10px 40px rgba(0,0,0,0.25);
-  padding:20px;overflow:hidden;transition: all 0.3s ease;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1e293b, #0f1724);
 }
-h1 {text-align:center;color:#fff;margin:0 0 15px;font-weight:700;text-shadow:0 0 12px rgba(255,255,255,0.3);}
-#chat {flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.3) transparent;}
-#chat::-webkit-scrollbar {width:6px;}
-#chat::-webkit-scrollbar-thumb {background:rgba(255,255,255,0.3);border-radius:3px;}
-.msg {padding:12px 16px;border-radius:16px;max-width:70%;font-size:15px;word-wrap:break-word;backdrop-filter:blur(5px);transition: all 0.2s ease;position:relative;}
-.user {align-self:flex-end;background:rgba(255,255,255,0.25);color:#111;border:1px solid rgba(255,255,255,0.2);box-shadow:0 2px 8px rgba(0,0,0,0.2);}
-.ai {align-self:flex-start;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.1);box-shadow:0 2px 8px rgba(0,0,0,0.2);}
-.typing {display:inline-block;width:10px;height:10px;background:#0ff;border-radius:50%;margin:0 2px;animation: blink 1s infinite;}
-.typing:nth-child(2){animation-delay:0.2s;}
-.typing:nth-child(3){animation-delay:0.4s;}
-@keyframes blink {0%,80%,100%{opacity:0;}40%{opacity:1;}}
-form {display:flex;gap:12px;margin-top:12px;}
-input, select {flex:1;padding:12px;border-radius:14px;border:none;outline:none;font-size:15px;background:rgba(255,255,255,0.1);color:#fff;}
-button {padding:12px 18px;border-radius:14px;border:none;cursor:pointer;background:rgba(255,255,255,0.2);color:#fff;font-weight:600;transition:0.2s;}
-button:hover {background:rgba(255,255,255,0.4);}
-#login-container {display:flex;flex-direction:column;align-items:center;gap:10px;}
+
+canvas#bgCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.glass {
+  position: relative;
+  z-index: 1;
+  width: 90%;
+  max-width: 700px;
+  height: 85%;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+h1 {
+  text-align: center;
+  color: #fff;
+  margin: 0 0 15px;
+  font-weight: 700;
+}
+
+#chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+#chat::-webkit-scrollbar {
+  width: 6px;
+}
+
+#chat::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.msg {
+  padding: 12px 16px;
+  border-radius: 16px;
+  max-width: 70%;
+  font-size: 15px;
+  word-wrap: break-word;
+  backdrop-filter: blur(5px);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.user {
+  align-self: flex-end;
+  background: rgba(255, 255, 255, 0.15);
+  color: #111;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ai {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.typing {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #0ff;
+  border-radius: 50%;
+  margin: 0 2px;
+  animation: blink 1s infinite;
+}
+
+.typing:nth-child(2) { animation-delay: 0.2s; }
+.typing:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+
+form {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+input, select {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+button {
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+#login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
 </style>
 </head>
 <body>
@@ -137,9 +256,8 @@ async function sendMessage(text){
   const maxTokens=isPremium?1024:512;
 
   if(!isPremium){
-    // Add small delay for free users
     await new Promise(r=>setTimeout(r,1000 + Math.random()*1000));
-    selectedAgent="ag:00a239e3:20250918:prisimai:1e918d1e"; // force free agent
+    selectedAgent="ag:00a239e3:20250918:prisimai:1e918d1e";
   }
 
   try{
@@ -180,23 +298,19 @@ async function sendMessage(text){
 
 form.addEventListener("submit",e=>{e.preventDefault();const text=input.value.trim();if(text)sendMessage(text);});
 
-/* CYBER-GLASS BACKGROUND */
+/* SIMPLE BACKGROUND PARTICLES */
 const canvas=document.getElementById("bgCanvas");
 const ctx=canvas.getContext("2d");
 let W=canvas.width=window.innerWidth,H=canvas.height=window.innerHeight;
 window.addEventListener("resize",()=>{W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;});
 
-class Particle{constructor(){this.reset();}reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*1.5+0.5;this.speed=Math.random()*0.5+0.2;this.angle=Math.random()*2*Math.PI;}update(){this.x+=Math.cos(this.angle)*this.speed;this.y+=Math.sin(this.angle)*this.speed;if(this.x>W||this.x<0||this.y>H||this.y<0)this.reset();}draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,2*Math.PI);ctx.fillStyle='rgba(0,255,255,0.2)';ctx.fill();}}
-class HoloIcon{constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*12+6;this.speed=Math.random()*0.3+0.1;this.symbols=["✦","✧","★","✺","✵","❖"];this.char=this.symbols[Math.floor(Math.random()*this.symbols.length)];this.opacity=Math.random()*0.5+0.3;this.glow=Math.random()*0.5+0.5;}update(){this.y-=this.speed;if(this.y<0)this.y=H;this.x+=Math.sin(this.y*0.01)*0.3;this.opacity=0.3+0.2*Math.sin(Date.now()*0.005);}draw(){ctx.font=this.size+"px Arial";ctx.fillStyle=`rgba(0,255,255,${this.opacity})`;ctx.shadowColor="cyan";ctx.shadowBlur=this.glow*10;ctx.fillText(this.char,this.x,this.y);}}
-
-const particles=[],holoIcons=[];
-for(let i=0;i<120;i++)particles.push(new Particle());
-for(let i=0;i<40;i++)holoIcons.push(new HoloIcon());
+class Particle{constructor(){this.reset();}reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*1.2+0.3;this.speed=Math.random()*0.3+0.1;}update(){this.y-=this.speed;if(this.y<0)this.y=H;}draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,2*Math.PI);ctx.fillStyle='rgba(255,255,255,0.05)';ctx.fill();}}
+const particles=[];
+for(let i=0;i<100;i++)particles.push(new Particle());
 
 function animate(){
   ctx.clearRect(0,0,W,H);
   particles.forEach(p=>{p.update();p.draw();});
-  holoIcons.forEach(h=>{h.update();h.draw();});
   requestAnimationFrame(animate);
 }
 animate();

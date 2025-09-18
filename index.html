@@ -4,253 +4,202 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PrisimAI</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+html, body {margin:0;padding:0;height:100%;font-family:'Inter',sans-serif;display:flex;justify-content:center;align-items:center;overflow:hidden;background:#0f1724;}
+canvas#bgCanvas {position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;}
+.glass {
+  position:relative;z-index:1;width:90%;max-width:700px;height:85%;
+  display:flex;flex-direction:column;
+  backdrop-filter:blur(25px) saturate(200%);
+  -webkit-backdrop-filter:blur(25px) saturate(200%);
+  background-color:rgba(255,255,255,0.05);
+  border-radius:25px;border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 10px 40px rgba(0,0,0,0.25);
+  padding:20px;overflow:hidden;transition: all 0.3s ease;
+}
+h1 {text-align:center;color:#fff;margin:0 0 15px;font-weight:700;text-shadow:0 0 12px rgba(255,255,255,0.3);}
+#chat {flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.3) transparent;}
+#chat::-webkit-scrollbar {width:6px;}
+#chat::-webkit-scrollbar-thumb {background:rgba(255,255,255,0.3);border-radius:3px;}
+.msg {padding:12px 16px;border-radius:16px;max-width:70%;font-size:15px;word-wrap:break-word;backdrop-filter:blur(5px);transition: all 0.2s ease;position:relative;}
+.user {align-self:flex-end;background:rgba(255,255,255,0.25);color:#111;border:1px solid rgba(255,255,255,0.2);box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.ai {align-self:flex-start;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.1);box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.typing {display:inline-block;width:10px;height:10px;background:#0ff;border-radius:50%;margin:0 2px;animation: blink 1s infinite;}
+.typing:nth-child(2){animation-delay:0.2s;}
+.typing:nth-child(3){animation-delay:0.4s;}
+@keyframes blink {0%,80%,100%{opacity:0;}40%{opacity:1;}}
+form {display:flex;gap:12px;margin-top:12px;}
+input, select {flex:1;padding:12px;border-radius:14px;border:none;outline:none;font-size:15px;background:rgba(255,255,255,0.1);color:#fff;}
+button {padding:12px 18px;border-radius:14px;border:none;cursor:pointer;background:rgba(255,255,255,0.2);color:#fff;font-weight:600;transition:0.2s;}
+button:hover {background:rgba(255,255,255,0.4);}
+#login-container {display:flex;flex-direction:column;align-items:center;gap:10px;}
+</style>
 </head>
-<body class="bg-gray-100 transition-colors duration-300">
+<body>
+<canvas id="bgCanvas"></canvas>
 
-<!-- Login Modal -->
-<div id="loginModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="bg-white p-6 rounded shadow-lg w-80">
-    <h2 class="text-xl font-bold mb-4">Login</h2>
-    <input id="username" type="text" placeholder="Username" class="w-full p-2 mb-2 border rounded"/>
-    <input id="password" type="password" placeholder="Password" class="w-full p-2 mb-4 border rounded"/>
-    <button id="loginBtn" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
-    <p id="loginError" class="text-red-500 mt-2 hidden">Invalid credentials</p>
+<div class="glass" id="mainContainer">
+  <h1>💎 PrisimAI</h1>
+
+  <div id="login-container">
+    <input type="text" id="username" placeholder="Username (optional)"/>
+    <input type="password" id="password" placeholder="Password"/>
+    <button id="loginBtn">Login</button>
+    <button id="skipBtn">Continue as Free</button>
   </div>
-</div>
 
-<div id="mainApp" class="flex h-screen overflow-hidden hidden">
-
-  <!-- Sidebar -->
-  <aside id="sidebar" class="w-72 bg-white/70 backdrop-blur-md p-4 flex flex-col transition-all duration-300">
-    <button id="toggleSidebar" class="mb-4 px-2 py-1 bg-gray-200 rounded hover:bg-gray-300">Collapse</button>
-    <h2 class="font-bold text-lg mb-2">Models</h2>
-    <select id="modelDropdown" class="mb-2 p-1 rounded border"></select>
-    <div id="modelTiles" class="grid grid-cols-1 gap-2 mb-4 overflow-y-auto"></div>
-    <h2 class="font-bold text-lg mb-2">Chat History</h2>
-    <div id="chatHistory" class="flex-1 overflow-y-auto"></div>
-    <button id="settingsBtn" class="mt-4 px-2 py-1 bg-gray-200 rounded hover:bg-gray-300">Settings</button>
-  </aside>
-
-  <!-- Chat Area -->
-  <main class="flex-1 flex flex-col bg-white/60 backdrop-blur-md p-4 relative">
-    <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-2"></div>
-    <div id="typingIndicator" class="hidden mb-2 flex items-center space-x-1">
-      <span class="dot w-2 h-2 bg-gray-700 rounded-full animate-bounce"></span>
-      <span class="dot w-2 h-2 bg-gray-700 rounded-full animate-bounce delay-150"></span>
-      <span class="dot w-2 h-2 bg-gray-700 rounded-full animate-bounce delay-300"></span>
-      <span>Model is typing...</span>
-    </div>
-    <div class="flex space-x-2">
-      <input id="chatInput" type="text" placeholder="Type a message..." class="flex-1 p-2 border rounded"/>
-      <input id="fileInput" type="file" class="hidden"/>
-      <button id="attachBtn" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Attach</button>
-      <button id="sendBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Send</button>
-      <button id="voiceBtn" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">🎤</button>
-    </div>
-  </main>
-</div>
-
-<!-- Settings Panel -->
-<div id="settingsPanel" class="fixed top-0 right-0 w-80 h-full bg-white/80 backdrop-blur-md p-4 shadow-lg transform translate-x-full transition-transform duration-300">
-  <h2 class="text-xl font-bold mb-4">Settings</h2>
-  <div class="mb-4">
-    <label class="block font-semibold mb-1">Theme:</label>
-    <select id="themeSelect" class="p-1 border rounded w-full">
-      <option value="light">Light</option>
-      <option value="glass">Glassmorphic</option>
-      <option value="dark">Dark</option>
+  <div id="agent-select-container" style="display:none; margin-bottom:10px;">
+    <select id="agentSelect">
+      <option value="ag:00a239e3:20250918:prisimai:1e918d1e">PrisimAI-Free</option>
+      <option value="ag:00a239e3:20250918:prisimai-math:10391aca">PrisimAI-MATH</option>
+      <option value="ag:00a239e3:20250918:prisimai-english:be00cad7">PrisimAI-ENGLISH</option>
+      <option value="ag:00a239e3:20250918:prisimai-reason:433e469e">PrisimAI-REASON</option>
     </select>
   </div>
-  <div class="mb-4">
-    <label class="block font-semibold mb-1">Voice Input/Output:</label>
-    <input type="checkbox" id="voiceToggle" checked/> Enabled
-  </div>
-  <div class="mb-4">
-    <label class="block font-semibold mb-1">Throttling Info:</label>
-    <div id="throttleInfo" class="text-sm text-gray-700">No active throttles</div>
-  </div>
-  <button id="closeSettings" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Close</button>
+
+  <div id="chat" style="display:none;"></div>
+  <form id="chat-form" style="display:none;">
+    <input type="text" id="input" placeholder="Type a message..." required/>
+    <button type="submit">Send</button>
+  </form>
 </div>
 
 <script>
-const md = window.markdownit();
+const API_URL = "https://api.mistral.ai/v1/agents/completions";
+const API_KEY = "Uhk3m4xQ1m3MeyJD8G2hUXV9CUPia9AE";
 
-// ======= Variables =======
-const MISTRAL_KEY = "8OtDWHGDeNs7rpQxRoYSSMjDjoP6utZr";
-const MODELS_URL = "https://api.mistral.ai/v1/models";
-const CHAT_URL = "https://api.mistral.ai/v1/chat/completions";
+const PREMIUM_USER = {username:"prisimpro", password:"supersecret123"};
+let isPremium=false;
+let selectedAgent="ag:00a239e3:20250918:prisimai:1e918d1e";
 
-let models = [];
-let currentModel = null;
-let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
-let lastMessageTime = 0;
-const FREE_DELAY = 3000;
-const MAX_MSGS_PER_MIN = 5;
-let msgCount = 0;
-let isPremium = false;
+const chatHistory = [];
 
-// ======= Elements =======
-const loginModal = document.getElementById('loginModal');
-const mainApp = document.getElementById('mainApp');
-const username = document.getElementById('username');
-const password = document.getElementById('password');
-const loginBtn = document.getElementById('loginBtn');
-const loginError = document.getElementById('loginError');
-const sidebar = document.getElementById('sidebar');
-const toggleSidebar = document.getElementById('toggleSidebar');
-const modelDropdown = document.getElementById('modelDropdown');
-const modelTiles = document.getElementById('modelTiles');
-const chatHistoryDiv = document.getElementById('chatHistory');
-const messagesDiv = document.getElementById('messages');
-const chatInput = document.getElementById('chatInput');
-const sendBtn = document.getElementById('sendBtn');
-const attachBtn = document.getElementById('attachBtn');
-const fileInput = document.getElementById('fileInput');
-const voiceBtn = document.getElementById('voiceBtn');
-const typingIndicator = document.getElementById('typingIndicator');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsPanel = document.getElementById('settingsPanel');
-const closeSettings = document.getElementById('closeSettings');
-const themeSelect = document.getElementById('themeSelect');
-const voiceToggle = document.getElementById('voiceToggle');
-const throttleInfo = document.getElementById('throttleInfo');
+const chat = document.getElementById("chat");
+const form = document.getElementById("chat-form");
+const input = document.getElementById("input");
+const loginContainer=document.getElementById("login-container");
+const loginBtn=document.getElementById("loginBtn");
+const skipBtn=document.getElementById("skipBtn");
+const agentSelectContainer=document.getElementById("agent-select-container");
+const agentSelect=document.getElementById("agentSelect");
 
-// ======= Login =======
-loginBtn.onclick = ()=>{
-  if(username.value === "guest" && password.value==="guest123"){
-    isPremium = true;
-    loginModal.classList.add('hidden');
-    mainApp.classList.remove('hidden');
+function addMessage(role,text,typing=false){
+  const div=document.createElement("div");
+  div.className="msg "+role;
+  if(typing){
+    for(let i=0;i<3;i++){
+      const dot=document.createElement("span");
+      dot.className="typing";
+      div.appendChild(dot);
+    }
   } else {
-    loginError.classList.remove('hidden');
+    div.textContent=text;
+  }
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+  return div;
+}
+
+function showChat(){
+  loginContainer.style.display="none";
+  chat.style.display="flex";
+  form.style.display="flex";
+  if(isPremium){
+    agentSelectContainer.style.display="block";
+    addMessage("ai","💎 Premium Mode Activated!","");
   }
 }
 
-// ======= Utils =======
-function saveHistory(){ localStorage.setItem('chatHistory', JSON.stringify(chatHistory)); }
-function renderChat(){
-  messagesDiv.innerHTML = '';
-  chatHistory.forEach(msg=>{
-    const div = document.createElement('div');
-    div.className = 'p-2 rounded '+(msg.role==='user'?'bg-blue-100 self-end':'bg-gray-200 self-start');
-    div.innerHTML = md.render(msg.content);
-    messagesDiv.appendChild(div);
-  });
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-function addMessage(role, content){
-  chatHistory.push({role, content});
-  saveHistory();
-  renderChat();
-}
-
-// ======= Throttling =======
-function canSend(){
-  if(isPremium) return true;
-  const now = Date.now();
-  if(now - lastMessageTime < FREE_DELAY) return false;
-  if(msgCount >= MAX_MSGS_PER_MIN){
-    throttleInfo.textContent = "Throttled: wait 1 minute";
-    setTimeout(()=>{ msgCount=0; throttleInfo.textContent='No active throttles'; },60000);
-    return false;
+loginBtn.addEventListener("click",()=>{
+  const u=document.getElementById("username").value;
+  const p=document.getElementById("password").value;
+  if(u===PREMIUM_USER.username && p===PREMIUM_USER.password){
+    isPremium=true;
+    selectedAgent=agentSelect.value;
+    showChat();
+  } else {
+    alert("Incorrect credentials. Continuing as Free.");
+    showChat();
   }
-  lastMessageTime = now;
-  msgCount++;
-  return true;
-}
+});
+skipBtn.addEventListener("click",()=>{showChat();});
 
-// ======= Fetch Models =======
-async function fetchModels(){
-  const res = await fetch(MODELS_URL,{headers:{'Authorization':'Bearer '+MISTRAL_KEY}});
-  const data = await res.json();
-  models = data.models || [];
-  if(models.length>0) currentModel=models[0];
-  renderModels();
-}
-function renderModels(){
-  modelDropdown.innerHTML=''; modelTiles.innerHTML='';
-  models.forEach((m,i)=>{
-    const opt=document.createElement('option'); opt.value=i; opt.textContent=m.name;
-    modelDropdown.appendChild(opt);
-    const tile=document.createElement('div');
-    tile.className='p-2 border rounded hover:bg-gray-100 cursor-pointer';
-    tile.innerHTML=`<strong>${m.name}</strong><br/><small>${m.description||''}</small>`;
-    tile.onclick = ()=>{ currentModel=m; alert("Switched to "+m.name);}
-    modelTiles.appendChild(tile);
-  });
-}
-modelDropdown.onchange = e=>{ currentModel=models[e.target.value]; }
+agentSelect.addEventListener("change",()=>{selectedAgent=agentSelect.value;});
 
-// ======= Send Message =======
-sendBtn.onclick = async ()=>{
-  const msg = chatInput.value.trim();
-  if(!msg) return;
-  if(!canSend()) return;
-  addMessage('user', msg);
-  chatInput.value='';
-  await sendToMistral(msg);
-}
+async function sendMessage(text){
+  addMessage("user", text);
+  input.value="";
+  chatHistory.push({role:"user", content:text});
 
-// ======= Attachments =======
-attachBtn.onclick = ()=> fileInput.click();
-fileInput.onchange = (e)=>{
-  const file=e.target.files[0];
-  if(file){
-    const reader=new FileReader();
-    reader.onload=()=> addMessage('user', `![attachment](${reader.result})`);
-    reader.readAsDataURL(file);
+  const aiDiv = addMessage("ai","",true);
+
+  const maxTokens=isPremium?1024:512;
+
+  if(!isPremium){
+    // Add small delay for free users
+    await new Promise(r=>setTimeout(r,1000 + Math.random()*1000));
+    selectedAgent="ag:00a239e3:20250918:prisimai:1e918d1e"; // force free agent
   }
-}
 
-// ======= Voice Input =======
-voiceBtn.onclick = ()=>{
-  if(!voiceToggle.checked) return alert("Voice disabled");
-  const recognition = new (window.SpeechRecognition||window.webkitSpeechRecognition)();
-  recognition.onresult = e=>{ chatInput.value = e.results[0][0].transcript; }
-  recognition.start();
-}
-
-// ======= Settings =======
-toggleSidebar.onclick = ()=> sidebar.classList.toggle('-translate-x-full');
-settingsBtn.onclick = ()=> settingsPanel.classList.remove('translate-x-full');
-closeSettings.onclick = ()=> settingsPanel.classList.add('translate-x-full');
-themeSelect.onchange = ()=>{
-  document.body.className='';
-  if(themeSelect.value==='dark') document.body.classList.add('bg-gray-800','text-white');
-  else if(themeSelect.value==='glass') document.body.classList.add('bg-white/30','backdrop-blur-md');
-  else document.body.classList.add('bg-gray-100');
-}
-
-// ======= Streaming Mistral =======
-async function sendToMistral(message){
-  if(!currentModel) return alert("No model selected");
-  typingIndicator.classList.remove('hidden');
-  const payload = {
-    model: currentModel.name,
-    input: message,
-    max_output_tokens: 500
-  };
   try{
-    const res = await fetch(CHAT_URL,{
-      method:'POST',
-      headers:{
-        'Authorization':'Bearer '+MISTRAL_KEY,
-        'Content-Type':'application/json'
-      },
-      body: JSON.stringify(payload)
+    const res=await fetch(API_URL,{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+API_KEY,"Content-Type":"application/json"},
+      body:JSON.stringify({agent_id:selectedAgent,messages:chatHistory,max_tokens:maxTokens,n:1,stream:true})
     });
-    const data = await res.json();
-    const output = data?.output?.[0]?.content || "No response";
-    addMessage('assistant', output);
-  }catch(e){ addMessage('assistant', 'Error: '+e.message);}
-  typingIndicator.classList.add('hidden');
+    if(!res.ok){const err=await res.text();aiDiv.textContent=`Error ${res.status}: ${err}`;return;}
+
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let done=false, aiText="";
+    while(!done){
+      const {value,done:doneReading}=await reader.read();
+      done=doneReading;
+      if(value){
+        const chunk=decoder.decode(value,{stream:true});
+        const lines=chunk.split("\n").filter(l=>l.startsWith("data:"));
+        lines.forEach(line=>{
+          const json=line.replace("data:","").trim();
+          if(json && json!=="[DONE]"){
+            try{
+              const parsed=JSON.parse(json);
+              if(parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content){
+                aiText+=parsed.choices[0].delta.content;
+                aiDiv.innerHTML=aiText;
+                chat.scrollTop = chat.scrollHeight;
+              }
+            }catch(e){}
+          }
+        });
+      }
+    }
+    chatHistory.push({role:"assistant", content:aiText});
+  }catch(err){aiDiv.textContent="Error: "+err.message;}
 }
 
-// ======= Init =======
-fetchModels();
-renderChat();
+form.addEventListener("submit",e=>{e.preventDefault();const text=input.value.trim();if(text)sendMessage(text);});
+
+/* CYBER-GLASS BACKGROUND */
+const canvas=document.getElementById("bgCanvas");
+const ctx=canvas.getContext("2d");
+let W=canvas.width=window.innerWidth,H=canvas.height=window.innerHeight;
+window.addEventListener("resize",()=>{W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;});
+
+class Particle{constructor(){this.reset();}reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*1.5+0.5;this.speed=Math.random()*0.5+0.2;this.angle=Math.random()*2*Math.PI;}update(){this.x+=Math.cos(this.angle)*this.speed;this.y+=Math.sin(this.angle)*this.speed;if(this.x>W||this.x<0||this.y>H||this.y<0)this.reset();}draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,2*Math.PI);ctx.fillStyle='rgba(0,255,255,0.2)';ctx.fill();}}
+class HoloIcon{constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*12+6;this.speed=Math.random()*0.3+0.1;this.symbols=["✦","✧","★","✺","✵","❖"];this.char=this.symbols[Math.floor(Math.random()*this.symbols.length)];this.opacity=Math.random()*0.5+0.3;this.glow=Math.random()*0.5+0.5;}update(){this.y-=this.speed;if(this.y<0)this.y=H;this.x+=Math.sin(this.y*0.01)*0.3;this.opacity=0.3+0.2*Math.sin(Date.now()*0.005);}draw(){ctx.font=this.size+"px Arial";ctx.fillStyle=`rgba(0,255,255,${this.opacity})`;ctx.shadowColor="cyan";ctx.shadowBlur=this.glow*10;ctx.fillText(this.char,this.x,this.y);}}
+
+const particles=[],holoIcons=[];
+for(let i=0;i<120;i++)particles.push(new Particle());
+for(let i=0;i<40;i++)holoIcons.push(new HoloIcon());
+
+function animate(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{p.update();p.draw();});
+  holoIcons.forEach(h=>{h.update();h.draw();});
+  requestAnimationFrame(animate);
+}
+animate();
 </script>
 </body>
 </html>

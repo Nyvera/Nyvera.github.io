@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PrisimAI</title>
+<title>PrisimAI Cyber-Glass</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 html, body {margin:0;padding:0;height:100%;font-family:'Inter',sans-serif;display:flex;justify-content:center;align-items:center;overflow:hidden;background:#0f1724;}
 canvas#bgCanvas {position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;}
-
 .glass {
   position:relative;z-index:1;
   width:90%;max-width:700px;height:85%;
@@ -20,36 +19,39 @@ canvas#bgCanvas {position:absolute;top:0;left:0;width:100%;height:100%;z-index:0
   box-shadow:0 10px 40px rgba(0,0,0,0.25);
   padding:20px;overflow:hidden;transition: all 0.3s ease;
 }
-
 h1 {text-align:center;color:#fff;margin:0 0 15px;font-weight:700;text-shadow:0 0 12px rgba(255,255,255,0.3);}
-
 #chat {flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.3) transparent;}
 #chat::-webkit-scrollbar {width:6px;}
 #chat::-webkit-scrollbar-thumb {background:rgba(255,255,255,0.3);border-radius:3px;}
-
 .msg {padding:12px 16px;border-radius:16px;max-width:70%;font-size:15px;word-wrap:break-word;backdrop-filter:blur(5px);transition: all 0.2s ease;position:relative;}
 .user {align-self:flex-end;background:rgba(255,255,255,0.25);color:#111;border:1px solid rgba(255,255,255,0.2);box-shadow:0 2px 8px rgba(0,0,0,0.2);}
 .ai {align-self:flex-start;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.1);box-shadow:0 2px 8px rgba(0,0,0,0.2);}
-
-/* Typing indicator animation */
 .typing {display:inline-block;width:10px;height:10px;background:#0ff;border-radius:50%;margin:0 2px;animation: blink 1s infinite;}
 .typing:nth-child(2){animation-delay:0.2s;}
 .typing:nth-child(3){animation-delay:0.4s;}
 @keyframes blink {0%,80%,100%{opacity:0;}40%{opacity:1;}}
-
 form {display:flex;gap:12px;margin-top:12px;}
 input {flex:1;padding:12px;border-radius:14px;border:none;outline:none;font-size:15px;background:rgba(255,255,255,0.1);color:#fff;}
 button {padding:12px 18px;border-radius:14px;border:none;cursor:pointer;background:rgba(255,255,255,0.2);color:#fff;font-weight:600;transition:0.2s;}
 button:hover {background:rgba(255,255,255,0.4);}
+#login-container {display:flex;flex-direction:column;align-items:center;gap:10px;}
 </style>
 </head>
 <body>
 <canvas id="bgCanvas"></canvas>
 
-<div class="glass">
-  <h1>PrisimAI</h1>
-  <div id="chat"></div>
-  <form id="chat-form">
+<div class="glass" id="mainContainer">
+  <h1>💎 PrisimAI</h1>
+
+  <div id="login-container">
+    <input type="text" id="username" placeholder="Username (optional)"/>
+    <input type="password" id="password" placeholder="Password"/>
+    <button id="loginBtn">Login</button>
+    <button id="skipBtn">Continue as Free</button>
+  </div>
+
+  <div id="chat" style="display:none;"></div>
+  <form id="chat-form" style="display:none;">
     <input type="text" id="input" placeholder="Type a message..." required/>
     <button type="submit">Send</button>
   </form>
@@ -60,13 +62,19 @@ const API_URL = "https://api.mistral.ai/v1/agents/completions";
 const API_KEY = "Uhk3m4xQ1m3MeyJD8G2hUXV9CUPia9AE";
 const AGENT_ID = "ag:00a239e3:20250918:prisimai:1e918d1e";
 
-const chat = document.getElementById("chat");
-const form = document.getElementById("chat-form");
-const input = document.getElementById("input");
+const PREMIUM_USER = {username:"prisimpro", password:"supersecret123"};
+let isPremium=false;
 
 const chatHistory = [];
 
-function addMessage(role, text, typing=false){
+const chat = document.getElementById("chat");
+const form = document.getElementById("chat-form");
+const input = document.getElementById("input");
+const loginContainer=document.getElementById("login-container");
+const loginBtn=document.getElementById("loginBtn");
+const skipBtn=document.getElementById("skipBtn");
+
+function addMessage(role,text,typing=false){
   const div=document.createElement("div");
   div.className="msg "+role;
   if(typing){
@@ -83,17 +91,40 @@ function addMessage(role, text, typing=false){
   return div;
 }
 
+function showChat(){
+  loginContainer.style.display="none";
+  chat.style.display="flex";
+  form.style.display="flex";
+  if(isPremium) addMessage("ai","💎 Premium Mode Activated!","");
+}
+
+loginBtn.addEventListener("click",()=>{
+  const u=document.getElementById("username").value;
+  const p=document.getElementById("password").value;
+  if(u===PREMIUM_USER.username && p===PREMIUM_USER.password){
+    isPremium=true;
+    showChat();
+  } else {
+    alert("Incorrect credentials. Continuing as Free.");
+    showChat();
+  }
+});
+skipBtn.addEventListener("click",()=>{showChat();});
+
 async function sendMessage(text){
   addMessage("user", text);
   input.value="";
   chatHistory.push({role:"user", content:text});
-  const aiDiv=addMessage("ai","",true);
+
+  const aiDiv = addMessage("ai","",true);
+
+  const maxTokens=isPremium?1024:512;
 
   try{
     const res=await fetch(API_URL,{
       method:"POST",
       headers:{"Authorization":"Bearer "+API_KEY,"Content-Type":"application/json"},
-      body:JSON.stringify({agent_id:AGENT_ID,messages:chatHistory,max_tokens:512,n:1,stream:true})
+      body:JSON.stringify({agent_id:AGENT_ID,messages:chatHistory,max_tokens:maxTokens,n:1,stream:true})
     });
     if(!res.ok){const err=await res.text();aiDiv.textContent=`Error ${res.status}: ${err}`;return;}
 
@@ -114,7 +145,7 @@ async function sendMessage(text){
               if(parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content){
                 aiText+=parsed.choices[0].delta.content;
                 aiDiv.innerHTML=aiText;
-                chat.scrollTop=chat.scrollHeight;
+                chat.scrollTop = chat.scrollHeight;
               }
             }catch(e){}
           }
@@ -127,16 +158,13 @@ async function sendMessage(text){
 
 form.addEventListener("submit",e=>{e.preventDefault();const text=input.value.trim();if(text)sendMessage(text);});
 
-/* CYBER-GLASS BACKGROUND WITH PARTICLES & HOLO ICONS */
+/* CYBER-GLASS BACKGROUND */
 const canvas=document.getElementById("bgCanvas");
 const ctx=canvas.getContext("2d");
 let W=canvas.width=window.innerWidth,H=canvas.height=window.innerHeight;
 window.addEventListener("resize",()=>{W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;});
 
-// particles
 class Particle{constructor(){this.reset();}reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*1.5+0.5;this.speed=Math.random()*0.5+0.2;this.angle=Math.random()*2*Math.PI;}update(){this.x+=Math.cos(this.angle)*this.speed;this.y+=Math.sin(this.angle)*this.speed;if(this.x>W||this.x<0||this.y>H||this.y<0)this.reset();}draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,2*Math.PI);ctx.fillStyle='rgba(0,255,255,0.2)';ctx.fill();}}
-
-// holographic icons with glow
 class HoloIcon{constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*12+6;this.speed=Math.random()*0.3+0.1;this.symbols=["✦","✧","★","✺","✵","❖"];this.char=this.symbols[Math.floor(Math.random()*this.symbols.length)];this.opacity=Math.random()*0.5+0.3;this.glow=Math.random()*0.5+0.5;}update(){this.y-=this.speed;if(this.y<0)this.y=H;this.x+=Math.sin(this.y*0.01)*0.3;this.opacity=0.3+0.2*Math.sin(Date.now()*0.005);}draw(){ctx.font=this.size+"px Arial";ctx.fillStyle=`rgba(0,255,255,${this.opacity})`;ctx.shadowColor="cyan";ctx.shadowBlur=this.glow*10;ctx.fillText(this.char,this.x,this.y);}}
 
 const particles=[],holoIcons=[];

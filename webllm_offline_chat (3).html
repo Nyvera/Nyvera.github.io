@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WebLLM — Offline Chat (Responsive)</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#7c3aed}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#e6eef8;background:linear-gradient(180deg,#071129 0%,#00121a 100%)}
+    .wrap{max-width:900px;margin:28px auto;padding:20px;display:flex;flex-direction:column;height:95vh}
+    header{display:flex;gap:16px;align-items:center}
+    h1{font-size:20px;margin:0}
+    .card{flex:1;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6);}
+
+    .controls{display:flex;gap:8px;margin-top:12px}
+    select,input[type=text]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);min-width:0}
+    button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;cursor:pointer}
+    .progress{height:10px;background:rgba(255,255,255,0.03);border-radius:8px;margin-top:8px;overflow:hidden}
+    .progress > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#60a5fa)}
+
+    .chat{flex:1;margin-top:18px;display:flex;flex-direction:column;gap:10px;overflow:auto;padding:8px}
+    .msg{max-width:78%;padding:10px;border-radius:10px;white-space:pre-wrap}
+    .msg.user{align-self:flex-end;background:linear-gradient(180deg,#16324a,#0f2430);color:#d9f2ff}
+    .msg.ai{align-self:flex-start;background:linear-gradient(180deg,#0f1724,#071029);border:1px solid rgba(255,255,255,0.03);color:#dcecff}
+
+    footer{display:flex;gap:8px;margin-top:12px}
+    textarea{flex:1;min-height:64px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef8}
+    .meta{margin-top:8px;color:var(--muted);font-size:13px}
+    .help{margin-top:10px;color:#cfe8ff;font-size:13px}
+    .error{color:#ffb4b4;font-size:13px;margin-top:8px}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(90deg,#7c3aed,#60a5fa);display:flex;align-items:center;justify-content:center;color:#04233b;font-weight:700">AI</div>
+      <div>
+        <h1>WebLLM — Offline Responsive Chat</h1>
+        <div class="meta">The AI now maintains conversation history so it actually responds correctly.</div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="color:var(--muted)">Model:</label>
+        <select id="modelSelect"></select>
+        <button id="loadBtn">Load model</button>
+        <button id="refreshModelsBtn" title="Re-read built-in model list">Refresh</button>
+        <div style="flex:1"></div>
+        <div style="font-size:12px;color:var(--muted)">Status: <span id="status">idle</span></div>
+      </div>
+
+      <div class="progress" title="load progress"><i id="progressBar"></i></div>
+      <div id="availableModels" class="help small"></div>
+      <div id="errorBox" class="error" style="display:none"></div>
+
+      <div class="chat" id="chat"></div>
+
+      <footer>
+        <textarea id="prompt" placeholder="Type a message..." ></textarea>
+        <button id="sendBtn">Send</button>
+      </footer>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+    const { CreateMLCEngine, prebuiltAppConfig } = webllm;
+
+    const statusEl = document.getElementById('status');
+    const progressBar = document.getElementById('progressBar');
+    const chatEl = document.getElementById('chat');
+    const modelSelect = document.getElementById('modelSelect');
+    const loadBtn = document.getElementById('loadBtn');
+    const refreshBtn = document.getElementById('refreshModelsBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const promptEl = document.getElementById('prompt');
+    const availableModelsEl = document.getElementById('availableModels');
+    const errorBox = document.getElementById('errorBox');
+
+    let engine = null;
+    let messagesHistory = [];
+
+    function appendMessage(who, text){
+      const div = document.createElement('div');
+      div.className = 'msg ' + (who==='user'?'user':'ai');
+      div.innerText = text;
+      chatEl.appendChild(div);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function setStatus(s){ statusEl.innerText = s; }
+    function setProgress(p){ progressBar.style.width = Math.max(0, Math.min(100, p)) + '%'; }
+
+    function populateModelSelect(){
+      modelSelect.innerHTML = '';
+      errorBox.style.display = 'none';
+      const list = (prebuiltAppConfig && prebuiltAppConfig.model_list) ? prebuiltAppConfig.model_list : [];
+      if(list.length === 0){
+        const fallback = [
+          { id: 'SmolLM2-1.7B-Instruct-q0f16', label: 'SmolLM2-1.7B-Instruct' },
+          { id: 'Llama-3.1-8B-Instruct', label: 'Llama-3.1-8B-Instruct' },
+          { id: 'Qwen-1.5B', label: 'Qwen-1.5B' }
+        ];
+        fallback.forEach(f=>{
+          const opt = document.createElement('option'); opt.value = f.id; opt.text=f.label||f.id; modelSelect.appendChild(opt);
+        });
+        availableModelsEl.innerText = 'Warning: no prebuilt models available.';
+        return;
+      }
+      list.forEach(m=>{
+        const id = m.model_id||m.model||m.name;
+        if(!id) return;
+        const opt=document.createElement('option');
+        opt.value=id;
+        opt.text=(m.short_name||m.name||id)+(m.vram_required_MB?` (VRAM ${m.vram_required_MB} MB)`: '');
+        modelSelect.appendChild(opt);
+      });
+      availableModelsEl.innerText=`Detected ${list.length} built-in models.`;
+    }
+
+    async function loadModel(){
+      const modelId = modelSelect.value;
+      setStatus('initializing engine'); setProgress(0); errorBox.style.display='none';
+      try{
+        const initProgressCallback=(progress)=>{
+          let frac=0;
+          if(typeof progress==='number') frac=progress;
+          else if(progress?.progress) frac=progress.progress;
+          if(frac>1){ setProgress(frac); setStatus('loading model: '+Math.round(frac)+'%'); }
+          else{ setProgress(frac*100); setStatus('loading model: '+Math.round(frac*100)+'%'); }
+        };
+        const opts = {initProgressCallback};
+        if(prebuiltAppConfig) opts.appConfig=prebuiltAppConfig;
+        engine = await CreateMLCEngine(modelId, opts);
+        setStatus('ready ('+modelId+')'); setProgress(100);
+      }catch(err){
+        console.error(err); setStatus('error'); errorBox.style.display='block'; errorBox.innerText='Error loading model: '+(err?.message||err);
+      }
+    }
+
+    async function sendMessage(){
+      const text=promptEl.value.trim(); if(!text||!engine) return; promptEl.value=''; appendMessage('user', text);
+      messagesHistory.push({role:'user', content:text});
+      setStatus('generating...');
+
+      const aiDiv=document.createElement('div'); aiDiv.className='msg ai'; aiDiv.innerText=''; chatEl.appendChild(aiDiv); chatEl.scrollTop=chatEl.scrollHeight;
+      let partial='';
+      try{
+        const stream = await engine.chat.completions.create({messages:messagesHistory, temperature:0.7, stream:true});
+        for await (const chunk of stream){
+          const delta=chunk?.choices?.[0]?.delta?.content||'';
+          if(delta){ partial+=delta; aiDiv.innerText=partial; chatEl.scrollTop=chatEl.scrollHeight; }
+        }
+        messagesHistory.push({role:'assistant', content:partial});
+        setStatus('ready');
+      }catch(err){
+        console.error(err); appendMessage('ai','Error: '+(err?.message||err)); setStatus('error');
+      }
+    }
+
+    loadBtn.addEventListener('click', loadModel);
+    sendBtn.addEventListener('click', sendMessage);
+    refreshBtn.addEventListener('click', populateModelSelect);
+    promptEl.addEventListener('keydown', e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) sendMessage();});
+
+    if(!('gpu' in navigator)) setStatus('WARNING: WebGPU not available');
+    populateModelSelect();
+  </script>
+</body>
+</html>

@@ -3,47 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PrisimAI</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<title></title>
 <link rel="manifest" href="/manifest.json">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
-body { font-family: 'Inter', sans-serif; background:#0f1724; color:#e6eef8; }
+body { font-family: 'Inter', sans-serif; }
 #chat-history::-webkit-scrollbar { width: 8px; }
-#chat-history::-webkit-scrollbar-track { background: #1e293b; }
-#chat-history::-webkit-scrollbar-thumb { background-color: #3b82f6; border-radius: 4px; }
-textarea { resize:none; }
-.msg { max-width:75%; padding:10px; border-radius:12px; white-space:pre-wrap; word-wrap:break-word; }
-.msg.user { align-self:flex-end; background:linear-gradient(180deg,#1d4ed8,#3b82f6); color:#fff; }
-.msg.ai { align-self:flex-start; background:linear-gradient(180deg,#1e293b,#0f1724); border:1px solid rgba(255,255,255,0.05); color:#dcecff; }
-.timestamp { font-size:10px; color:#94a3b8; margin-top:2px; text-align:right; }
-.progress { height:10px; background:rgba(255,255,255,0.1); border-radius:8px; margin-top:4px; overflow:hidden; }
-.progress > i { display:block; height:100%; width:0%; background:linear-gradient(90deg,#3b82f6,#60a5fa); }
+#chat-history::-webkit-scrollbar-track { background: #f1f5f9; }
+#chat-history::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+
+@keyframes bounce-dot {
+    0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}
+}
+.bounce-dot{animation:bounce-dot 1.4s infinite ease-in-out both;}
 </style>
 </head>
 
-<body class="flex h-screen">
+<body class="bg-gray-100 text-gray-800 flex h-screen overflow-hidden">
+
 <!-- Sidebar -->
-<aside class="w-64 bg-gray-900 p-4 flex flex-col justify-between">
-    <div>
-        <h1 class="text-2xl font-bold mb-4 text-white">PrisimAI</h1>
-        <label class="text-gray-400">Select Model</label>
-        <select id="model-selector" class="w-full p-2 rounded-lg mt-2 bg-gray-800 text-white border border-gray-700"></select>
-        <button id="load-btn" class="w-full mt-2 p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition">Load Model</button>
-        <div class="progress mt-2"><i id="progress-bar"></i></div>
-        <div class="text-sm text-gray-400 mt-1">Load: <span id="progress-text">0%</span></div>
-        <button id="new-chat-btn" class="w-full mt-4 p-2 rounded-lg bg-gray-700 hover:bg-gray-600">+ New Chat</button>
+<aside class="w-64 bg-gray-50 border-r border-gray-200 flex-shrink-0 flex flex-col justify-between p-4 sm:flex">
+    <div class="space-y-4">
+        <div class="flex items-center space-x-2">
+            <h1 class="text-xl font-bold text-gray-900">PrisimAI Offline</h1>
+        </div>
+        <button id="new-chat-btn" class="w-full p-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition duration-200 text-center">+ New Chat</button>
+        <div class="space-y-2">
+            <label for="model-selector" class="text-sm font-medium text-gray-700">Select Model</label>
+            <select id="model-selector" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+        </div>
+        <div class="mt-2">
+            <div class="progress bg-gray-300 h-3 rounded-lg overflow-hidden">
+                <i id="progress-bar" class="bg-blue-600 h-full w-0"></i>
+            </div>
+            <div class="text-sm text-gray-600 mt-1">Load: <span id="progress-text">0%</span></div>
+        </div>
+    </div>
+    <div class="mt-4 flex items-center space-x-2 p-2 hover:bg-gray-200 rounded-lg transition duration-200">
+        <img src="https://placehold.co/32x32" alt="Profile" class="w-8 h-8 rounded-full">
+        <div>
+            <div class="font-medium text-gray-900">CJ</div>
+            <div class="text-sm text-gray-500">7th Grade</div>
+        </div>
     </div>
 </aside>
 
-<main class="flex-1 flex flex-col">
-    <div id="chat-history" class="flex-1 flex flex-col p-4 space-y-2 overflow-y-auto"></div>
-    <div class="p-4 bg-gray-800 flex gap-2">
-        <textarea id="chat-input" placeholder="Type a message..." rows="2" class="flex-1 p-2 rounded-lg bg-gray-700 text-white border border-gray-600"></textarea>
-        <button id="send-btn" class="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg">Send</button>
-    </div>
-</main>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col relative">
+    <div class="flex-1 flex flex-col justify-between" id="chat-container">
+        <div id="chat-area" class="flex-1 relative">
+            <div id="welcome-message" class="absolute inset-0 flex flex-col justify-center items-center text-center p-8 space-y-4 text-gray-500">
+                <h2 class="text-2xl font-bold text-gray-800">Hello there, CJ!</h2>
+                <p class="text-lg">Try typing something in the box below. Press Ctrl+Enter to send.</p>
+            </div>
+            <div id="chat-history" class="absolute inset-0 overflow-y-auto p-8 space-y-4 hidden"></div>
+            <div class="absolute bottom-0 inset-x-0 p-4 bg-white border-t border-gray-200">
+                <form id="chat-form" class="flex items-end space-x-4">
+                    <textarea id="chat-input" placeholder="Message PrisimAI..." rows="1" class="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                    <button type="submit" class="p-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition duration-200">Send</button>
+                </form>
+            </div>
+        </div>
+    </main>
 
 <script type="module">
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
@@ -51,52 +79,49 @@ const { CreateMLCEngine, prebuiltAppConfig } = webllm;
 
 const chatHistory = document.getElementById('chat-history');
 const chatInput = document.getElementById('chat-input');
-const sendBtn = document.getElementById('send-btn');
+const chatForm = document.getElementById('chat-form');
+const welcomeMessage = document.getElementById('welcome-message');
+const newChatBtn = document.getElementById('new-chat-btn');
 const modelSelector = document.getElementById('model-selector');
-const loadBtn = document.getElementById('load-btn');
 const progressBar = document.getElementById('progress-bar');
 const progressText = document.getElementById('progress-text');
-const newChatBtn = document.getElementById('new-chat-btn');
 
 let engine = null;
 let messagesHistory = [];
 
-// --- UI ---
+// --- UI Functions ---
 function addMessage(text, role){
+    welcomeMessage.classList.add('hidden');
+    chatHistory.classList.remove('hidden');
     const div = document.createElement('div');
-    div.className = 'msg ' + (role==='user'?'user':'ai');
-    div.innerText = text;
-
-    const time = document.createElement('div');
-    time.className='timestamp';
-    time.innerText=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-
-    div.appendChild(time);
+    div.className = 'flex mb-4 ' + (role==='user'?'justify-end':'justify-start');
+    div.innerHTML = `<div class="p-4 rounded-xl ${role==='user'?'bg-blue-500 text-white':'bg-gray-200 text-gray-800'}" style="white-space:pre-wrap; max-width:80%;">${text}</div>`;
     chatHistory.appendChild(div);
     chatHistory.scrollTop = chatHistory.scrollHeight;
-
     if(role==='user') messagesHistory.push({role, content:text});
 }
 
 // --- Progress ---
 function setProgress(percent){
     progressBar.style.width = percent + '%';
-    progressText.innerText = Math.round(percent)+'%';
+    progressText.textContent = Math.round(percent) + '%';
 }
 
-// --- WebLLM ---
+// --- WebLLM Functions ---
 function populateModelSelect(){
     modelSelector.innerHTML='';
-    const list = prebuiltAppConfig?.model_list || [];
+    const list = (prebuiltAppConfig && prebuiltAppConfig.model_list) ? prebuiltAppConfig.model_list : [];
     if(list.length===0){
         const fallback=[{id:'SmolLM2-1.7B-Instruct-q0f16',label:'SmolLM2-1.7B-Instruct'}];
-        fallback.forEach(f=>{ const opt=document.createElement('option'); opt.value=f.id; opt.text=f.label||f.id; modelSelector.appendChild(opt);});
+        fallback.forEach(f=>{
+            const opt=document.createElement('option'); opt.value=f.id; opt.text=f.label||f.id; modelSelector.appendChild(opt);
+        });
         return;
     }
     list.forEach(m=>{
         const id = m.model_id||m.model||m.name;
         if(!id) return;
-        const opt=document.createElement('option'); opt.value=id; opt.text=m.short_name||m.name||id;
+        const opt=document.createElement('option'); opt.value=id; opt.text=(m.short_name||m.name||id);
         modelSelector.appendChild(opt);
     });
 }
@@ -107,14 +132,15 @@ async function loadModel(){
     try{
         engine = await CreateMLCEngine(modelId,{
             appConfig: prebuiltAppConfig,
-            initProgressCallback: p=>{
-                if(typeof p==='number') setProgress(p*100);
+            initProgressCallback: (progress)=>{
+                if(typeof progress==='number') setProgress(progress*100);
             }
         });
         setProgress(100);
-        alert('Model loaded: '+modelId);
     }catch(err){
-        console.error(err); alert('Error loading model: '+err.message);
+        console.error('Load error',err);
+        setProgress(0);
+        alert('Error loading model: '+err.message);
     }
 }
 
@@ -125,37 +151,37 @@ async function handleChat(){
     addMessage(text,'user');
 
     const aiDiv = document.createElement('div');
-    aiDiv.className='msg ai'; aiDiv.innerText='...';
-    const time = document.createElement('div'); time.className='timestamp'; time.innerText=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    aiDiv.appendChild(time);
+    aiDiv.className='flex mb-4 justify-start';
+    aiDiv.innerHTML=`<div class="p-4 rounded-xl bg-gray-200 text-gray-800" style="white-space:pre-wrap; max-width:80%;">...</div>`;
     chatHistory.appendChild(aiDiv);
-    chatHistory.scrollTop=chatHistory.scrollHeight;
+    chatHistory.scrollTop = chatHistory.scrollHeight;
 
-    let partial='';
+    let partial = '';
     try{
         const stream = await engine.chat.completions.create({messages:messagesHistory,temperature:0.7,stream:true});
-        for await(const chunk of stream){
+        for await (const chunk of stream){
             const delta = chunk?.choices?.[0]?.delta?.content || '';
-            if(delta){ partial+=delta; aiDiv.firstChild.nodeValue=partial; chatHistory.scrollTop=chatHistory.scrollHeight;}
+            if(delta){ partial += delta; aiDiv.querySelector('div').innerText = partial; chatHistory.scrollTop = chatHistory.scrollHeight; }
         }
         messagesHistory.push({role:'assistant',content:partial});
     }catch(err){
         console.error(err);
-        aiDiv.firstChild.nodeValue='Error: '+(err?.message||err);
+        aiDiv.querySelector('div').innerText = 'Error: '+(err?.message||err);
     }
 }
 
-// --- Events ---
-sendBtn.addEventListener('click',handleChat);
-chatInput.addEventListener('keydown',e=>{
-    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleChat(); }
+// --- Event Listeners ---
+chatForm.addEventListener('submit',e=>{e.preventDefault();handleChat();});
+chatInput.addEventListener('input',()=>{chatInput.style.height='auto'; chatInput.style.height=chatInput.scrollHeight+'px';});
+newChatBtn.addEventListener('click',()=>{
+    chatHistory.innerHTML=''; messagesHistory=[]; welcomeMessage.classList.remove('hidden'); chatHistory.classList.add('hidden');
 });
-newChatBtn.addEventListener('click',()=>{ chatHistory.innerHTML=''; messagesHistory=[]; });
-loadBtn.addEventListener('click',loadModel);
 
+// Populate and load first model
 populateModelSelect();
+loadModel();
 </script>
-    <script>
+<script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')

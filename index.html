@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Nyvera</title>
   <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="shortcut icon" href="/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<meta name="apple-mobile-web-app-title" content="Nyvera" />
-<link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="Nyvera" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Tailwind-like styling -->
   <style>
     :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#7c3aed}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#e6eef8;background:linear-gradient(180deg,#071129 0%,#00121a 100%)}
@@ -17,18 +19,15 @@
     header{display:flex;gap:16px;align-items:center}
     h1{font-size:20px;margin:0}
     .card{flex:1;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6);}
-
     .controls{display:flex;gap:8px;margin-top:12px}
     select,input[type=text]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);min-width:0}
     button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;cursor:pointer}
     .progress{height:10px;background:rgba(255,255,255,0.03);border-radius:8px;margin-top:8px;overflow:hidden}
     .progress > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#60a5fa)}
-
     .chat{flex:1;margin-top:18px;display:flex;flex-direction:column;gap:10px;overflow:auto;padding:8px}
     .msg{max-width:78%;padding:10px;border-radius:10px;white-space:pre-wrap}
     .msg.user{align-self:flex-end;background:linear-gradient(180deg,#16324a,#0f2430);color:#d9f2ff}
     .msg.ai{align-self:flex-start;background:linear-gradient(180deg,#0f1724,#071029);border:1px solid rgba(255,255,255,0.03);color:#dcecff}
-
     footer{display:flex;gap:8px;margin-top:12px}
     textarea{flex:1;min-height:64px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef8}
     .meta{margin-top:8px;color:var(--muted);font-size:13px}
@@ -36,6 +35,12 @@
     .error{color:#ffb4b4;font-size:13px;margin-top:8px}
     .small{font-size:12px;color:var(--muted)}
   </style>
+
+  <!-- Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -88,10 +93,29 @@
     let engine = null;
     let messagesHistory = [];
 
-    function appendMessage(who, text){
+    // --- Rendering helpers ---
+    function renderAIText(text) {
+      // Convert <think>...</think> to italics
+      const processed = text.replace(/<think>(.*?)<\/think>/gs, "*$1*");
+      // Render Markdown
+      const html = marked.parse(processed, { breaks: true });
+      // Highlight code blocks
+      const container = document.createElement("div");
+      container.innerHTML = html;
+      container.querySelectorAll("pre code").forEach((el) => {
+        hljs.highlightElement(el);
+      });
+      return container.innerHTML;
+    }
+
+    function appendMessage(who, text) {
       const div = document.createElement('div');
-      div.className = 'msg ' + (who==='user'?'user':'ai');
-      div.innerText = text;
+      div.className = 'msg ' + (who === 'user' ? 'user' : 'ai');
+      if (who === 'ai') {
+        div.innerHTML = renderAIText(text);
+      } else {
+        div.innerText = text;
+      }
       chatEl.appendChild(div);
       chatEl.scrollTop = chatEl.scrollHeight;
     }
@@ -151,13 +175,17 @@
       messagesHistory.push({role:'user', content:text});
       setStatus('generating...');
 
-      const aiDiv=document.createElement('div'); aiDiv.className='msg ai'; aiDiv.innerText=''; chatEl.appendChild(aiDiv); chatEl.scrollTop=chatEl.scrollHeight;
+      const aiDiv=document.createElement('div'); aiDiv.className='msg ai'; aiDiv.innerHTML=''; chatEl.appendChild(aiDiv); chatEl.scrollTop=chatEl.scrollHeight;
       let partial='';
       try{
         const stream = await engine.chat.completions.create({messages:messagesHistory, temperature:0.7, stream:true});
         for await (const chunk of stream){
           const delta=chunk?.choices?.[0]?.delta?.content||'';
-          if(delta){ partial+=delta; aiDiv.innerText=partial; chatEl.scrollTop=chatEl.scrollHeight; }
+          if(delta){
+            partial+=delta;
+            aiDiv.innerHTML=renderAIText(partial);
+            chatEl.scrollTop=chatEl.scrollHeight;
+          }
         }
         messagesHistory.push({role:'assistant', content:partial});
         setStatus('ready');
@@ -173,15 +201,15 @@
 
     if(!('gpu' in navigator)) setStatus('WARNING: WebGPU not available');
     populateModelSelect();
+
+    // --- Register service worker ---
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js")
+          .then(reg => console.log("SW registered:", reg.scope))
+          .catch(err => console.error("SW registration failed:", err));
+      });
+    }
   </script>
-  <script>if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then(reg => console.log("SW registered:", reg.scope))
-      .catch(err => console.error("SW registration failed:", err));
-  });
-}
-</script>
 </body>
 </html>

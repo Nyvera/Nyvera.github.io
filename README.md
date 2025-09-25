@@ -1,17 +1,17 @@
-# PrisimAI
+# Nyvera
 
-PrisimAI is a progressive web app (PWA) that lets you chat with models powered by Pollinations.ai
-. It’s designed to look sleek, run fast, and stay usable even when offline. Once installed, PrisimAI behaves like a native app on desktop or mobile, complete with icons, splash screens, and offline support.
+Nyvera is a progressive web app (PWA) that lets you chat with models powered by WebLLM
+. It’s designed to look sleek, run fast, and stay usable even when offline. Once installed, Nyvera behaves like a native app on desktop or mobile, complete with icons, splash screens, and offline support.
 
 ## ✨ Features
 
 - Chat Interface – Seamless, modern chat UI built with Tailwind CSS.
 
-- Model Selection – Choose different AI models from Pollinations API.
+- Model Selection – Choose different AI models from WebLLM.
 
 - PWA Support – Installable on desktop and mobile, with offline caching.
 
-- Offline Mode – Displays a custom offline page when there’s no internet.
+- Offline Mode – Lets you chat OFFLINE.
 
 - Theming – Colors and fonts configured for a clean, modern experience.
 
@@ -21,9 +21,9 @@ PrisimAI is a progressive web app (PWA) that lets you chat with models powered b
 ## 🚀 Getting Started
 ### 1. Clone the Repository
 
-`git clone https://github.com/yourusername/prisimai.git`
+`git clone https://github.com/orgs/nyvera/nyvera.github.io.git`
 
-`cd prisimai`
+`cd nyvera`
 
 ### 2. Add Icons
 
@@ -62,7 +62,7 @@ http://localhost:8080
 
 ## 📱 Installation (as PWA)
 
-Open PrisimAI in Chrome, Edge, or Safari.
+Open Nyvera in Chrome, Edge, or Safari.
 
 Click the “Install App” prompt (or “Add to Home Screen” on iOS).
 
@@ -89,7 +89,7 @@ manifest.json → "theme_color" and "background_color"
 
 API Integration
 
-Right now, the chat uses the Pollinations.ai API. You can swap this out with any other AI API by modifying the JavaScript fetch logic inside index.html.
+Right now, the chat uses WebLLM to chat online and offline. You can swap this out with any other AI API by modifying the JavaScript fetch logic inside index.html.
 
 Caching
 
@@ -122,6 +122,6 @@ You are free to use, modify, and distribute it with attribution.
 
 ### Built with Tailwind CSS
 
-### Powered by Pollinations.ai API
+### Powered by WebLLM
 
-### Icon design inspired by Prism & AI themes
+### Icon design inspiration by Nyvera.

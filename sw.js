@@ -1,103 +1,64 @@
-const CACHE_NAME = "prisimai-cache-v5";
+// sw.js
 
-// Core files + offline fallback
-const ASSETS = [
-  "/PrisimAI/",
-  "/PrisimAI/index.html",
-  "/PrisimAI/offline.html",
-  "/PrisimAI/manifest.json",
+const CACHE_NAME = "nyvera-cache-v1";
 
-  // PWA icons
-  "/PrisimAI/icons/icon-192.png",
-  "/PrisimAI/icons/icon-512.png",
-
-  // Apple & favicons
-  "/PrisimAI/apple-touch-icon.png",
-  "/PrisimAI/favicon-32x32.png",
-  "/PrisimAI/favicon-16x16.png",
-
-  // Fonts (served cross-origin, safer to let runtime caching handle them)
-  // Don’t precache cdn.tailwindcss.com or google fonts, they can break install
+// Files to precache
+const PRECACHE_ASSETS = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/favicon.ico",
+  "/favicon-96x96.png",
+  "/favicon.svg",
+  "/apple-touch-icon.png",
+  "/web-app-manifest-192x192.png",
+  "/web-app-manifest-512x512.png",
 ];
 
-// Install event with safe precaching
+// Install: cache assets
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      Promise.all(
-        ASSETS.map((url) =>
-          fetch(url)
-            .then((response) => {
-              if (!response.ok) throw new Error(`Failed: ${url}`);
-              return cache.put(url, response);
-            })
-            .catch((err) => console.warn("Skipping asset:", url, err))
-          )
-        )
-      )
-    );
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
+  );
   self.skipWaiting();
 });
 
-// Activate event → clear old caches
+// Activate: clean old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames.map((name) => {
+          if (name !== CACHE_NAME) {
+            return caches.delete(name);
+          }
+        })
+      )
     )
   );
   self.clients.claim();
 });
 
-// Fetch event with network strategies
+// Fetch: serve index.html as fallback for all navigation
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-
-  // Pollinations API → network first
-  if (url.hostname.includes("pollinations.ai")) {
+  if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request).catch(() => caches.match("/index.html"))
     );
     return;
   }
 
-  // Google Fonts & Tailwind CDN → network first, cache fallback
-  if (
-    url.hostname.includes("fonts.googleapis.com") ||
-    url.hostname.includes("fonts.gstatic.com") ||
-    url.hostname.includes("cdn.tailwindcss.com")
-  ) {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
+  // For other requests (icons, manifest, etc.)
+  event.respondWith(
+    caches.match(event.request).then(
+      (cached) =>
+        cached ||
+        fetch(event.request).then((resp) => {
           return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
+            cache.put(event.request, resp.clone());
+            return resp;
           });
         })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Default → cache first, then network, then offline.html
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return (
-        cachedResponse ||
-        fetch(event.request)
-          .then((networkResponse) => {
-            return caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse.clone());
-              return networkResponse;
-            });
-          })
-          .catch(() => {
-            if (event.request.mode === "navigate") {
-              return caches.match("/PrisimAI/offline.html");
-            }
-          })
-      );
-    })
+    )
   );
 });

@@ -11,10 +11,9 @@
   <meta name="apple-mobile-web-app-title" content="Nyvera" />
   <link rel="manifest" href="manifest.json" />
 
-  <!-- Glassmorphism Styling -->
+  <!-- Glassmorphism Styling with Animated Background -->
   <style>
     :root {
-      --bg: #0f1724;
       --muted: #94a3b8;
       --accent: #7c3aed;
     }
@@ -23,8 +22,16 @@
       margin:0;
       font-family: Inter, system-ui, Segoe UI, Roboto, 'Helvetica Neue', Arial;
       color:#e6eef8;
-      background:linear-gradient(180deg,#071129 0%,#00121a 100%);
+      background:linear-gradient(270deg,#071129,#00121a,#1a1f3c,#002b40);
+      background-size: 800% 800%;
+      animation: gradientShift 24s ease infinite;
     }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     .wrap {
       max-width:900px;
       margin:28px auto;
@@ -220,7 +227,6 @@
     let engine = null;
     let messagesHistory = [];
 
-    // --- Rendering helpers ---
     function renderAIText(text) {
       const processed = text.replace(/<think>(.*?)<\/think>/gs, "*$1*");
       const html = marked.parse(processed, { breaks: true });

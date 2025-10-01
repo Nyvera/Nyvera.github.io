@@ -11,29 +11,156 @@
   <meta name="apple-mobile-web-app-title" content="Nyvera" />
   <link rel="manifest" href="manifest.json" />
 
-  <!-- Tailwind-like styling -->
+  <!-- Glassmorphism Styling -->
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#7c3aed}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#e6eef8;background:linear-gradient(180deg,#071129 0%,#00121a 100%)}
-    .wrap{max-width:900px;margin:28px auto;padding:20px;display:flex;flex-direction:column;height:95vh}
-    header{display:flex;gap:16px;align-items:center}
-    h1{font-size:20px;margin:0}
-    .card{flex:1;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6);}
-    .controls{display:flex;gap:8px;margin-top:12px}
-    select,input[type=text]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);min-width:0}
-    button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;cursor:pointer}
-    .progress{height:10px;background:rgba(255,255,255,0.03);border-radius:8px;margin-top:8px;overflow:hidden}
-    .progress > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#60a5fa)}
-    .chat{flex:1;margin-top:18px;display:flex;flex-direction:column;gap:10px;overflow:auto;padding:8px}
-    .msg{max-width:78%;padding:10px;border-radius:10px;white-space:pre-wrap}
-    .msg.user{align-self:flex-end;background:linear-gradient(180deg,#16324a,#0f2430);color:#d9f2ff}
-    .msg.ai{align-self:flex-start;background:linear-gradient(180deg,#0f1724,#071029);border:1px solid rgba(255,255,255,0.03);color:#dcecff}
-    footer{display:flex;gap:8px;margin-top:12px}
-    textarea{flex:1;min-height:64px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef8}
-    .meta{margin-top:8px;color:var(--muted);font-size:13px}
-    .help{margin-top:10px;color:#cfe8ff;font-size:13px}
-    .error{color:#ffb4b4;font-size:13px;margin-top:8px}
-    .small{font-size:12px;color:var(--muted)}
+    :root {
+      --bg: #0f1724;
+      --muted: #94a3b8;
+      --accent: #7c3aed;
+    }
+    html,body {
+      height:100%;
+      margin:0;
+      font-family: Inter, system-ui, Segoe UI, Roboto, 'Helvetica Neue', Arial;
+      color:#e6eef8;
+      background:linear-gradient(180deg,#071129 0%,#00121a 100%);
+    }
+    .wrap {
+      max-width:900px;
+      margin:28px auto;
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      height:95vh;
+    }
+    header {
+      display:flex;
+      gap:16px;
+      align-items:center;
+    }
+    h1 {
+      font-size:20px;
+      margin:0;
+    }
+
+    /* Glass card */
+    .card {
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      padding:16px;
+      border-radius:20px;
+      background:rgba(255,255,255,0.08);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      border:1px solid rgba(255,255,255,0.15);
+      box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .controls {
+      display:flex;
+      gap:8px;
+      margin-top:12px;
+    }
+    select,input[type=text],textarea {
+      padding:10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color:#e6eef8;
+      transition:background 0.3s, border 0.3s;
+    }
+    select:focus,input[type=text]:focus,textarea:focus {
+      border:1px solid var(--accent);
+      outline:none;
+      background:rgba(255,255,255,0.1);
+    }
+    button {
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:linear-gradient(135deg,var(--accent),#60a5fa);
+      color:white;
+      cursor:pointer;
+      font-weight:500;
+      transition:transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform:translateY(-1px);
+      box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .progress {
+      height:10px;
+      background:rgba(255,255,255,0.08);
+      border-radius:8px;
+      margin-top:8px;
+      overflow:hidden;
+    }
+    .progress > i {
+      display:block;
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,#7c3aed,#60a5fa);
+    }
+
+    .chat {
+      flex:1;
+      margin-top:18px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:auto;
+      padding:8px;
+    }
+    .msg {
+      max-width:78%;
+      padding:12px 14px;
+      border-radius:14px;
+      white-space:pre-wrap;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    }
+    .msg.user {
+      align-self:flex-end;
+      background:rgba(124,58,237,0.2);
+      border:1px solid rgba(124,58,237,0.4);
+      color:#e6e6ff;
+    }
+    .msg.ai {
+      align-self:flex-start;
+      background:rgba(15,23,36,0.5);
+      border:1px solid rgba(255,255,255,0.15);
+      color:#dcecff;
+    }
+
+    footer {
+      display:flex;
+      gap:8px;
+      margin-top:12px;
+    }
+    .meta {
+      margin-top:8px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .help {
+      margin-top:10px;
+      color:#cfe8ff;
+      font-size:13px;
+    }
+    .error {
+      color:#ffb4b4;
+      font-size:13px;
+      margin-top:8px;
+    }
+    .small {
+      font-size:12px;
+      color:var(--muted);
+    }
   </style>
 
   <!-- Markdown parser -->
@@ -45,7 +172,7 @@
 <body>
   <div class="wrap">
     <header>
-      <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(90deg,#7c3aed,#60a5fa);display:flex;align-items:center;justify-content:center;color:#04233b;font-weight:700">AI</div>
+      <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(90deg,#7c3aed,#60a5fa);display:flex;align-items:center;justify-content:center;color:#04233b;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,0.4);backdrop-filter:blur(8px)">AI</div>
       <div>
         <h1>Nyvera</h1>
         <div class="meta">The AI now maintains conversation history so it actually responds correctly.</div>
@@ -95,11 +222,8 @@
 
     // --- Rendering helpers ---
     function renderAIText(text) {
-      // Convert <think>...</think> to italics
       const processed = text.replace(/<think>(.*?)<\/think>/gs, "*$1*");
-      // Render Markdown
       const html = marked.parse(processed, { breaks: true });
-      // Highlight code blocks
       const container = document.createElement("div");
       container.innerHTML = html;
       container.querySelectorAll("pre code").forEach((el) => {
@@ -202,7 +326,6 @@
     if(!('gpu' in navigator)) setStatus('WARNING: WebGPU not available');
     populateModelSelect();
 
-    // --- Register service worker ---
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("/sw.js")

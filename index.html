@@ -197,7 +197,7 @@ footer { display:flex; gap:8px; margin-top:12px; }
     <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(90deg,#7c3aed,#60a5fa);display:flex;align-items:center;justify-content:center;color:#04233b;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,0.5);backdrop-filter:blur(10px)">AI</div>
     <div>
       <h1>Nyvera</h1>
-      <div class="meta">The AI now maintains conversation history so it actually responds correctly.</div>
+      <div class="meta">Now supports text & image generation.</div>
     </div>
   </header>
 
@@ -218,7 +218,7 @@ footer { display:flex; gap:8px; margin-top:12px; }
     <div class="chat" id="chat"></div>
 
     <footer>
-      <textarea id="prompt" placeholder="Type a message..."></textarea>
+      <textarea id="prompt" placeholder="Type a message or /image something..."></textarea>
       <button id="sendBtn">Send</button>
     </footer>
   </div>
@@ -277,15 +277,77 @@ async function loadModel(){
     engine=await CreateMLCEngine(modelId,opts); setStatus('ready ('+modelId+')'); setProgress(100);
   }catch(err){console.error(err);setStatus('error');errorBox.style.display='block';errorBox.innerText='Error loading model: '+(err?.message||err);}
 }
-async function sendMessage(){
-  const text=promptEl.value.trim(); if(!text||!engine) return;
-  promptEl.value=''; appendMessage('user',text); messagesHistory.push({role:'user',content:text}); setStatus('generating...');
-  const aiDiv=document.createElement('div'); aiDiv.className='msg ai'; aiDiv.innerHTML=''; chatEl.appendChild(aiDiv); chatEl.scrollTop=chatEl.scrollHeight;
-  let partial=''; try{const stream=await engine.chat.completions.create({messages:messagesHistory,temperature:0.7,stream:true});
-    for await(const chunk of stream){const delta=chunk?.choices?.[0]?.delta?.content||''; if(delta){partial+=delta;aiDiv.innerHTML=renderAIText(partial);chatEl.scrollTop=chatEl.scrollHeight;}}
+
+// IMAGE GENERATION SUPPORT
+async function sendImage(prompt) {
+  appendMessage('user', '/image ' + prompt);
+  setStatus('generating image...');
+
+  try {
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'msg ai';
+    aiDiv.innerHTML = `<div>Generating image...</div>`;
+    chatEl.appendChild(aiDiv);
+    chatEl.scrollTop = chatEl.scrollHeight;
+
+    const img = new Image();
+    img.src = url;
+    img.alt = prompt;
+    img.style.maxWidth = "100%";
+    img.style.borderRadius = "12px";
+    img.onload = () => {
+      aiDiv.innerHTML = '';
+      aiDiv.appendChild(img);
+      setStatus('ready');
+    };
+    img.onerror = () => {
+      aiDiv.innerHTML = '❌ Error generating image.';
+      setStatus('error');
+    };
+
+    messagesHistory.push({ role: "assistant", content: `[Image generated for: ${prompt}]` });
+  } catch (err) {
+    console.error(err);
+    appendMessage('ai', 'Error fetching image: ' + err.message);
+    setStatus('error');
+  }
+}
+
+async function sendMessage() {
+  const text=promptEl.value.trim();
+  if (!text) return;
+  promptEl.value = '';
+
+  // Check for image command
+  if (text.toLowerCase().startsWith('/image ')) {
+    const imgPrompt = text.replace('/image ', '').trim();
+    return sendImage(imgPrompt);
+  }
+
+  if (!engine) return;
+  appendMessage('user', text);
+  messagesHistory.push({role:'user',content:text});
+  setStatus('generating...');
+  
+  const aiDiv=document.createElement('div');
+  aiDiv.className='msg ai';
+  aiDiv.innerHTML='';
+  chatEl.appendChild(aiDiv);
+  chatEl.scrollTop=chatEl.scrollHeight;
+
+  let partial='';
+  try{
+    const stream=await engine.chat.completions.create({messages:messagesHistory,temperature:0.7,stream:true});
+    for await(const chunk of stream){
+      const delta=chunk?.choices?.[0]?.delta?.content||'';
+      if(delta){partial+=delta;aiDiv.innerHTML=renderAIText(partial);chatEl.scrollTop=chatEl.scrollHeight;}
+    }
     messagesHistory.push({role:'assistant',content:partial}); setStatus('ready');
   }catch(err){console.error(err);appendMessage('ai','Error: '+(err?.message||err));setStatus('error');}
 }
+
 loadBtn.addEventListener('click',loadModel);
 sendBtn.addEventListener('click',sendMessage);
 refreshBtn.addEventListener('click',populateModelSelect);
@@ -319,7 +381,7 @@ initParticles();animate();
 const follower = document.querySelector('.cursor-follower');
 let mouseX = 0, mouseY = 0, posX = 0, posY = 0, speed = 0.1;
 document.addEventListener('mousemove', e=>{mouseX=e.clientX; mouseY=e.clientY;});
-function animateFollower(){ posX+=(mouseX-posX)*speed; posY+=(mouseY-posY)*speed; follower.style.transform=`translate(${posX}px,${posY}px)`; requestAnimationFrame(animateFollower);}
+function animateFollower(){ posX+=(mouseX-posX)*speed; posY+=(mouseY-posY)*speed; follower.style.left=posX+'px'; follower.style.top=posY+'px'; requestAnimationFrame(animateFollower);}
 animateFollower();
 </script>
 

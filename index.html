@@ -1,251 +1,252 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nyvera Chat</title>
-<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<title>Nyvera Liquid Chat</title>
 
 <style>
-:root {
-  --bg: #f8f9fa;
-  --bg-alt: #ffffff;
-  --text: #1a1a1a;
-  --user-bg: #10a37f;
-  --user-text: #fff;
-  --ai-bg: #e2e2e2;
-  --ai-text: #1a1a1a;
-  --accent: #7c3aed;
-}
-body {
-  margin:0;
-  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+:root{
+  --accent:#7c3aed;
+  --text:#e6eef8;
+  --glass-base:rgba(255,255,255,0.05);
+  --glass-border:rgba(255,255,255,0.15);
+  --user-bg:rgba(124,58,237,0.3);
+  --ai-bg:rgba(255,255,255,0.08);
 }
 
-/* Starfield and cursor orb */
-canvas#stars, .cursor-follower {
-  position: fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  pointer-events:none;
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:Inter,sans-serif;color:var(--text);overflow:hidden;}
+body{
+  background:linear-gradient(270deg,#071129,#00121a,#1a1f3c,#002b40);
+  background-size:800% 800%;
+  animation:gradientShift 24s ease infinite;
+  position:relative;
+}
+@keyframes gradientShift{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+
+.wrap{
+  position:relative;
+  z-index:1;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+
+/* Liquid Glass Card */
+.card{
+  width:90%;
+  max-width:600px;
+  padding:30px;
+  border-radius:60px;
+  background:var(--glass-base);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(40px) saturate(200%);
+  -webkit-backdrop-filter:blur(40px) saturate(200%);
+  box-shadow:0 12px 48px rgba(0,0,0,0.45);
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  color:var(--text);
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';
+  position:absolute;
+  top:-50%;left:-50%;
+  width:200%;height:200%;
+  background:linear-gradient(120deg, #7c3aed,#60a5fa,#ff9a9e,#fad0c4);
+  animation:flow 6s linear infinite;
+  opacity:0.15;
   z-index:0;
 }
-.cursor-follower {
-  width: 30px; height:30px;
+@keyframes flow{
+  0%{transform:translate(0,0) rotate(0deg);}
+  50%{transform:translate(20%,20%) rotate(180deg);}
+  100%{transform:translate(0,0) rotate(360deg);}
+}
+.card > *{position:relative;z-index:1;}
+
+textarea{
+  width:100%;
+  padding:16px;
+  border-radius:30px;
+  border:none;
+  background:rgba(255,255,255,0.1);
+  color:var(--text);
+  font-size:16px;
+  backdrop-filter:blur(25px) saturate(180%);
+  outline:none;
+  resize:none;
+}
+button{
+  padding:12px 20px;
+  border-radius:30px;
+  border:none;
+  background:linear-gradient(135deg,var(--accent),#60a5fa);
+  color:white;
+  font-weight:500;
+  cursor:pointer;
+  transition:0.3s;
+}
+button:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 20px rgba(124,58,237,0.7);
+}
+.chat{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  max-height:400px;
+  overflow-y:auto;
+}
+.msg{
+  padding:14px 18px;
+  border-radius:30px;
+  backdrop-filter:blur(25px) saturate(180%);
+  -webkit-backdrop-filter:blur(25px) saturate(180%);
+  box-shadow:0 6px 24px rgba(0,0,0,0.4);
+  max-width:75%;
+  word-break:break-word;
+}
+.msg.user{align-self:flex-end;background:var(--user-bg);}
+.msg.ai{align-self:flex-start;background:var(--ai-bg);}
+
+/* Cursor liquid orb */
+.cursor-follower{
+  position:fixed;
+  top:0;left:0;
+  width:40px;height:40px;
   border-radius:50%;
-  background: rgba(124,58,237,0.2);
-  backdrop-filter: blur(6px);
-  box-shadow:0 0 10px rgba(124,58,237,0.4);
+  pointer-events:none;
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(12px);
+  box-shadow:0 0 25px rgba(255,255,255,0.6);
+  transform:translate(-50%,-50%);
   z-index:9999;
 }
 
-/* Chat container */
-#chat-wrap {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  padding:1rem;
-  gap:0.5rem;
-  overflow-y:auto;
-  z-index:1;
+@media (max-width:600px){
+  .card{padding:20px;border-radius:40px;}
+  textarea{padding:12px;}
 }
-.msg {
-  max-width:75%;
-  padding:10px 14px;
-  border-radius:16px;
-  line-height:1.4;
-  word-wrap: break-word;
-  box-shadow:0 2px 6px rgba(0,0,0,0.15);
-}
-.msg.user {
-  background: var(--user-bg);
-  color: var(--user-text);
-  align-self:flex-end;
-  border-bottom-right-radius:2px;
-}
-.msg.ai {
-  background: var(--ai-bg);
-  color: var(--ai-text);
-  align-self:flex-start;
-  border-bottom-left-radius:2px;
-}
-
-/* Input area */
-#input-wrap {
-  display:flex;
-  gap:0.5rem;
-  padding:0.5rem 1rem;
-  border-top:1px solid rgba(0,0,0,0.1);
-  background: var(--bg-alt);
-}
-#prompt {
-  flex:1;
-  padding:10px;
-  border-radius:12px;
-  border:1px solid rgba(0,0,0,0.2);
-  outline:none;
-}
-#sendBtn {
-  padding:10px 16px;
-  border:none;
-  border-radius:12px;
-  background: var(--accent);
-  color:white;
-  cursor:pointer;
-}
-
-/* Settings panel */
-#settingsBtn {
-  position: fixed;
-  top:10px; right:10px;
-  z-index:100;
-  padding:8px 12px;
-  border:none;
-  border-radius:12px;
-  background: var(--accent);
-  color:white;
-  cursor:pointer;
-}
-#settingsPanel {
-  position: fixed;
-  top:0; right:-300px;
-  width:280px;
-  height:100%;
-  background: var(--bg-alt);
-  box-shadow:-4px 0 12px rgba(0,0,0,0.2);
-  padding:1rem;
-  transition: right 0.3s ease;
-  display:flex;
-  flex-direction:column;
-  gap:1rem;
-  z-index:99;
-}
-#settingsPanel.active {
-  right:0;
-}
-label {display:block; margin-bottom:4px;}
-select,input[type=color] {width:100%; padding:6px; border-radius:8px; border:1px solid #ccc;}
 </style>
 </head>
 <body>
-
 <canvas id="stars"></canvas>
+<canvas id="orbCanvas"></canvas>
 <div class="cursor-follower"></div>
 
-<button id="settingsBtn">⚙️</button>
-<div id="settingsPanel">
-  <h3>Settings</h3>
-  <label for="themeSelect">Theme:</label>
-  <select id="themeSelect">
-    <option value="light">Light</option>
-    <option value="dark">Dark</option>
-    <option value="neon">Neon</option>
-  </select>
-  <label for="modelSelect">Model:</label>
-  <select id="modelSelect">
-    <option value="smollm">SmolLM2</option>
-    <option value="llama3">LLaMA-3</option>
-    <option value="qwen1">Qwen-1.5B</option>
-  </select>
-</div>
-
-<div id="chat-wrap"></div>
-
-<div id="input-wrap">
-  <textarea id="prompt" placeholder="Type a message..."></textarea>
-  <button id="sendBtn">Send</button>
+<div class="wrap">
+  <div class="card">
+    <div class="chat" id="chat"></div>
+    <textarea id="prompt" placeholder="Type a message..."></textarea>
+    <button id="sendBtn">Send</button>
+    <select id="modelSelect" style="margin-top:10px;"></select>
+  </div>
 </div>
 
 <script type="module">
-  import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-  const { CreateMLCEngine, prebuiltAppConfig } = webllm;
+import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+const { CreateMLCEngine, prebuiltAppConfig } = webllm;
 
-  const chatEl = document.getElementById("chat-wrap");
-  const promptEl = document.getElementById("prompt");
-  const sendBtn = document.getElementById("sendBtn");
-  const themeSelect = document.getElementById("themeSelect");
-  const modelSelect = document.getElementById("modelSelect");
-  const settingsBtn = document.getElementById("settingsBtn");
-  const settingsPanel = document.getElementById("settingsPanel");
-  
-  let engine=null, messagesHistory=[];
+const chatEl=document.getElementById("chat");
+const promptEl=document.getElementById("prompt");
+const sendBtn=document.getElementById("sendBtn");
+const modelSelect=document.getElementById("modelSelect");
 
-  function appendMessage(role,text){
-    const div=document.createElement("div");
-    div.className="msg "+role;
-    div.innerText=text;
-    chatEl.appendChild(div);
-    chatEl.scrollTop = chatEl.scrollHeight;
-  }
+let engine=null,messagesHistory=[];
 
-  async function sendMessage(){
-    const text = promptEl.value.trim();
-    if(!text || !engine) return;
-    appendMessage("user",text);
-    messagesHistory.push({role:"user",content:text});
-    promptEl.value="";
-    const aiDiv=document.createElement("div");
-    aiDiv.className="msg ai"; aiDiv.innerText="...";
-    chatEl.appendChild(aiDiv); chatEl.scrollTop = chatEl.scrollHeight;
-    try{
-      let partial="";
-      const stream = await engine.chat.completions.create({messages:messagesHistory, temperature:0.7, stream:true});
-      for await(const chunk of stream){
-        const delta=chunk?.choices?.[0]?.delta?.content||"";
-        if(delta){partial+=delta; aiDiv.innerText=partial;}
-      }
-      messagesHistory.push({role:"assistant",content:partial});
-    }catch(err){
-      aiDiv.innerText="Error: "+(err?.message||err);
+// Populate models
+if(prebuiltAppConfig?.model_list){
+  prebuiltAppConfig.model_list.forEach(m=>{
+    const opt=document.createElement("option");
+    opt.value=m.model_id||m.model||m.name;
+    opt.text=m.short_name||m.name||m.model_id||m.model;
+    modelSelect.appendChild(opt);
+  });
+}
+
+async function loadEngine(modelId){
+  engine = await CreateMLCEngine(modelId,{appConfig:prebuiltAppConfig});
+}
+
+modelSelect.addEventListener("change",e=>loadEngine(e.target.value));
+
+function appendMessage(role,text){
+  const div=document.createElement("div");
+  div.className="msg "+role;
+  div.innerText=text;
+  chatEl.appendChild(div);
+  chatEl.scrollTop=chatEl.scrollHeight;
+}
+
+async function sendMessage(){
+  const text=promptEl.value.trim();
+  if(!text||!engine) return;
+  appendMessage("user",text);
+  messagesHistory.push({role:"user",content:text});
+  promptEl.value="";
+  const aiDiv=document.createElement("div"); aiDiv.className="msg ai"; aiDiv.innerText="...";
+  chatEl.appendChild(aiDiv); chatEl.scrollTop=chatEl.scrollHeight;
+  try{
+    let partial="";
+    const stream = await engine.chat.completions.create({messages:messagesHistory,temperature:0.7,stream:true});
+    for await(const chunk of stream){
+      const delta=chunk?.choices?.[0]?.delta?.content||"";
+      if(delta){partial+=delta; aiDiv.innerText=partial;}
     }
-  }
+    messagesHistory.push({role:"assistant",content:partial});
+  }catch(err){aiDiv.innerText="Error: "+(err?.message||err);}
+}
 
-  sendBtn.addEventListener("click",sendMessage);
-  promptEl.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)) sendMessage();});
-
-  settingsBtn.addEventListener("click",()=>{settingsPanel.classList.toggle("active");});
-  themeSelect.addEventListener("change",(e)=>{
-    const t = e.target.value;
-    if(t==="light"){document.documentElement.style.setProperty("--bg","#f8f9fa");document.documentElement.style.setProperty("--bg-alt","#fff");document.documentElement.style.setProperty("--text","#1a1a1a");document.documentElement.style.setProperty("--user-bg","#10a37f");document.documentElement.style.setProperty("--ai-bg","#e2e2e2");}
-    else if(t==="dark"){document.documentElement.style.setProperty("--bg","#1a1a1a");document.documentElement.style.setProperty("--bg-alt","#2a2a2a");document.documentElement.style.setProperty("--text","#eee");document.documentElement.style.setProperty("--user-bg","#0fbd9f");document.documentElement.style.setProperty("--ai-bg","#333");}
-    else if(t==="neon"){document.documentElement.style.setProperty("--bg","#0b0c1a");document.documentElement.style.setProperty("--bg-alt","#0f0f2a");document.documentElement.style.setProperty("--text","#fff");document.documentElement.style.setProperty("--user-bg","#7c3aed");document.documentElement.style.setProperty("--ai-bg","#1a1f3c");}
-  });
-
-  modelSelect.addEventListener("change", async e=>{
-    if(engine) engine=null;
-    const modelId = e.target.value;
-    engine = await CreateMLCEngine(modelId, {appConfig: prebuiltAppConfig});
-  });
-
+sendBtn.addEventListener("click",sendMessage);
+promptEl.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)) sendMessage();});
 </script>
 
 <script>
 // Starfield
-const canvas = document.getElementById("stars");
-const ctx = canvas.getContext("2d");
-let w,h,particles=[];
-function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
+const canvas=document.getElementById("stars"),ctx=canvas.getContext("2d");
+let w,h;function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
 window.addEventListener("resize",resize);resize();
 class Particle{constructor(){this.reset();}
-reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.r=Math.random()*1.5+0.2;this.dx=(Math.random()-0.5)*0.3;this.dy=(Math.random()-0.5)*0.3;this.alpha=Math.random()*0.5+0.3;}
+reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.r=Math.random()*1.5+0.3;this.dx=(Math.random()-0.5)*0.4;this.dy=(Math.random()-0.5)*0.4;this.alpha=Math.random()*0.5+0.5;}
 update(){this.x+=this.dx;this.y+=this.dy;if(this.x<0||this.x>w||this.y<0||this.y>h)this.reset();this.alpha+=(Math.random()-0.5)*0.05;if(this.alpha<0.2)this.alpha=0.2;if(this.alpha>1)this.alpha=1;}
-draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle="rgba(255,255,255,"+this.alpha+")";ctx.fill();}}
-function initParticles(num=150){particles=[];for(let i=0;i<num;i++)particles.push(new Particle());}
+draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${this.alpha})`;ctx.fill();}}
+const particles=[];for(let i=0;i<150;i++)particles.push(new Particle());
 function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.update();p.draw();});requestAnimationFrame(animate);}
-initParticles();animate();
+animate();
 
-// Cursor follower orb
-const follower = document.querySelector(".cursor-follower");
-let mouseX=0,mouseY=0,posX=0,posY=0,speed=0.15;
-document.addEventListener("mousemove", e=>{mouseX=e.clientX; mouseY=e.clientY;});
-function animateFollower(){posX+=(mouseX-posX)*speed; posY+=(mouseY-posY)*speed; follower.style.transform=`translate(${posX}px,${posY}px)`; requestAnimationFrame(animateFollower);}
-animateFollower();
+// Liquid Orbs
+const orbCanvas=document.getElementById('orbCanvas');
+const octx=orbCanvas.getContext('2d');let ow,oh;function orbResize(){ow=orbCanvas.width=window.innerWidth;oh=orbCanvas.height=window.innerHeight;}
+window.addEventListener('resize',orbResize);orbResize();
+const mouse={x:ow/2,y:oh/2};
+const orbs=[],numOrbs=6,colors=['#ff9a9e','#fad0c4','#a1c4fd','#c2e9fb','#fbc2eb','#fda085'];
+for(let i=0;i<numOrbs;i++)orbs.push({x:mouse.x,y:mouse.y,vx:0,vy:0,r:6+Math.random()*4,color:colors[i%colors.length]});
+const ripples=[];
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+window.addEventListener('click',e=>{ripples.push({x:e.clientX,y:e.clientY,radius:0,alpha:1});});
+const follower=document.querySelector('.cursor-follower');
+function animateOrbs(){
+  octx.clearRect(0,0,ow,oh);
+  orbs.forEach(o=>{o.vx+=(mouse.x-o.x)*0.12;o.vy+=(mouse.y-o.y)*0.12;o.vx*=0.85;o.vy*=0.85;o.x+=o.vx;o.y+=o.vy;
+  octx.beginPath();octx.arc(o.x,o.y,o.r,0,Math.PI*2);octx.fillStyle=o.color;octx.shadowBlur=20;octx.shadowColor=o.color;octx.fill();});
+  ripples.forEach(r=>{octx.beginPath();octx.arc(r.x,r.y,r.radius,0,Math.PI*2);octx.strokeStyle=`rgba(255,255,255,${r.alpha})`;octx.lineWidth=2;octx.stroke();r.radius+=5;r.alpha-=0.03;});
+  for(let i=ripples.length-1;i>=0;i--){if(ripples[i].alpha<=0) ripples.splice(i,1);}
+  follower.style.transform=`translate(${mouse.x}px,${mouse.y}px)`;
+  requestAnimationFrame(animateOrbs);
+}
+animateOrbs();
 </script>
 
 </body>

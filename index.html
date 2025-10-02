@@ -3,31 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nyvera Liquid Chat</title>
-
+<title>Nyvera Liquid Glass Chat</title>
 <style>
 :root{
   --accent:#7c3aed;
   --text:#e6eef8;
-  --glass-base:rgba(255,255,255,0.05);
-  --glass-border:rgba(255,255,255,0.15);
+  --glass-base:rgba(255,255,255,0.08);
+  --glass-border:rgba(255,255,255,0.2);
   --user-bg:rgba(124,58,237,0.3);
-  --ai-bg:rgba(255,255,255,0.08);
+  --ai-bg:rgba(255,255,255,0.1);
 }
 
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;font-family:Inter,sans-serif;color:var(--text);overflow:hidden;}
-body{
-  background:linear-gradient(270deg,#071129,#00121a,#1a1f3c,#002b40);
-  background-size:800% 800%;
-  animation:gradientShift 24s ease infinite;
-  position:relative;
-}
-@keyframes gradientShift{
-  0%{background-position:0% 50%}
-  50%{background-position:100% 50%}
-  100%{background-position:0% 50%}
-}
+html,body{height:100%;font-family:Inter,sans-serif;color:var(--text);overflow:hidden;background:#0b0c1a;}
+
+body{position:relative;}
 canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
 
 .wrap{
@@ -40,7 +30,7 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-
   padding:20px;
 }
 
-/* Liquid Glass Card */
+/* Fully Liquid Glass Card */
 .card{
   width:90%;
   max-width:600px;
@@ -48,30 +38,15 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-
   border-radius:60px;
   background:var(--glass-base);
   border:1px solid var(--glass-border);
-  backdrop-filter:blur(40px) saturate(200%);
-  -webkit-backdrop-filter:blur(40px) saturate(200%);
-  box-shadow:0 12px 48px rgba(0,0,0,0.45);
+  backdrop-filter:blur(35px) saturate(200%);
+  -webkit-backdrop-filter:blur(35px) saturate(200%);
+  box-shadow:0 12px 48px rgba(0,0,0,0.5);
   display:flex;
   flex-direction:column;
   gap:18px;
   color:var(--text);
   position:relative;
   overflow:hidden;
-}
-.card::before{
-  content:'';
-  position:absolute;
-  top:-50%;left:-50%;
-  width:200%;height:200%;
-  background:linear-gradient(120deg, #7c3aed,#60a5fa,#ff9a9e,#fad0c4);
-  animation:flow 6s linear infinite;
-  opacity:0.15;
-  z-index:0;
-}
-@keyframes flow{
-  0%{transform:translate(0,0) rotate(0deg);}
-  50%{transform:translate(20%,20%) rotate(180deg);}
-  100%{transform:translate(0,0) rotate(360deg);}
 }
 .card > *{position:relative;z-index:1;}
 
@@ -83,7 +58,7 @@ textarea{
   background:rgba(255,255,255,0.1);
   color:var(--text);
   font-size:16px;
-  backdrop-filter:blur(25px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
   outline:none;
   resize:none;
 }
@@ -133,6 +108,11 @@ button:hover{
   box-shadow:0 0 25px rgba(255,255,255,0.6);
   transform:translate(-50%,-50%);
   z-index:9999;
+  animation:pulse 1.5s infinite alternate;
+}
+@keyframes pulse{
+  0%{transform:translate(-50%,-50%) scale(1);}
+  100%{transform:translate(-50%,-50%) scale(1.3);}
 }
 
 @media (max-width:600px){
@@ -143,7 +123,6 @@ button:hover{
 </head>
 <body>
 <canvas id="stars"></canvas>
-<canvas id="orbCanvas"></canvas>
 <div class="cursor-follower"></div>
 
 <div class="wrap">
@@ -216,7 +195,8 @@ promptEl.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKe
 <script>
 // Starfield
 const canvas=document.getElementById("stars"),ctx=canvas.getContext("2d");
-let w,h;function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
+let w,h;
+function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
 window.addEventListener("resize",resize);resize();
 class Particle{constructor(){this.reset();}
 reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.r=Math.random()*1.5+0.3;this.dx=(Math.random()-0.5)*0.4;this.dy=(Math.random()-0.5)*0.4;this.alpha=Math.random()*0.5+0.5;}
@@ -226,28 +206,12 @@ const particles=[];for(let i=0;i<150;i++)particles.push(new Particle());
 function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.update();p.draw();});requestAnimationFrame(animate);}
 animate();
 
-// Liquid Orbs
-const orbCanvas=document.getElementById('orbCanvas');
-const octx=orbCanvas.getContext('2d');let ow,oh;function orbResize(){ow=orbCanvas.width=window.innerWidth;oh=orbCanvas.height=window.innerHeight;}
-window.addEventListener('resize',orbResize);orbResize();
-const mouse={x:ow/2,y:oh/2};
-const orbs=[],numOrbs=6,colors=['#ff9a9e','#fad0c4','#a1c4fd','#c2e9fb','#fbc2eb','#fda085'];
-for(let i=0;i<numOrbs;i++)orbs.push({x:mouse.x,y:mouse.y,vx:0,vy:0,r:6+Math.random()*4,color:colors[i%colors.length]});
-const ripples=[];
-window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
-window.addEventListener('click',e=>{ripples.push({x:e.clientX,y:e.clientY,radius:0,alpha:1});});
+// Cursor follow
 const follower=document.querySelector('.cursor-follower');
-function animateOrbs(){
-  octx.clearRect(0,0,ow,oh);
-  orbs.forEach(o=>{o.vx+=(mouse.x-o.x)*0.12;o.vy+=(mouse.y-o.y)*0.12;o.vx*=0.85;o.vy*=0.85;o.x+=o.vx;o.y+=o.vy;
-  octx.beginPath();octx.arc(o.x,o.y,o.r,0,Math.PI*2);octx.fillStyle=o.color;octx.shadowBlur=20;octx.shadowColor=o.color;octx.fill();});
-  ripples.forEach(r=>{octx.beginPath();octx.arc(r.x,r.y,r.radius,0,Math.PI*2);octx.strokeStyle=`rgba(255,255,255,${r.alpha})`;octx.lineWidth=2;octx.stroke();r.radius+=5;r.alpha-=0.03;});
-  for(let i=ripples.length-1;i>=0;i--){if(ripples[i].alpha<=0) ripples.splice(i,1);}
-  follower.style.transform=`translate(${mouse.x}px,${mouse.y}px)`;
-  requestAnimationFrame(animateOrbs);
-}
-animateOrbs();
+const mouse={x:w/2,y:h/2};
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+function moveFollower(){follower.style.transform=`translate(${mouse.x}px,${mouse.y}px)`;requestAnimationFrame(moveFollower);}
+moveFollower();
 </script>
-
 </body>
 </html>

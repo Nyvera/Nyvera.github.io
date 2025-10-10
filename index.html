@@ -224,6 +224,19 @@ footer { display:flex; gap:8px; margin-top:12px; }
   </div>
 </div>
 
+<!-- Interactive Animated Tutorial -->
+<div id="tutorialOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:none;z-index:99999;">
+  <div id="tutorialHighlight" style="position:absolute;border:2px solid var(--accent);border-radius:12px;box-shadow:0 0 20px var(--accent);pointer-events:none;transition:all 0.4s ease;"></div>
+  <div id="tutorialBox" style="position:absolute;max-width:400px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:20px;padding:20px;text-align:center;color:#e6eef8;z-index:99999;transition:all 0.4s ease;">
+    <div id="tutorialStepContent" style="margin-bottom:20px;font-size:16px;"></div>
+    <div style="display:flex;justify-content:space-between;">
+      <button id="tutorialBackBtn">Back</button>
+      <button id="tutorialNextBtn">Next</button>
+    </div>
+    <button id="tutorialCloseBtn" style="position:absolute;top:10px;right:10px;background:rgba(255,0,0,0.6);border:none;padding:6px 10px;border-radius:10px;color:white;">X</button>
+  </div>
+</div>
+
 <!-- AI & WebLLM Scripts -->
 <script type="module">
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
@@ -383,6 +396,86 @@ let mouseX = 0, mouseY = 0, posX = 0, posY = 0, speed = 0.1;
 document.addEventListener('mousemove', e=>{mouseX=e.clientX; mouseY=e.clientY;});
 function animateFollower(){ posX+=(mouseX-posX)*speed; posY+=(mouseY-posY)*speed; follower.style.left=posX+'px'; follower.style.top=posY+'px'; requestAnimationFrame(animateFollower);}
 animateFollower();
+</script>
+
+<!-- Tutorial Script -->
+<script>
+const tutorialOverlay = document.getElementById('tutorialOverlay');
+const tutorialBox = document.getElementById('tutorialBox');
+const highlight = document.getElementById('tutorialHighlight');
+const tutorialContent = document.getElementById('tutorialStepContent');
+const nextBtn = document.getElementById('tutorialNextBtn');
+const backBtn = document.getElementById('tutorialBackBtn');
+const closeBtn = document.getElementById('tutorialCloseBtn');
+
+const tutorialSteps = [
+  { text: "Welcome to Nyvera! Let's go through the main features.", element: null },
+  { text: "Step 1: Select a model from the dropdown at the top to load it.", element: "#modelSelect" },
+  { text: "Step 2: Click 'Load model' to initialize the AI engine.", element: "#loadBtn" },
+  { text: "Step 3: Type your message in the chat box and press 'Send' or Ctrl+Enter.", element: "#prompt" },
+  { text: "Step 4: Generate images using '/image your prompt here'.", element: "#sendBtn" },
+  { text: "Step 5: Monitor the status and progress bar to see model loading and generation.", element: "#progressBar" },
+  { text: "You're all set! Enjoy using Nyvera.", element: null }
+];
+
+let currentStep = 0;
+
+function showStep(index){
+  if(index < 0) index = 0;
+  if(index >= tutorialSteps.length) index = tutorialSteps.length - 1;
+  currentStep = index;
+
+  const step = tutorialSteps[index];
+  tutorialContent.innerText = step.text;
+  backBtn.style.display = index === 0 ? 'none' : 'inline-block';
+  nextBtn.innerText = index === tutorialSteps.length - 1 ? 'Finish' : 'Next';
+
+  if(step.element){
+    const el = document.querySelector(step.element);
+    if(el){
+      const rect = el.getBoundingClientRect();
+      highlight.style.display = 'block';
+      highlight.style.width = rect.width + 12 + 'px';
+      highlight.style.height = rect.height + 12 + 'px';
+      highlight.style.top = rect.top - 6 + 'px';
+      highlight.style.left = rect.left - 6 + 'px';
+
+      let top = rect.bottom + 10;
+      let left = rect.left;
+      if(top + 160 > window.innerHeight) top = rect.top - 170;
+      if(left + 400 > window.innerWidth) left = window.innerWidth - 420;
+      tutorialBox.style.top = top + 'px';
+      tutorialBox.style.left = left + 'px';
+      tutorialBox.style.transform = 'translate(0,0)';
+    } else {
+      resetBoxCenter();
+    }
+  } else {
+    resetBoxCenter();
+  }
+}
+
+function resetBoxCenter(){
+  highlight.style.display = 'none';
+  tutorialBox.style.top = '50%';
+  tutorialBox.style.left = '50%';
+  tutorialBox.style.transform = 'translate(-50%,-50%)';
+}
+
+nextBtn.addEventListener('click',()=>{
+  if(currentStep === tutorialSteps.length - 1){
+    tutorialOverlay.style.display = 'none';
+  } else {
+    showStep(currentStep + 1);
+  }
+});
+backBtn.addEventListener('click',()=>showStep(currentStep - 1));
+closeBtn.addEventListener('click',()=>tutorialOverlay.style.display='none');
+
+window.addEventListener('load',()=>{
+  tutorialOverlay.style.display='block';
+  showStep(0);
+});
 </script>
 
 </body>

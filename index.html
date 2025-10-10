@@ -258,12 +258,173 @@ footer { display:flex; gap:8px; margin-top:12px; }
   </div>
 </div>
 
+<!-- AI & WebLLM Scripts -->
+<script type="module">
+import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+const { CreateMLCEngine, prebuiltAppConfig } = webllm;
+const statusEl=document.getElementById('status');
+const progressBar=document.getElementById('progressBar');
+const chatEl=document.getElementById('chat');
+const modelSelect=document.getElementById('modelSelect');
+const loadBtn=document.getElementById('loadBtn');
+const refreshBtn=document.getElementById('refreshModelsBtn');
+const sendBtn=document.getElementById('sendBtn');
+const promptEl=document.getElementById('prompt');
+const availableModelsEl=document.getElementById('availableModels');
+const errorBox=document.getElementById('errorBox');
+let engine=null;
+let messagesHistory=[];
+
+function renderAIText(text){
+  const processed=text.replace(/<think>(.*?)<\/think>/gs,"*$1*");
+  const html=marked.parse(processed,{breaks:true});
+  const container=document.createElement("div");container.innerHTML=html;
+  container.querySelectorAll("pre code").forEach(el=>hljs.highlightElement(el));
+  return container.innerHTML;
+}
+function appendMessage(who,text){
+  const div=document.createElement('div');
+  div.className='msg '+(who==='user'?'user':'ai');
+  div.innerHTML=(who==='ai')?renderAIText(text):text;
+  chatEl.appendChild(div);
+  chatEl.scrollTop=chatEl.scrollHeight;
+}
+function setStatus(s){statusEl.innerText=s;}
+function setProgress(p){progressBar.style.width=Math.max(0,Math.min(100,p))+'%';}
+function populateModelSelect(){
+  modelSelect.innerHTML='';errorBox.style.display='none';
+  const list=(prebuiltAppConfig&&prebuiltAppConfig.model_list)?prebuiltAppConfig.model_list:[];
+  if(list.length===0){
+    const fallback=[{id:'SmolLM2-1.7B-Instruct-q0f16',label:'SmolLM2-1.7B-Instruct'},{id:'Llama-3.1-8B-Instruct',label:'Llama-3.1-8B-Instruct'},{id:'Qwen-1.5B',label:'Qwen-1.5B'}];
+    fallback.forEach(f=>{const opt=document.createElement('option');opt.value=f.id;opt.text=f.label||f.id;modelSelect.appendChild(opt);});
+    availableModelsEl.innerText='Warning: no prebuilt models available.';return;
+  }
+  list.forEach(m=>{const id=m.model_id||m.model||m.name;if(!id) return;
+    const opt=document.createElement('option');opt.value=id;opt.text=(m.short_name||m.name||id)+(m.vram_required_MB?` (VRAM ${m.vram_required_MB} MB)`: '');modelSelect.appendChild(opt);});
+  availableModelsEl.innerText=`Detected ${list.length} built-in models.`;}
+async function loadModel(){
+  const modelId=modelSelect.value;setStatus('initializing engine');setProgress(0);errorBox.style.display='none';
+  try{
+    const initProgressCallback=(progress)=>{let frac=0;if(typeof progress==='number') frac=progress; else if(progress?.progress) frac=progress.progress;
+      if(frac>1){setProgress(frac);setStatus('loading model: '+Math.round(frac)+'%');} else {setProgress(frac*100);setStatus('loading model: '+Math.round(frac*100)+'%');}};
+    const opts={initProgressCallback}; if(prebuiltAppConfig) opts.appConfig=prebuiltAppConfig;
+    engine=await CreateMLCEngine(modelId,opts); setStatus('ready ('+modelId+')'); setProgress(100);
+  }catch(err){console.error(err);setStatus('error');errorBox.style.display='block';errorBox.innerText='Error loading model: '+(err?.message||err);}
+}
+
+// IMAGE GENERATION SUPPORT
+async function sendImage(prompt) {
+  appendMessage('user', '/image ' + prompt);
+  setStatus('generating image...');
+
+  try {
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'msg ai';
+    aiDiv.innerHTML = `<div>Generating image...</div>`;
+    chatEl.appendChild(aiDiv);
+    chatEl.scrollTop = chatEl.scrollHeight;
+
+    const img = new Image();
+    img.src = url;
+    img.alt = prompt;
+    img.style.maxWidth = "100%";
+    img.style.borderRadius = "12px";
+    img.onload = () => {
+      aiDiv.innerHTML = '';
+      aiDiv.appendChild(img);
+      setStatus('ready');
+    };
+    img.onerror = () => {
+      aiDiv.innerHTML = '❌ Error generating image.';
+      setStatus('error');
+    };
+
+    messagesHistory.push({ role: "assistant", content: `[Image generated for: ${prompt}]` });
+  } catch (err) {
+    console.error(err);
+    appendMessage('ai', 'Error fetching image: ' + err.message);
+    setStatus('error');
+  }
+}
+
+async function sendMessage() {
+  const text=promptEl.value.trim();
+  if (!text) return;
+  promptEl.value = '';
+
+  // Check for image command
+  if (text.toLowerCase().startsWith('/image ')) {
+    const imgPrompt = text.replace('/image ', '').trim();
+    return sendImage(imgPrompt);
+  }
+
+  if (!engine) return;
+  appendMessage('user', text);
+  messagesHistory.push({role:'user',content:text});
+  setStatus('generating...');
+  
+  const aiDiv=document.createElement('div');
+  aiDiv.className='msg ai';
+  aiDiv.innerHTML='';
+  chatEl.appendChild(aiDiv);
+  chatEl.scrollTop=chatEl.scrollHeight;
+
+  let partial='';
+  try{
+    const stream=await engine.chat.completions.create({messages:messagesHistory,temperature:0.7,stream:true});
+    for await(const chunk of stream){
+      const delta=chunk?.choices?.[0]?.delta?.content||'';
+      if(delta){partial+=delta;aiDiv.innerHTML=renderAIText(partial);chatEl.scrollTop=chatEl.scrollHeight;}
+    }
+    messagesHistory.push({role:'assistant',content:partial}); setStatus('ready');
+  }catch(err){console.error(err);appendMessage('ai','Error: '+(err?.message||err));setStatus('error');}
+}
+
+loadBtn.addEventListener('click',loadModel);
+sendBtn.addEventListener('click',sendMessage);
+refreshBtn.addEventListener('click',populateModelSelect);
+promptEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) sendMessage();});
+if(!('gpu' in navigator)) setStatus('WARNING: WebGPU not available');
+populateModelSelect();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").then(reg=>console.log("SW registered:",reg.scope)).catch(err=>console.error("SW registration failed:",err));});}
+</script>
+
+<!-- Particle starfield -->
+<script>
+const canvas=document.getElementById("stars");
+const ctx=canvas.getContext("2d");
+let w,h,particles=[];
+function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
+window.addEventListener("resize",resize);resize();
+
+class Particle{
+  constructor(){this.reset();}
+  reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.r=Math.random()*1.8+0.2;this.dx=(Math.random()-0.5)*0.3;this.dy=(Math.random()-0.5)*0.3;this.alpha=Math.random()*0.5+0.5;}
+  update(){this.x+=this.dx; this.y+=this.dy; if(this.x<0||this.x>w||this.y<0||this.y>h)this.reset(); this.alpha+=(Math.random()-0.5)*0.05; this.alpha=Math.min(1,Math.max(0.2,this.alpha));}
+  draw(){ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle="rgba(255,255,255,"+this.alpha+")"; ctx.fill();}
+}
+function initParticles(num=150){particles=[];for(let i=0;i<num;i++){particles.push(new Particle());}}
+function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>p.update(),p.draw()); requestAnimationFrame(animate);}
+initParticles();animate();
+</script>
+
+<!-- Cursor follower -->
+<script>
+const follower = document.querySelector('.cursor-follower');
+let mouseX = 0, mouseY = 0, posX = 0, posY = 0, speed = 0.1;
+document.addEventListener('mousemove', e=>{mouseX=e.clientX; mouseY=e.clientY;});
+function animateFollower(){ posX+=(mouseX-posX)*speed; posY+=(mouseY-posY)*speed; follower.style.left=posX+'px'; follower.style.top=posY+'px'; requestAnimationFrame(animateFollower);}
+animateFollower();
+</script>
+
 <!-- Tutorial Script -->
 <script>
 const tutorialOverlay = document.getElementById('tutorialOverlay');
 const tutorialBox = document.getElementById('tutorialBox');
-const highlight = document.getElementById('tutorialHighlight');
 const tutorialContent = document.getElementById('tutorialStepContent');
+const highlight = document.getElementById('tutorialHighlight');
 const nextBtn = document.getElementById('tutorialNextBtn');
 const backBtn = document.getElementById('tutorialBackBtn');
 const closeBtn = document.getElementById('tutorialCloseBtn');
@@ -349,3 +510,6 @@ window.addEventListener('load',()=>{
   }
 });
 </script>
+
+</body>
+</html>

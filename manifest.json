@@ -1,21 +1,26 @@
 {
-  "name": "Nyvera",
+  "name": "Nyvera - AI Chat",
   "short_name": "Nyvera",
+  "description": "Chat with AI models powered by WebLLM. Works offline with text and image generation.",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     },
     {
       "src": "/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
-  "theme_color": "#1c53d5",
-  "background_color": "#9ca2e0",
-  "display": "standalone"
+  "theme_color": "#7c3aed",
+  "background_color": "#071129",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "utilities"]
 }

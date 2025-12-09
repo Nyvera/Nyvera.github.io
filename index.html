@@ -3,12 +3,33 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Nyvera</title>
+<title>Nyvera - AI Chat with WebLLM</title>
+<meta name="description" content="Nyvera is a progressive web app that lets you chat with AI models powered by WebLLM. Works offline with text and image generation capabilities." />
+<meta name="keywords" content="AI, chat, WebLLM, PWA, offline, machine learning, image generation" />
+<meta name="author" content="Nyvera" />
+<meta name="theme-color" content="#7c3aed" />
+<meta name="referrer" content="no-referrer-when-downgrade" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Nyvera - AI Chat with WebLLM" />
+<meta property="og:description" content="Chat with AI models powered by WebLLM. Works offline with text and image generation." />
+<meta property="og:image" content="/web-app-manifest-512x512.png" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Nyvera - AI Chat with WebLLM" />
+<meta name="twitter:description" content="Chat with AI models powered by WebLLM. Works offline with text and image generation." />
+<meta name="twitter:image" content="/web-app-manifest-512x512.png" />
+
 <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="shortcut icon" href="/favicon.ico" />
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-title" content="Nyvera" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="manifest" href="manifest.json" />
 
 <!-- Syntax Highlighting -->
@@ -153,6 +174,7 @@ button:hover {
   -webkit-backdrop-filter: blur(14px) saturate(160%);
   box-shadow:0 4px 14px rgba(0,0,0,0.45);
   transition:background 0.3s ease;
+  position: relative;
 }
 .msg.user {
   align-self:flex-end;
@@ -166,8 +188,39 @@ button:hover {
   border:1px solid rgba(255,255,255,0.18);
   color:#dcecff;
 }
+.msg.ai pre {
+  background: rgba(0,0,0,0.3);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.msg.ai code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+.msg.ai p {
+  margin: 8px 0;
+}
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: rgba(124,58,237,0.6);
+  border: 1px solid rgba(124,58,237,0.8);
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.msg:hover .copy-btn {
+  opacity: 1;
+}
 
 footer { display:flex; gap:8px; margin-top:12px; }
+textarea { resize: vertical; min-height: 60px; }
 .meta { margin-top:8px; color:var(--muted); font-size:13px; }
 .help { margin-top:10px; color:#cfe8ff; font-size:13px; }
 .error { color:#ffb4b4; font-size:13px; margin-top:8px; }
@@ -188,10 +241,40 @@ footer { display:flex; gap:8px; margin-top:12px; }
   box-shadow:0 4px 14px rgba(0,0,0,0.5);
 }
 
+/* Loading spinner */
+.loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Improved mobile responsiveness */
 @media(max-width:600px) {
-  .wrap { padding:10px; }
+  .wrap { padding:10px; margin:10px auto; height:98vh; }
   .card { padding:12px; }
   h1 { font-size:18px; }
+  .msg { max-width:85%; font-size:14px; padding:10px 12px; }
+  button { padding:8px 12px; font-size:14px; }
+  select { font-size:14px; }
+  textarea { font-size:14px; min-height: 50px; }
+  footer { flex-wrap: wrap; }
+  #showTutorialBtn { bottom:10px; right:10px; padding:8px 12px; font-size:13px; }
+  .copy-btn { font-size:10px; padding:3px 6px; }
+}
+
+@media(max-width:400px) {
+  .wrap { padding:5px; }
+  .card { padding:8px; }
+  h1 { font-size:16px; }
+  header { gap:10px; }
+  header > div:first-child { width:42px; height:42px; font-size:14px; }
 }
 </style>
 
@@ -218,12 +301,14 @@ footer { display:flex; gap:8px; margin-top:12px; }
 
   <div class="card">
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <label style="color:var(--muted)">Model:</label>
-      <select id="modelSelect"></select>
-      <button id="loadBtn">Load model</button>
-      <button id="refreshModelsBtn" title="Re-read built-in model list">Refresh</button>
+      <label style="color:var(--muted)" for="modelSelect">Model:</label>
+      <select id="modelSelect" aria-label="Select AI model"></select>
+      <button id="loadBtn" aria-label="Load selected model">Load model</button>
+      <button id="refreshModelsBtn" title="Re-read built-in model list" aria-label="Refresh model list">Refresh</button>
+      <button id="clearChatBtn" title="Clear chat history" aria-label="Clear chat" style="background:rgba(239,68,68,0.8)">Clear Chat</button>
+      <button id="exportChatBtn" title="Export chat history as text" aria-label="Export chat" style="background:rgba(34,197,94,0.8)">Export</button>
       <div style="flex:1"></div>
-      <div style="font-size:12px;color:var(--muted)">Status: <span id="status">idle</span></div>
+      <div style="font-size:12px;color:var(--muted)" role="status" aria-live="polite">Status: <span id="status">idle</span></div>
     </div>
 
     <div class="progress"><i id="progressBar"></i></div>
@@ -233,9 +318,12 @@ footer { display:flex; gap:8px; margin-top:12px; }
     <div class="chat" id="chat"></div>
 
     <footer>
-      <textarea id="prompt" placeholder="Type a message or /image something..."></textarea>
-      <button id="sendBtn">Send</button>
+      <textarea id="prompt" placeholder="Type a message or /image something..." aria-label="Message input" rows="3"></textarea>
+      <button id="sendBtn" aria-label="Send message">Send</button>
     </footer>
+    <div class="small" style="margin-top:6px;text-align:center;color:var(--muted)">
+      Tip: Press <kbd style="padding:2px 4px;background:rgba(255,255,255,0.1);border-radius:4px;">Ctrl+Enter</kbd> (or <kbd style="padding:2px 4px;background:rgba(255,255,255,0.1);border-radius:4px;">Cmd+Enter</kbd> on Mac) to send • Use <code style="background:rgba(255,255,255,0.1);padding:2px 4px;border-radius:4px;">/image</code> for image generation
+    </div>
   </div>
 </div>
 
@@ -260,20 +348,130 @@ footer { display:flex; gap:8px; margin-top:12px; }
 
 <!-- AI & WebLLM Scripts -->
 <script type="module">
+// ============================================================================
+// Nyvera - AI Chat Application
+// Powered by WebLLM for offline AI chat and Pollinations API for images
+// ============================================================================
+
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 const { CreateMLCEngine, prebuiltAppConfig } = webllm;
+
+// ============================================================================
+// DOM Element References
+// ============================================================================
 const statusEl=document.getElementById('status');
 const progressBar=document.getElementById('progressBar');
 const chatEl=document.getElementById('chat');
 const modelSelect=document.getElementById('modelSelect');
 const loadBtn=document.getElementById('loadBtn');
 const refreshBtn=document.getElementById('refreshModelsBtn');
+const clearChatBtn=document.getElementById('clearChatBtn');
 const sendBtn=document.getElementById('sendBtn');
 const promptEl=document.getElementById('prompt');
 const availableModelsEl=document.getElementById('availableModels');
 const errorBox=document.getElementById('errorBox');
+
+// ============================================================================
+// Application State
+// ============================================================================
 let engine=null;
 let messagesHistory=[];
+
+// ============================================================================
+// Chat History Management
+// ============================================================================
+
+// Load chat history from localStorage
+function loadChatHistory() {
+  try {
+    const saved = localStorage.getItem('nyveraChatHistory');
+    if (saved) {
+      const history = JSON.parse(saved);
+      history.forEach(msg => {
+        if (msg.role === 'user') {
+          appendMessage('user', msg.content, false);
+        } else if (msg.role === 'assistant') {
+          // Check if it's an image message
+          if (msg.imageUrl) {
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'msg ai';
+            const img = document.createElement('img');
+            img.src = msg.imageUrl;
+            img.alt = msg.content.match(/!\[(.*?)\]/)?.[1] || 'Generated image';
+            img.style.maxWidth = "100%";
+            img.style.borderRadius = "12px";
+            img.onerror = () => {
+              aiDiv.textContent = '❌ Image no longer available';
+            };
+            aiDiv.appendChild(img);
+            chatEl.appendChild(aiDiv);
+          } else {
+            appendMessage('ai', msg.content, false);
+          }
+        }
+      });
+      messagesHistory = history;
+    }
+  } catch (e) {
+    console.error('Failed to load chat history:', e);
+  }
+}
+
+// Save chat history to localStorage
+function saveChatHistory() {
+  try {
+    localStorage.setItem('nyveraChatHistory', JSON.stringify(messagesHistory));
+  } catch (e) {
+    console.error('Failed to save chat history:', e);
+  }
+}
+
+// Export chat history as text file
+function exportChat() {
+  if (messagesHistory.length === 0) {
+    setStatus('No chat history to export');
+    setTimeout(() => setStatus('idle'), 2000);
+    return;
+  }
+  
+  let chatText = 'Nyvera Chat History\n';
+  chatText += '='.repeat(50) + '\n';
+  chatText += `Exported: ${new Date().toLocaleString()}\n`;
+  chatText += '='.repeat(50) + '\n\n';
+  
+  messagesHistory.forEach(msg => {
+    const role = msg.role === 'user' ? 'You' : 'AI';
+    chatText += `${role}:\n${msg.content}\n\n${'-'.repeat(50)}\n\n`;
+  });
+  
+  // Create and download file
+  const blob = new Blob([chatText], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `nyvera-chat-${Date.now()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  setStatus('Chat exported successfully');
+  setTimeout(() => setStatus('ready'), 2000);
+}
+
+// Clear chat history
+function clearChat() {
+  if (confirm('Are you sure you want to clear the chat history?')) {
+    chatEl.innerHTML = '';
+    messagesHistory = [];
+    localStorage.removeItem('nyveraChatHistory');
+    setStatus('Chat cleared');
+  }
+}
+
+// ============================================================================
+// UI Helper Functions
+// ============================================================================
 
 function renderAIText(text){
   const processed=text.replace(/<think>(.*?)<\/think>/gs,"*$1*");
@@ -282,15 +480,65 @@ function renderAIText(text){
   container.querySelectorAll("pre code").forEach(el=>hljs.highlightElement(el));
   return container.innerHTML;
 }
-function appendMessage(who,text){
+
+function copyToClipboard(text) {
+  // Remove HTML tags for plain text copy
+  const temp = document.createElement('div');
+  temp.innerHTML = text;
+  const plainText = temp.textContent || temp.innerText || '';
+  
+  navigator.clipboard.writeText(plainText).then(() => {
+    setStatus('Copied to clipboard!');
+    setTimeout(() => setStatus('ready'), 2000);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+  });
+}
+
+function appendMessage(who, text, save = true){
   const div=document.createElement('div');
   div.className='msg '+(who==='user'?'user':'ai');
-  div.innerHTML=(who==='ai')?renderAIText(text):text;
+  
+  if (who === 'ai') {
+    div.innerHTML = renderAIText(text);
+    // Add copy button for AI messages
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = () => copyToClipboard(text);
+    div.appendChild(copyBtn);
+  } else {
+    div.textContent = text;
+  }
+  
   chatEl.appendChild(div);
   chatEl.scrollTop=chatEl.scrollHeight;
+  
+  // Save to history if needed
+  if (save) {
+    saveChatHistory();
+  }
 }
-function setStatus(s){statusEl.innerText=s;}
+
+// ============================================================================
+// Model Management Functions
+// ============================================================================
+
+function setStatus(s){
+  // Add spinner for loading states
+  if (s.includes('loading') || s.includes('generating') || s.includes('initializing')) {
+    statusEl.textContent = '';
+    const spinner = document.createElement('span');
+    spinner.className = 'loading-spinner';
+    statusEl.appendChild(spinner);
+    statusEl.appendChild(document.createTextNode(' ' + s));
+  } else {
+    statusEl.textContent = s;
+  }
+}
+
 function setProgress(p){progressBar.style.width=Math.max(0,Math.min(100,p))+'%';}
+
 function populateModelSelect(){
   modelSelect.innerHTML='';errorBox.style.display='none';
   const list=(prebuiltAppConfig&&prebuiltAppConfig.model_list)?prebuiltAppConfig.model_list:[];
@@ -312,7 +560,10 @@ async function loadModel(){
   }catch(err){console.error(err);setStatus('error');errorBox.style.display='block';errorBox.innerText='Error loading model: '+(err?.message||err);}
 }
 
-// IMAGE GENERATION SUPPORT
+// ============================================================================
+// Image Generation Functions
+// ============================================================================
+
 async function sendImage(prompt) {
   appendMessage('user', '/image ' + prompt);
   setStatus('generating image...');
@@ -322,7 +573,7 @@ async function sendImage(prompt) {
 
     const aiDiv = document.createElement('div');
     aiDiv.className = 'msg ai';
-    aiDiv.innerHTML = `<div>Generating image...</div>`;
+    aiDiv.textContent = 'Generating image...';
     chatEl.appendChild(aiDiv);
     chatEl.scrollTop = chatEl.scrollHeight;
 
@@ -332,16 +583,19 @@ async function sendImage(prompt) {
     img.style.maxWidth = "100%";
     img.style.borderRadius = "12px";
     img.onload = () => {
-      aiDiv.innerHTML = '';
+      aiDiv.textContent = '';
       aiDiv.appendChild(img);
       setStatus('ready');
+      // Save image URL to history so it can be restored
+      messagesHistory.push({ role: "assistant", content: `![${prompt}](${url})`, imageUrl: url });
+      saveChatHistory();
     };
     img.onerror = () => {
-      aiDiv.innerHTML = '❌ Error generating image.';
+      aiDiv.textContent = '❌ Error generating image.';
       setStatus('error');
+      messagesHistory.push({ role: "assistant", content: `[Failed to generate image: ${prompt}]` });
+      saveChatHistory();
     };
-
-    messagesHistory.push({ role: "assistant", content: `[Image generated for: ${prompt}]` });
   } catch (err) {
     console.error(err);
     appendMessage('ai', 'Error fetching image: ' + err.message);
@@ -349,25 +603,43 @@ async function sendImage(prompt) {
   }
 }
 
+// ============================================================================
+// Text Chat Functions
+// ============================================================================
+
 async function sendMessage() {
   const text=promptEl.value.trim();
-  if (!text) return;
+  if (!text) {
+    setStatus('Please enter a message');
+    setTimeout(() => setStatus('idle'), 2000);
+    return;
+  }
   promptEl.value = '';
 
   // Check for image command
   if (text.toLowerCase().startsWith('/image ')) {
-    const imgPrompt = text.replace('/image ', '').trim();
+    const imgPrompt = text.replace(/^\/image\s+/, '').trim();
+    if (!imgPrompt) {
+      setStatus('Please provide an image prompt');
+      setTimeout(() => setStatus('idle'), 2000);
+      return;
+    }
     return sendImage(imgPrompt);
   }
 
-  if (!engine) return;
+  if (!engine) {
+    setStatus('Please load a model first');
+    setTimeout(() => setStatus('idle'), 2000);
+    return;
+  }
+  
   appendMessage('user', text);
   messagesHistory.push({role:'user',content:text});
   setStatus('generating...');
   
   const aiDiv=document.createElement('div');
   aiDiv.className='msg ai';
-  aiDiv.innerHTML='';
+  aiDiv.innerHTML='<span class="loading-spinner"></span> Thinking...';
   chatEl.appendChild(aiDiv);
   chatEl.scrollTop=chatEl.scrollHeight;
 
@@ -378,16 +650,63 @@ async function sendMessage() {
       const delta=chunk?.choices?.[0]?.delta?.content||'';
       if(delta){partial+=delta;aiDiv.innerHTML=renderAIText(partial);chatEl.scrollTop=chatEl.scrollHeight;}
     }
-    messagesHistory.push({role:'assistant',content:partial}); setStatus('ready');
+    // Add copy button after generation completes
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = () => copyToClipboard(partial);
+    aiDiv.appendChild(copyBtn);
+    
+    messagesHistory.push({role:'assistant',content:partial}); 
+    saveChatHistory();
+    setStatus('ready');
   }catch(err){console.error(err);appendMessage('ai','Error: '+(err?.message||err));setStatus('error');}
 }
 
-loadBtn.addEventListener('click',loadModel);
+// ============================================================================
+// Event Listeners and Initialization
+// ============================================================================
+
+// Disable buttons during model loading and call loadModel
+loadBtn.addEventListener('click', async () => {
+  loadBtn.disabled = true;
+  modelSelect.disabled = true;
+  try {
+    await loadModel();
+  } finally {
+    loadBtn.disabled = false;
+    modelSelect.disabled = false;
+  }
+});
+
 sendBtn.addEventListener('click',sendMessage);
 refreshBtn.addEventListener('click',populateModelSelect);
-promptEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) sendMessage();});
-if(!('gpu' in navigator)) setStatus('WARNING: WebGPU not available');
+clearChatBtn.addEventListener('click',clearChat);
+const exportChatBtn=document.getElementById('exportChatBtn');
+exportChatBtn.addEventListener('click',exportChat);
+promptEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&(e.ctrlKey||e.metaKey)) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Add focus to prompt on load
+window.addEventListener('load', () => {
+  promptEl.focus();
+});
+
+// Better WebGPU detection
+if(!('gpu' in navigator)) {
+  setStatus('WARNING: WebGPU not available');
+  errorBox.style.display='block';
+  errorBox.textContent='WebGPU is not available in this browser. Please use Chrome/Edge 113+ or check if WebGPU is enabled in your browser flags.';
+} else {
+  setStatus('idle');
+}
+
 populateModelSelect();
+loadChatHistory(); // Load saved chat history on startup
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").then(reg=>console.log("SW registered:",reg.scope)).catch(err=>console.error("SW registration failed:",err));});}
 </script>
 
@@ -406,7 +725,7 @@ class Particle{
   draw(){ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle="rgba(255,255,255,"+this.alpha+")"; ctx.fill();}
 }
 function initParticles(num=150){particles=[];for(let i=0;i<num;i++){particles.push(new Particle());}}
-function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>p.update(),p.draw()); requestAnimationFrame(animate);}
+function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animate);}
 initParticles();animate();
 </script>
 

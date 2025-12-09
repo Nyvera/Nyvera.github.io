@@ -8,6 +8,8 @@
 <meta name="keywords" content="AI, chat, WebLLM, PWA, offline, machine learning, image generation" />
 <meta name="author" content="Nyvera" />
 <meta name="theme-color" content="#7c3aed" />
+<meta name="referrer" content="no-referrer-when-downgrade" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
@@ -304,6 +306,7 @@ textarea { resize: vertical; min-height: 60px; }
       <button id="loadBtn" aria-label="Load selected model">Load model</button>
       <button id="refreshModelsBtn" title="Re-read built-in model list" aria-label="Refresh model list">Refresh</button>
       <button id="clearChatBtn" title="Clear chat history" aria-label="Clear chat" style="background:rgba(239,68,68,0.8)">Clear Chat</button>
+      <button id="exportChatBtn" title="Export chat history as text" aria-label="Export chat" style="background:rgba(34,197,94,0.8)">Export</button>
       <div style="flex:1"></div>
       <div style="font-size:12px;color:var(--muted)" role="status" aria-live="polite">Status: <span id="status">idle</span></div>
     </div>
@@ -345,8 +348,17 @@ textarea { resize: vertical; min-height: 60px; }
 
 <!-- AI & WebLLM Scripts -->
 <script type="module">
+// ============================================================================
+// Nyvera - AI Chat Application
+// Powered by WebLLM for offline AI chat and Pollinations API for images
+// ============================================================================
+
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 const { CreateMLCEngine, prebuiltAppConfig } = webllm;
+
+// ============================================================================
+// DOM Element References
+// ============================================================================
 const statusEl=document.getElementById('status');
 const progressBar=document.getElementById('progressBar');
 const chatEl=document.getElementById('chat');
@@ -358,8 +370,16 @@ const sendBtn=document.getElementById('sendBtn');
 const promptEl=document.getElementById('prompt');
 const availableModelsEl=document.getElementById('availableModels');
 const errorBox=document.getElementById('errorBox');
+
+// ============================================================================
+// Application State
+// ============================================================================
 let engine=null;
 let messagesHistory=[];
+
+// ============================================================================
+// Chat History Management
+// ============================================================================
 
 // Load chat history from localStorage
 function loadChatHistory() {
@@ -390,6 +410,39 @@ function saveChatHistory() {
   }
 }
 
+// Export chat history as text file
+function exportChat() {
+  if (messagesHistory.length === 0) {
+    setStatus('No chat history to export');
+    setTimeout(() => setStatus('idle'), 2000);
+    return;
+  }
+  
+  let chatText = 'Nyvera Chat History\n';
+  chatText += '='.repeat(50) + '\n';
+  chatText += `Exported: ${new Date().toLocaleString()}\n`;
+  chatText += '='.repeat(50) + '\n\n';
+  
+  messagesHistory.forEach(msg => {
+    const role = msg.role === 'user' ? 'You' : 'AI';
+    chatText += `${role}:\n${msg.content}\n\n${'-'.repeat(50)}\n\n`;
+  });
+  
+  // Create and download file
+  const blob = new Blob([chatText], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `nyvera-chat-${Date.now()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  setStatus('Chat exported successfully');
+  setTimeout(() => setStatus('ready'), 2000);
+}
+
 // Clear chat history
 function clearChat() {
   if (confirm('Are you sure you want to clear the chat history?')) {
@@ -399,6 +452,10 @@ function clearChat() {
     setStatus('Chat cleared');
   }
 }
+
+// ============================================================================
+// UI Helper Functions
+// ============================================================================
 
 function renderAIText(text){
   const processed=text.replace(/<think>(.*?)<\/think>/gs,"*$1*");
@@ -446,6 +503,11 @@ function appendMessage(who, text, save = true){
     saveChatHistory();
   }
 }
+
+// ============================================================================
+// Model Management Functions
+// ============================================================================
+
 function setStatus(s){
   statusEl.innerHTML = s;
   // Add spinner for loading states
@@ -453,7 +515,9 @@ function setStatus(s){
     statusEl.innerHTML = `<span class="loading-spinner"></span> ${s}`;
   }
 }
+
 function setProgress(p){progressBar.style.width=Math.max(0,Math.min(100,p))+'%';}
+
 function populateModelSelect(){
   modelSelect.innerHTML='';errorBox.style.display='none';
   const list=(prebuiltAppConfig&&prebuiltAppConfig.model_list)?prebuiltAppConfig.model_list:[];
@@ -475,7 +539,10 @@ async function loadModel(){
   }catch(err){console.error(err);setStatus('error');errorBox.style.display='block';errorBox.innerText='Error loading model: '+(err?.message||err);}
 }
 
-// IMAGE GENERATION SUPPORT
+// ============================================================================
+// Image Generation Functions
+// ============================================================================
+
 async function sendImage(prompt) {
   appendMessage('user', '/image ' + prompt);
   setStatus('generating image...');
@@ -511,6 +578,10 @@ async function sendImage(prompt) {
     setStatus('error');
   }
 }
+
+// ============================================================================
+// Text Chat Functions
+// ============================================================================
 
 async function sendMessage() {
   const text=promptEl.value.trim();
@@ -568,10 +639,16 @@ async function sendMessage() {
   }catch(err){console.error(err);appendMessage('ai','Error: '+(err?.message||err));setStatus('error');}
 }
 
+// ============================================================================
+// Event Listeners and Initialization
+// ============================================================================
+
 loadBtn.addEventListener('click',loadModel);
 sendBtn.addEventListener('click',sendMessage);
 refreshBtn.addEventListener('click',populateModelSelect);
 clearChatBtn.addEventListener('click',clearChat);
+const exportChatBtn=document.getElementById('exportChatBtn');
+exportChatBtn.addEventListener('click',exportChat);
 promptEl.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey&&(e.ctrlKey||e.metaKey)) {
     e.preventDefault();

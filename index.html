@@ -509,10 +509,15 @@ function appendMessage(who, text, save = true){
 // ============================================================================
 
 function setStatus(s){
-  statusEl.innerHTML = s;
   // Add spinner for loading states
   if (s.includes('loading') || s.includes('generating') || s.includes('initializing')) {
-    statusEl.innerHTML = `<span class="loading-spinner"></span> ${s}`;
+    statusEl.textContent = '';
+    const spinner = document.createElement('span');
+    spinner.className = 'loading-spinner';
+    statusEl.appendChild(spinner);
+    statusEl.appendChild(document.createTextNode(' ' + s));
+  } else {
+    statusEl.textContent = s;
   }
 }
 
@@ -594,7 +599,7 @@ async function sendMessage() {
 
   // Check for image command
   if (text.toLowerCase().startsWith('/image ')) {
-    const imgPrompt = text.replace(/^\/image\s+/i, '').trim();
+    const imgPrompt = text.replace(/^\/image\s+/, '').trim();
     if (!imgPrompt) {
       setStatus('Please provide an image prompt');
       setTimeout(() => setStatus('idle'), 2000);
@@ -643,7 +648,18 @@ async function sendMessage() {
 // Event Listeners and Initialization
 // ============================================================================
 
-loadBtn.addEventListener('click',loadModel);
+// Disable buttons during model loading and call loadModel
+loadBtn.addEventListener('click', async () => {
+  loadBtn.disabled = true;
+  modelSelect.disabled = true;
+  try {
+    await loadModel();
+  } finally {
+    loadBtn.disabled = false;
+    modelSelect.disabled = false;
+  }
+});
+
 sendBtn.addEventListener('click',sendMessage);
 refreshBtn.addEventListener('click',populateModelSelect);
 clearChatBtn.addEventListener('click',clearChat);
@@ -661,23 +677,11 @@ window.addEventListener('load', () => {
   promptEl.focus();
 });
 
-// Disable buttons during model loading
-loadBtn.addEventListener('click', async () => {
-  loadBtn.disabled = true;
-  modelSelect.disabled = true;
-  try {
-    await loadModel();
-  } finally {
-    loadBtn.disabled = false;
-    modelSelect.disabled = false;
-  }
-});
-
 // Better WebGPU detection
 if(!('gpu' in navigator)) {
   setStatus('WARNING: WebGPU not available');
   errorBox.style.display='block';
-  errorBox.innerHTML='WebGPU is not available in this browser. Please use Chrome/Edge 113+ or check if WebGPU is enabled in your browser flags.';
+  errorBox.textContent='WebGPU is not available in this browser. Please use Chrome/Edge 113+ or check if WebGPU is enabled in your browser flags.';
 } else {
   setStatus('idle');
 }

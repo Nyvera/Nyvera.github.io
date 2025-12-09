@@ -391,7 +391,23 @@ function loadChatHistory() {
         if (msg.role === 'user') {
           appendMessage('user', msg.content, false);
         } else if (msg.role === 'assistant') {
-          appendMessage('ai', msg.content, false);
+          // Check if it's an image message
+          if (msg.imageUrl) {
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'msg ai';
+            const img = document.createElement('img');
+            img.src = msg.imageUrl;
+            img.alt = msg.content.match(/!\[(.*?)\]/)?.[1] || 'Generated image';
+            img.style.maxWidth = "100%";
+            img.style.borderRadius = "12px";
+            img.onerror = () => {
+              aiDiv.textContent = '❌ Image no longer available';
+            };
+            aiDiv.appendChild(img);
+            chatEl.appendChild(aiDiv);
+          } else {
+            appendMessage('ai', msg.content, false);
+          }
         }
       });
       messagesHistory = history;
@@ -557,7 +573,7 @@ async function sendImage(prompt) {
 
     const aiDiv = document.createElement('div');
     aiDiv.className = 'msg ai';
-    aiDiv.innerHTML = `<div>Generating image...</div>`;
+    aiDiv.textContent = 'Generating image...';
     chatEl.appendChild(aiDiv);
     chatEl.scrollTop = chatEl.scrollHeight;
 
@@ -567,16 +583,19 @@ async function sendImage(prompt) {
     img.style.maxWidth = "100%";
     img.style.borderRadius = "12px";
     img.onload = () => {
-      aiDiv.innerHTML = '';
+      aiDiv.textContent = '';
       aiDiv.appendChild(img);
       setStatus('ready');
+      // Save image URL to history so it can be restored
+      messagesHistory.push({ role: "assistant", content: `![${prompt}](${url})`, imageUrl: url });
+      saveChatHistory();
     };
     img.onerror = () => {
-      aiDiv.innerHTML = '❌ Error generating image.';
+      aiDiv.textContent = '❌ Error generating image.';
       setStatus('error');
+      messagesHistory.push({ role: "assistant", content: `[Failed to generate image: ${prompt}]` });
+      saveChatHistory();
     };
-
-    messagesHistory.push({ role: "assistant", content: `[Image generated for: ${prompt}]` });
   } catch (err) {
     console.error(err);
     appendMessage('ai', 'Error fetching image: ' + err.message);

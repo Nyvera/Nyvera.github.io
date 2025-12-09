@@ -239,10 +239,40 @@ textarea { resize: vertical; min-height: 60px; }
   box-shadow:0 4px 14px rgba(0,0,0,0.5);
 }
 
+/* Loading spinner */
+.loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Improved mobile responsiveness */
 @media(max-width:600px) {
-  .wrap { padding:10px; }
+  .wrap { padding:10px; margin:10px auto; height:98vh; }
   .card { padding:12px; }
   h1 { font-size:18px; }
+  .msg { max-width:85%; font-size:14px; padding:10px 12px; }
+  button { padding:8px 12px; font-size:14px; }
+  select { font-size:14px; }
+  textarea { font-size:14px; min-height: 50px; }
+  footer { flex-wrap: wrap; }
+  #showTutorialBtn { bottom:10px; right:10px; padding:8px 12px; font-size:13px; }
+  .copy-btn { font-size:10px; padding:3px 6px; }
+}
+
+@media(max-width:400px) {
+  .wrap { padding:5px; }
+  .card { padding:8px; }
+  h1 { font-size:16px; }
+  header { gap:10px; }
+  header > div:first-child { width:42px; height:42px; font-size:14px; }
 }
 </style>
 
@@ -288,6 +318,9 @@ textarea { resize: vertical; min-height: 60px; }
       <textarea id="prompt" placeholder="Type a message or /image something..." aria-label="Message input" rows="3"></textarea>
       <button id="sendBtn" aria-label="Send message">Send</button>
     </footer>
+    <div class="small" style="margin-top:6px;text-align:center;color:var(--muted)">
+      Tip: Press <kbd style="padding:2px 4px;background:rgba(255,255,255,0.1);border-radius:4px;">Ctrl+Enter</kbd> (or <kbd style="padding:2px 4px;background:rgba(255,255,255,0.1);border-radius:4px;">Cmd+Enter</kbd> on Mac) to send • Use <code style="background:rgba(255,255,255,0.1);padding:2px 4px;border-radius:4px;">/image</code> for image generation
+    </div>
   </div>
 </div>
 
@@ -413,7 +446,13 @@ function appendMessage(who, text, save = true){
     saveChatHistory();
   }
 }
-function setStatus(s){statusEl.innerText=s;}
+function setStatus(s){
+  statusEl.innerHTML = s;
+  // Add spinner for loading states
+  if (s.includes('loading') || s.includes('generating') || s.includes('initializing')) {
+    statusEl.innerHTML = `<span class="loading-spinner"></span> ${s}`;
+  }
+}
 function setProgress(p){progressBar.style.width=Math.max(0,Math.min(100,p))+'%';}
 function populateModelSelect(){
   modelSelect.innerHTML='';errorBox.style.display='none';
@@ -475,23 +514,37 @@ async function sendImage(prompt) {
 
 async function sendMessage() {
   const text=promptEl.value.trim();
-  if (!text) return;
+  if (!text) {
+    setStatus('Please enter a message');
+    setTimeout(() => setStatus('idle'), 2000);
+    return;
+  }
   promptEl.value = '';
 
   // Check for image command
   if (text.toLowerCase().startsWith('/image ')) {
-    const imgPrompt = text.replace('/image ', '').trim();
+    const imgPrompt = text.replace(/^\/image\s+/i, '').trim();
+    if (!imgPrompt) {
+      setStatus('Please provide an image prompt');
+      setTimeout(() => setStatus('idle'), 2000);
+      return;
+    }
     return sendImage(imgPrompt);
   }
 
-  if (!engine) return;
+  if (!engine) {
+    setStatus('Please load a model first');
+    setTimeout(() => setStatus('idle'), 2000);
+    return;
+  }
+  
   appendMessage('user', text);
   messagesHistory.push({role:'user',content:text});
   setStatus('generating...');
   
   const aiDiv=document.createElement('div');
   aiDiv.className='msg ai';
-  aiDiv.innerHTML='';
+  aiDiv.innerHTML='<span class="loading-spinner"></span> Thinking...';
   chatEl.appendChild(aiDiv);
   chatEl.scrollTop=chatEl.scrollHeight;
 
@@ -502,7 +555,16 @@ async function sendMessage() {
       const delta=chunk?.choices?.[0]?.delta?.content||'';
       if(delta){partial+=delta;aiDiv.innerHTML=renderAIText(partial);chatEl.scrollTop=chatEl.scrollHeight;}
     }
-    messagesHistory.push({role:'assistant',content:partial}); setStatus('ready');
+    // Add copy button after generation completes
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = () => copyToClipboard(partial);
+    aiDiv.appendChild(copyBtn);
+    
+    messagesHistory.push({role:'assistant',content:partial}); 
+    saveChatHistory();
+    setStatus('ready');
   }catch(err){console.error(err);appendMessage('ai','Error: '+(err?.message||err));setStatus('error');}
 }
 
@@ -510,8 +572,39 @@ loadBtn.addEventListener('click',loadModel);
 sendBtn.addEventListener('click',sendMessage);
 refreshBtn.addEventListener('click',populateModelSelect);
 clearChatBtn.addEventListener('click',clearChat);
-promptEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) sendMessage();});
-if(!('gpu' in navigator)) setStatus('WARNING: WebGPU not available');
+promptEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&(e.ctrlKey||e.metaKey)) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Add focus to prompt on load
+window.addEventListener('load', () => {
+  promptEl.focus();
+});
+
+// Disable buttons during model loading
+loadBtn.addEventListener('click', async () => {
+  loadBtn.disabled = true;
+  modelSelect.disabled = true;
+  try {
+    await loadModel();
+  } finally {
+    loadBtn.disabled = false;
+    modelSelect.disabled = false;
+  }
+});
+
+// Better WebGPU detection
+if(!('gpu' in navigator)) {
+  setStatus('WARNING: WebGPU not available');
+  errorBox.style.display='block';
+  errorBox.innerHTML='WebGPU is not available in this browser. Please use Chrome/Edge 113+ or check if WebGPU is enabled in your browser flags.';
+} else {
+  setStatus('idle');
+}
+
 populateModelSelect();
 loadChatHistory(); // Load saved chat history on startup
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").then(reg=>console.log("SW registered:",reg.scope)).catch(err=>console.error("SW registration failed:",err));});}

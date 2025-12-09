@@ -3,12 +3,31 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Nyvera</title>
+<title>Nyvera - AI Chat with WebLLM</title>
+<meta name="description" content="Nyvera is a progressive web app that lets you chat with AI models powered by WebLLM. Works offline with text and image generation capabilities." />
+<meta name="keywords" content="AI, chat, WebLLM, PWA, offline, machine learning, image generation" />
+<meta name="author" content="Nyvera" />
+<meta name="theme-color" content="#7c3aed" />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Nyvera - AI Chat with WebLLM" />
+<meta property="og:description" content="Chat with AI models powered by WebLLM. Works offline with text and image generation." />
+<meta property="og:image" content="/web-app-manifest-512x512.png" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Nyvera - AI Chat with WebLLM" />
+<meta name="twitter:description" content="Chat with AI models powered by WebLLM. Works offline with text and image generation." />
+<meta name="twitter:image" content="/web-app-manifest-512x512.png" />
+
 <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="shortcut icon" href="/favicon.ico" />
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-title" content="Nyvera" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="manifest" href="manifest.json" />
 
 <!-- Syntax Highlighting -->
@@ -153,6 +172,7 @@ button:hover {
   -webkit-backdrop-filter: blur(14px) saturate(160%);
   box-shadow:0 4px 14px rgba(0,0,0,0.45);
   transition:background 0.3s ease;
+  position: relative;
 }
 .msg.user {
   align-self:flex-end;
@@ -166,8 +186,39 @@ button:hover {
   border:1px solid rgba(255,255,255,0.18);
   color:#dcecff;
 }
+.msg.ai pre {
+  background: rgba(0,0,0,0.3);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.msg.ai code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+.msg.ai p {
+  margin: 8px 0;
+}
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: rgba(124,58,237,0.6);
+  border: 1px solid rgba(124,58,237,0.8);
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.msg:hover .copy-btn {
+  opacity: 1;
+}
 
 footer { display:flex; gap:8px; margin-top:12px; }
+textarea { resize: vertical; min-height: 60px; }
 .meta { margin-top:8px; color:var(--muted); font-size:13px; }
 .help { margin-top:10px; color:#cfe8ff; font-size:13px; }
 .error { color:#ffb4b4; font-size:13px; margin-top:8px; }
@@ -218,12 +269,13 @@ footer { display:flex; gap:8px; margin-top:12px; }
 
   <div class="card">
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <label style="color:var(--muted)">Model:</label>
-      <select id="modelSelect"></select>
-      <button id="loadBtn">Load model</button>
-      <button id="refreshModelsBtn" title="Re-read built-in model list">Refresh</button>
+      <label style="color:var(--muted)" for="modelSelect">Model:</label>
+      <select id="modelSelect" aria-label="Select AI model"></select>
+      <button id="loadBtn" aria-label="Load selected model">Load model</button>
+      <button id="refreshModelsBtn" title="Re-read built-in model list" aria-label="Refresh model list">Refresh</button>
+      <button id="clearChatBtn" title="Clear chat history" aria-label="Clear chat" style="background:rgba(239,68,68,0.8)">Clear Chat</button>
       <div style="flex:1"></div>
-      <div style="font-size:12px;color:var(--muted)">Status: <span id="status">idle</span></div>
+      <div style="font-size:12px;color:var(--muted)" role="status" aria-live="polite">Status: <span id="status">idle</span></div>
     </div>
 
     <div class="progress"><i id="progressBar"></i></div>
@@ -233,8 +285,8 @@ footer { display:flex; gap:8px; margin-top:12px; }
     <div class="chat" id="chat"></div>
 
     <footer>
-      <textarea id="prompt" placeholder="Type a message or /image something..."></textarea>
-      <button id="sendBtn">Send</button>
+      <textarea id="prompt" placeholder="Type a message or /image something..." aria-label="Message input" rows="3"></textarea>
+      <button id="sendBtn" aria-label="Send message">Send</button>
     </footer>
   </div>
 </div>
@@ -268,12 +320,52 @@ const chatEl=document.getElementById('chat');
 const modelSelect=document.getElementById('modelSelect');
 const loadBtn=document.getElementById('loadBtn');
 const refreshBtn=document.getElementById('refreshModelsBtn');
+const clearChatBtn=document.getElementById('clearChatBtn');
 const sendBtn=document.getElementById('sendBtn');
 const promptEl=document.getElementById('prompt');
 const availableModelsEl=document.getElementById('availableModels');
 const errorBox=document.getElementById('errorBox');
 let engine=null;
 let messagesHistory=[];
+
+// Load chat history from localStorage
+function loadChatHistory() {
+  try {
+    const saved = localStorage.getItem('nyveraChatHistory');
+    if (saved) {
+      const history = JSON.parse(saved);
+      history.forEach(msg => {
+        if (msg.role === 'user') {
+          appendMessage('user', msg.content, false);
+        } else if (msg.role === 'assistant') {
+          appendMessage('ai', msg.content, false);
+        }
+      });
+      messagesHistory = history;
+    }
+  } catch (e) {
+    console.error('Failed to load chat history:', e);
+  }
+}
+
+// Save chat history to localStorage
+function saveChatHistory() {
+  try {
+    localStorage.setItem('nyveraChatHistory', JSON.stringify(messagesHistory));
+  } catch (e) {
+    console.error('Failed to save chat history:', e);
+  }
+}
+
+// Clear chat history
+function clearChat() {
+  if (confirm('Are you sure you want to clear the chat history?')) {
+    chatEl.innerHTML = '';
+    messagesHistory = [];
+    localStorage.removeItem('nyveraChatHistory');
+    setStatus('Chat cleared');
+  }
+}
 
 function renderAIText(text){
   const processed=text.replace(/<think>(.*?)<\/think>/gs,"*$1*");
@@ -282,12 +374,44 @@ function renderAIText(text){
   container.querySelectorAll("pre code").forEach(el=>hljs.highlightElement(el));
   return container.innerHTML;
 }
-function appendMessage(who,text){
+
+function copyToClipboard(text) {
+  // Remove HTML tags for plain text copy
+  const temp = document.createElement('div');
+  temp.innerHTML = text;
+  const plainText = temp.textContent || temp.innerText || '';
+  
+  navigator.clipboard.writeText(plainText).then(() => {
+    setStatus('Copied to clipboard!');
+    setTimeout(() => setStatus('ready'), 2000);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+  });
+}
+
+function appendMessage(who, text, save = true){
   const div=document.createElement('div');
   div.className='msg '+(who==='user'?'user':'ai');
-  div.innerHTML=(who==='ai')?renderAIText(text):text;
+  
+  if (who === 'ai') {
+    div.innerHTML = renderAIText(text);
+    // Add copy button for AI messages
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = () => copyToClipboard(text);
+    div.appendChild(copyBtn);
+  } else {
+    div.textContent = text;
+  }
+  
   chatEl.appendChild(div);
   chatEl.scrollTop=chatEl.scrollHeight;
+  
+  // Save to history if needed
+  if (save) {
+    saveChatHistory();
+  }
 }
 function setStatus(s){statusEl.innerText=s;}
 function setProgress(p){progressBar.style.width=Math.max(0,Math.min(100,p))+'%';}
@@ -385,9 +509,11 @@ async function sendMessage() {
 loadBtn.addEventListener('click',loadModel);
 sendBtn.addEventListener('click',sendMessage);
 refreshBtn.addEventListener('click',populateModelSelect);
+clearChatBtn.addEventListener('click',clearChat);
 promptEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) sendMessage();});
 if(!('gpu' in navigator)) setStatus('WARNING: WebGPU not available');
 populateModelSelect();
+loadChatHistory(); // Load saved chat history on startup
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").then(reg=>console.log("SW registered:",reg.scope)).catch(err=>console.error("SW registration failed:",err));});}
 </script>
 
@@ -406,7 +532,7 @@ class Particle{
   draw(){ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle="rgba(255,255,255,"+this.alpha+")"; ctx.fill();}
 }
 function initParticles(num=150){particles=[];for(let i=0;i<num;i++){particles.push(new Particle());}}
-function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>p.update(),p.draw()); requestAnimationFrame(animate);}
+function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animate);}
 initParticles();animate();
 </script>
 

@@ -1,22 +1,22 @@
 # Nyvera
 
-Nyvera is a progressive web app (PWA) that lets you chat with AI models powered by WebLLM. Featuring a modern, ChatGPT-like interface inspired by OpenWebUI, it's designed to look sleek, run fast, and stay usable even when offline. Once installed, Nyvera behaves like a native app on desktop or mobile, complete with icons, splash screens, and offline support.
+Nyvera is a progressive web app (PWA) that lets you chat with AI models powered by WebLLM. Featuring a modern, ChatGPT-like interface, it's designed to look sleek, run fast, and work completely offline. All AI processing happens locally in your browser using WebGPU - no server required, complete privacy guaranteed. Once installed, Nyvera behaves like a native app on desktop or mobile, complete with icons, splash screens, and offline support.
 
 ## ✨ Features
 
-- **Modern ChatGPT-like Interface** – Clean, professional UI with sidebar navigation, conversation management, and dark theme inspired by OpenWebUI.
+- **Modern ChatGPT-like Interface** – Clean, professional UI with sidebar navigation, conversation management, and dark theme.
 
-- **Conversation Management** – Create multiple chat sessions, switch between them, and maintain conversation history.
+- **Completely Offline** – All AI processing happens locally in your browser using WebGPU. No internet required after initial setup.
+
+- **Conversation Management** – Create multiple chat sessions, switch between them, and maintain conversation history locally.
 
 - **Sidebar Navigation** – Collapsible sidebar with conversation list, model selection, and settings.
 
 - **Model Selection** – Choose different AI models from WebLLM's extensive library.
 
-- **Text & Image Generation** – Supports both text chat and image generation using Pollinations API.
+- **Local AI Inference** – Powered by WebLLM for true offline AI chat with complete privacy.
 
 - **PWA Support** – Installable on desktop and mobile, with offline caching.
-
-- **Offline Mode** – Chat with AI models completely offline once loaded.
 
 - **Responsive Design** – Optimized for desktop, tablet, and mobile devices.
 
@@ -63,7 +63,7 @@ Then visit: http://localhost:8080
 - Models can run completely offline once loaded.
 - This ensures the app feels responsive even without an internet connection.
 
-## 🎨 New UI Features
+## 🎨 UI Features
 
 ### Sidebar Navigation
 - Collapsible sidebar for easy access to conversations and settings
@@ -75,8 +75,8 @@ Then visit: http://localhost:8080
 - Clean, modern message bubbles for user and AI responses
 - Markdown and code syntax highlighting support
 - Copy button for AI responses
-- Image generation support with `/image` command
 - Example prompts to get started quickly
+- Smooth animations and transitions
 
 ### Settings
 - Centralized settings modal
@@ -107,14 +107,16 @@ Right now, the chat uses WebLLM to chat online and offline. You can swap this ou
 
 Adjust what's cached offline by editing the ASSETS array in `sw.js`.
 
-## 🔒 Permissions
+## 🔒 Privacy & Security
 
 This app:
 
-- Does not collect user data.
-- Does not require login.
-- Only communicates with external APIs when explicitly requested (Pollinations API for images).
-- Stores conversation history locally in your browser.
+- **100% Private** - All AI processing happens locally in your browser using WebGPU
+- Does not collect or transmit user data
+- Does not require login or account creation
+- Works completely offline after initial model download
+- Stores conversation history locally in your browser only
+- No external API calls for AI inference
 
 ## 🧩 Browser Compatibility
 
@@ -131,18 +133,22 @@ You are free to use, modify, and distribute it with attribution.
 
 ## 🙌 Credits
 
-- **UI Design**: Inspired by ChatGPT and OpenWebUI
+- **UI Design**: Inspired by ChatGPT
 - **Built with**: Vanilla JavaScript, HTML5, CSS3
 - **Powered by**: WebLLM for offline AI inference
-- **Image Generation**: Pollinations AI
 - **Syntax Highlighting**: Highlight.js
 - **Markdown Rendering**: Marked.js
 - **Icon design**: Nyvera
 
 ## 🌟 What's New
 
-**Latest Update: OpenWebUI-Inspired Interface**
+**Latest Update: Focused Offline Experience**
 
+- Removed image generation to focus on local AI chat
+- Enhanced ChatGPT-like styling with better animations
+- Improved offline capabilities - truly works without internet
+- Better performance with streamlined codebase
+- Complete privacy with 100% local AI processing
 - Complete UI overhaul with a modern, ChatGPT-like design
 - Added sidebar navigation with conversation management
 - Implemented conversation history and switching

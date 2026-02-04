@@ -4,8 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Nyvera - AI Chat with WebLLM</title>
-<meta name="description" content="Nyvera is a progressive web app that lets you chat with AI models powered by WebLLM. Works offline with text and image generation capabilities." />
-<meta name="keywords" content="AI, chat, WebLLM, PWA, offline, machine learning, image generation" />
+<meta name="description" content="Nyvera is a progressive web app that lets you chat with AI models powered by WebLLM. Works completely offline with local AI inference." />
+<meta name="keywords" content="AI, chat, WebLLM, PWA, offline, machine learning, local AI" />
 <meta name="author" content="Nyvera" />
 <meta name="theme-color" content="#171717" />
 <meta name="referrer" content="no-referrer-when-downgrade" />
@@ -14,13 +14,13 @@
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Nyvera - AI Chat with WebLLM" />
-<meta property="og:description" content="Chat with AI models powered by WebLLM. Works offline with text and image generation." />
+<meta property="og:description" content="Chat with AI models powered by WebLLM. Works completely offline with local AI inference." />
 <meta property="og:image" content="/web-app-manifest-512x512.png" />
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Nyvera - AI Chat with WebLLM" />
-<meta name="twitter:description" content="Chat with AI models powered by WebLLM. Works offline with text and image generation." />
+<meta name="twitter:description" content="Chat with AI models powered by WebLLM. Works completely offline with local AI inference." />
 <meta name="twitter:image" content="/web-app-manifest-512x512.png" />
 
 <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -541,6 +541,8 @@ html, body {
 .example-prompt:hover {
   background: var(--bg-hover);
   border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 163, 127, 0.15);
 }
 
 .example-prompt-title {
@@ -749,9 +751,9 @@ html, body {
             <div class="example-prompt-title">💻 Code</div>
             <div class="example-prompt-text">Python sorting function</div>
           </div>
-          <div class="example-prompt" data-prompt="/image a futuristic city at sunset">
-            <div class="example-prompt-title">🎨 Generate</div>
-            <div class="example-prompt-text">Create an image</div>
+          <div class="example-prompt" data-prompt="Explain the concept of recursion with a simple example">
+            <div class="example-prompt-title">💭 Learn</div>
+            <div class="example-prompt-text">Programming concepts</div>
           </div>
           <div class="example-prompt" data-prompt="What are the benefits of meditation?">
             <div class="example-prompt-title">💡 Discover</div>
@@ -769,7 +771,7 @@ html, body {
         <textarea 
           class="input-area" 
           id="inputArea" 
-          placeholder="Send a message... (Enter to send, Shift+Enter for new line, /image for image generation)"
+          placeholder="Send a message... (Enter to send, Shift+Enter for new line)"
           rows="1"
         ></textarea>
         <button class="send-btn" id="sendBtn" aria-label="Send message">
@@ -778,7 +780,7 @@ html, body {
           </svg>
         </button>
         <div class="input-hint">
-          Press Enter to send • Shift+Enter for new line • Use /image for image generation
+          Press Enter to send • Shift+Enter for new line
         </div>
       </div>
     </div>
@@ -808,7 +810,7 @@ html, body {
       <h3>About</h3>
       <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
         Nyvera is an offline-capable AI chat application powered by WebLLM. 
-        It supports text generation and image creation using Pollinations API.
+        All AI processing happens locally in your browser using WebGPU for complete privacy and offline functionality.
       </p>
     </div>
 
@@ -821,8 +823,8 @@ html, body {
 <!-- AI & WebLLM Scripts -->
 <script type="module">
 // ============================================================================
-// Nyvera - AI Chat Application (OpenWebUI-inspired UI)
-// Powered by WebLLM for offline AI chat and Pollinations API for images
+// Nyvera - AI Chat Application (ChatGPT-inspired UI)
+// Powered by WebLLM for completely offline AI chat with local inference
 // ============================================================================
 
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
@@ -1006,14 +1008,14 @@ function renderMessages() {
   }
 
   conversation.messages.forEach(msg => {
-    appendMessageElement(msg.role, msg.content, msg.imageUrl);
+    appendMessageElement(msg.role, msg.content);
   });
 
   showChatArea();
   scrollToBottom();
 }
 
-function appendMessageElement(role, content, imageUrl = null) {
+function appendMessageElement(role, content) {
   const msgDiv = document.createElement('div');
   msgDiv.className = `message ${role}`;
   
@@ -1024,19 +1026,9 @@ function appendMessageElement(role, content, imageUrl = null) {
   const contentDiv = document.createElement('div');
   contentDiv.className = 'message-content';
   
-  if (imageUrl) {
-    const img = document.createElement('img');
-    img.src = imageUrl;
-    img.alt = 'Generated image';
-    img.onerror = () => {
-      contentDiv.innerHTML = '❌ Image no longer available';
-    };
-    contentDiv.appendChild(img);
-  } else {
-    contentDiv.innerHTML = role === 'assistant' ? renderMarkdown(content) : content;
-  }
+  contentDiv.innerHTML = role === 'assistant' ? renderMarkdown(content) : content;
   
-  if (role === 'assistant' && !imageUrl) {
+  if (role === 'assistant') {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
     actions.innerHTML = `
@@ -1159,17 +1151,6 @@ async function sendMessage() {
   inputArea.value = '';
   autoResizeTextarea();
   
-  // Check for image command
-  if (text.toLowerCase().startsWith('/image ')) {
-    const imgPrompt = text.replace(/^\/image\s+/, '').trim();
-    if (!imgPrompt) {
-      setStatus('Please provide an image prompt', 'idle');
-      setTimeout(() => setStatus('Idle', 'idle'), 2000);
-      return;
-    }
-    return sendImage(imgPrompt, conversation);
-  }
-  
   if (!engine) {
     setStatus('Please load a model first', 'idle');
     setTimeout(() => setStatus('Idle', 'idle'), 2000);
@@ -1232,60 +1213,6 @@ async function sendMessage() {
   } catch (err) {
     console.error(err);
     contentDiv.textContent = 'Error: ' + (err?.message || err);
-    setStatus('Error', 'idle');
-  }
-}
-
-async function sendImage(prompt, conversation) {
-  conversation.messages.push({ role: 'user', content: '/image ' + prompt });
-  updateConversationTitle(conversation);
-  saveConversations();
-  renderConversations();
-  appendMessageElement('user', '/image ' + prompt);
-  
-  setStatus('Generating image...', 'loading');
-  
-  try {
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
-    
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'message assistant';
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.textContent = 'AI';
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    contentDiv.textContent = 'Generating image...';
-    
-    msgDiv.appendChild(avatar);
-    msgDiv.appendChild(contentDiv);
-    chatMessages.appendChild(msgDiv);
-    scrollToBottom();
-    
-    const img = new Image();
-    img.src = url;
-    img.alt = prompt;
-    img.style.maxWidth = "100%";
-    img.style.borderRadius = "12px";
-    
-    img.onload = () => {
-      contentDiv.innerHTML = '';
-      contentDiv.appendChild(img);
-      conversation.messages.push({ role: 'assistant', content: `![${prompt}](${url})`, imageUrl: url });
-      saveConversations();
-      setStatus('Ready', 'ready');
-    };
-    
-    img.onerror = () => {
-      contentDiv.textContent = '❌ Error generating image.';
-      conversation.messages.push({ role: 'assistant', content: `[Failed to generate image: ${prompt}]` });
-      saveConversations();
-      setStatus('Error', 'idle');
-    };
-  } catch (err) {
-    console.error(err);
     setStatus('Error', 'idle');
   }
 }

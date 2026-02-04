@@ -538,11 +538,13 @@ html, body {
   text-align: left;
 }
 
-.example-prompt:hover {
+.example-prompt:hover,
+.example-prompt:focus {
   background: var(--bg-hover);
   border-color: var(--accent);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(16, 163, 127, 0.15);
+  outline: none;
 }
 
 .example-prompt-title {
@@ -743,19 +745,19 @@ html, body {
         <h2>Nyvera AI</h2>
         <p>Your offline-capable AI assistant powered by WebLLM</p>
         <div class="example-prompts">
-          <div class="example-prompt" data-prompt="Explain quantum computing in simple terms">
+          <div class="example-prompt" data-prompt="Explain quantum computing in simple terms" tabindex="0" role="button">
             <div class="example-prompt-title">🔬 Explain</div>
             <div class="example-prompt-text">Quantum computing basics</div>
           </div>
-          <div class="example-prompt" data-prompt="Write a Python function to sort a list">
+          <div class="example-prompt" data-prompt="Write a Python function to sort a list" tabindex="0" role="button">
             <div class="example-prompt-title">💻 Code</div>
             <div class="example-prompt-text">Python sorting function</div>
           </div>
-          <div class="example-prompt" data-prompt="Explain the concept of recursion with a simple example">
+          <div class="example-prompt" data-prompt="Explain the concept of recursion with a simple example" tabindex="0" role="button">
             <div class="example-prompt-title">💭 Learn</div>
             <div class="example-prompt-text">Programming concepts</div>
           </div>
-          <div class="example-prompt" data-prompt="What are the benefits of meditation?">
+          <div class="example-prompt" data-prompt="What are the benefits of meditation?" tabindex="0" role="button">
             <div class="example-prompt-title">💡 Discover</div>
             <div class="example-prompt-text">Health and wellness</div>
           </div>
@@ -1319,10 +1321,18 @@ inputArea.addEventListener('input', autoResizeTextarea);
 
 // Example prompts
 document.querySelectorAll('.example-prompt').forEach(prompt => {
-  prompt.addEventListener('click', () => {
+  const handlePrompt = () => {
     inputArea.value = prompt.dataset.prompt;
     autoResizeTextarea();
     inputArea.focus();
+  };
+  
+  prompt.addEventListener('click', handlePrompt);
+  prompt.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handlePrompt();
+    }
   });
 });
 

@@ -7,7 +7,7 @@
 <meta name="description" content="Nyvera is a progressive web app that lets you chat with AI models powered by WebLLM. Works offline with text and image generation capabilities." />
 <meta name="keywords" content="AI, chat, WebLLM, PWA, offline, machine learning, image generation" />
 <meta name="author" content="Nyvera" />
-<meta name="theme-color" content="#7c3aed" />
+<meta name="theme-color" content="#171717" />
 <meta name="referrer" content="no-referrer-when-downgrade" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
@@ -36,212 +36,450 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 
 <style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 :root {
-  --muted: #94a3b8;
-  --accent: #7c3aed;
-  --glass-bg: rgba(255,255,255,0.08);
-  --glass-border: rgba(255,255,255,0.18);
+  --bg-primary: #171717;
+  --bg-secondary: #212121;
+  --bg-tertiary: #2a2a2a;
+  --bg-hover: #343541;
+  --text-primary: #ececf1;
+  --text-secondary: #c5c5d2;
+  --text-muted: #8e8ea0;
+  --border-color: #3e3e4e;
+  --accent: #10a37f;
+  --accent-hover: #0d8a6a;
+  --user-bg: #343541;
+  --ai-bg: #2a2a2a;
+  --sidebar-width: 260px;
+  --input-height: 120px;
 }
 
-html,body {
-  height:100%;
-  margin:0;
-  font-family: Inter, system-ui, Segoe UI, Roboto, 'Helvetica Neue', Arial;
-  color:#e6eef8;
-  overflow:hidden;
-}
-
-/* Animated gradient background */
-body {
-  background:linear-gradient(270deg,#071129,#00121a,#1a1f3c,#002b40);
-  background-size:800% 800%;
-  animation: gradientShift 24s ease infinite;
-  position:relative;
-}
-@keyframes gradientShift {
-  0% { background-position:0% 50%; }
-  50% { background-position:100% 50%; }
-  100% { background-position:0% 50%; }
-}
-
-/* Canvas for particles */
-canvas#stars {
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  z-index:0;
-  pointer-events:none;
-}
-
-/* Cursor follower */
-.cursor-follower {
-  position: fixed;
-  top: 0; left: 0;
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 20px rgba(255,255,255,0.6);
-  transform: translate(-50%, -50%);
-  z-index: 9999;
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  overflow: hidden;
 }
 
 /* Layout */
-.wrap {
-  max-width:900px;
-  margin:28px auto;
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  height:95vh;
-  position:relative;
-  z-index:1;
-}
-header {
-  display:flex;
-  gap:16px;
-  align-items:center;
-}
-h1 {
-  font-size:20px;
-  margin:0;
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
 }
 
-/* Glass card */
-.card {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  padding:18px;
-  border-radius:20px;
-  background:var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border:1px solid var(--glass-border);
-  box-shadow:0 8px 32px rgba(0,0,0,0.5);
-  transition: background 0.3s, transform 0.3s;
-}
-.card:hover { background:rgba(255,255,255,0.12); transform:translateY(-2px); }
-
-/* Inputs & text areas */
-select,input[type=text],textarea {
-  padding:10px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,0.25);
-  background:rgba(255,255,255,0.08);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  color:#e6eef8;
-  transition:all 0.3s ease;
-}
-select:focus,input[type=text]:focus,textarea:focus {
-  border:1px solid var(--accent);
-  outline:none;
-  background:rgba(255,255,255,0.15);
-  box-shadow:0 0 10px rgba(124,58,237,0.5);
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+  z-index: 1000;
 }
 
-/* Buttons */
-button {
-  padding:10px 16px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,0.25);
-  background:linear-gradient(135deg,var(--accent),#60a5fa);
-  color:white;
-  cursor:pointer;
-  font-weight:500;
-  backdrop-filter: blur(10px);
-  transition:transform 0.2s, box-shadow 0.2s;
-}
-button:hover {
-  transform:translateY(-2px) scale(1.02);
-  box-shadow:0 6px 20px rgba(0,0,0,0.6), 0 0 12px rgba(124,58,237,0.6);
+.sidebar.collapsed {
+  transform: translateX(-100%);
 }
 
-/* Progress bar */
-.progress { height:10px; background:rgba(255,255,255,0.08); border-radius:8px; margin-top:8px; overflow:hidden; }
-.progress>i { display:block; height:100%; width:0%; background:linear-gradient(90deg,#7c3aed,#60a5fa); transition:width 0.4s ease; }
+.sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
 
-/* Chat */
-.chat { flex:1; margin-top:18px; display:flex; flex-direction:column; gap:10px; overflow:auto; padding:8px; }
-.msg {
-  max-width:78%;
-  padding:12px 14px;
-  border-radius:16px;
-  white-space:pre-wrap;
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  box-shadow:0 4px 14px rgba(0,0,0,0.45);
-  transition:background 0.3s ease;
+.new-chat-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.new-chat-btn:hover {
+  background: var(--bg-hover);
+}
+
+.conversations-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.conversation-item {
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-item:hover {
+  background: var(--bg-hover);
+}
+
+.conversation-item.active {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.delete-conversation {
+  opacity: 0;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.conversation-item:hover .delete-conversation {
+  opacity: 1;
+}
+
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.model-selector {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.load-model-btn, .settings-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.load-model-btn:hover {
+  background: var(--accent-hover);
+}
+
+.settings-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.settings-btn:hover {
+  background: var(--bg-hover);
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   position: relative;
 }
-.msg.user {
-  align-self:flex-end;
-  background:rgba(124,58,237,0.25);
-  border:1px solid rgba(124,58,237,0.4);
-  color:#e6e6ff;
+
+.main-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-secondary);
 }
-.msg.ai {
-  align-self:flex-start;
-  background:rgba(15,23,36,0.55);
-  border:1px solid rgba(255,255,255,0.18);
-  color:#dcecff;
+
+.toggle-sidebar-btn {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 20px;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
-.msg.ai pre {
-  background: rgba(0,0,0,0.3);
+
+.toggle-sidebar-btn:hover {
+  background: var(--bg-hover);
+}
+
+.model-status {
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.status-indicator.ready {
+  background: var(--accent);
+}
+
+.status-indicator.loading {
+  background: #fbbf24;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Chat Area */
+.chat-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chat-messages {
+  width: 100%;
+  max-width: 768px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.message {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message.user {
+  background: var(--user-bg);
+}
+
+.message.assistant {
+  background: var(--ai-bg);
+}
+
+.message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.message.user .message-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.message.assistant .message-avatar {
+  background: var(--accent);
+}
+
+.message-content {
+  flex: 1;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.message-content pre {
+  background: var(--bg-primary);
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
   margin: 8px 0;
+  border: 1px solid var(--border-color);
 }
-.msg.ai code {
+
+.message-content code {
   font-family: 'Courier New', monospace;
   font-size: 0.9em;
 }
-.msg.ai p {
+
+.message-content p {
   margin: 8px 0;
 }
-.copy-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 4px 8px;
-  font-size: 11px;
-  background: rgba(124,58,237,0.6);
-  border: 1px solid rgba(124,58,237,0.8);
-  border-radius: 6px;
-  cursor: pointer;
+
+.message-content img {
+  max-width: 100%;
+  border-radius: 12px;
+  margin: 8px 0;
+}
+
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
   opacity: 0;
   transition: opacity 0.2s;
 }
-.msg:hover .copy-btn {
+
+.message:hover .message-actions {
   opacity: 1;
 }
 
-footer { display:flex; gap:8px; margin-top:12px; }
-textarea { resize: vertical; min-height: 60px; }
-.meta { margin-top:8px; color:var(--muted); font-size:13px; }
-.help { margin-top:10px; color:#cfe8ff; font-size:13px; }
-.error { color:#ffb4b4; font-size:13px; margin-top:8px; }
-.small { font-size:12px; color:var(--muted); }
-
-#showTutorialBtn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100000;
-  padding: 10px 16px;
-  border-radius: 16px;
-  border: none;
-  background: linear-gradient(135deg,var(--accent),#60a5fa);
-  color:white;
-  cursor:pointer;
-  font-weight:500;
-  box-shadow:0 4px 14px rgba(0,0,0,0.5);
+.action-btn {
+  padding: 4px 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
 }
 
-/* Loading spinner */
+.action-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Input Area */
+.input-container {
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.input-wrapper {
+  width: 100%;
+  max-width: 768px;
+  position: relative;
+}
+
+.input-area {
+  width: 100%;
+  padding: 14px 50px 14px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: none;
+  min-height: 52px;
+  max-height: 200px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.input-area:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.send-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Progress Bar */
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--bg-tertiary);
+  overflow: hidden;
+  display: none;
+}
+
+.progress-bar.active {
+  display: block;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* Loading Spinner */
 .loading-spinner {
   display: inline-block;
   width: 14px;
@@ -251,30 +489,206 @@ textarea { resize: vertical; min-height: 60px; }
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* Improved mobile responsiveness */
-@media(max-width:600px) {
-  .wrap { padding:10px; margin:10px auto; height:98vh; }
-  .card { padding:12px; }
-  h1 { font-size:18px; }
-  .msg { max-width:85%; font-size:14px; padding:10px 12px; }
-  button { padding:8px 12px; font-size:14px; }
-  select { font-size:14px; }
-  textarea { font-size:14px; min-height: 50px; }
-  footer { flex-wrap: wrap; }
-  #showTutorialBtn { bottom:10px; right:10px; padding:8px 12px; font-size:13px; }
-  .copy-btn { font-size:10px; padding:3px 6px; }
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 32px;
 }
 
-@media(max-width:400px) {
-  .wrap { padding:5px; }
-  .card { padding:8px; }
-  h1 { font-size:16px; }
-  header { gap:10px; }
-  header > div:first-child { width:42px; height:42px; font-size:14px; }
+.empty-state h2 {
+  font-size: 32px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--accent) 0%, #667eea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  max-width: 400px;
+}
+
+.example-prompts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+  max-width: 600px;
+}
+
+.example-prompt {
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.example-prompt:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+.example-prompt-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.example-prompt-text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Settings Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+}
+
+.close-modal {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 24px;
+  padding: 4px;
+}
+
+.modal-section {
+  margin-bottom: 20px;
+}
+
+.modal-section h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 80%;
+  }
+
+  .sidebar {
+    position: absolute;
+    height: 100%;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.5);
+  }
+
+  .chat-messages {
+    padding: 0 8px;
+  }
+
+  .message {
+    padding: 12px;
+  }
+
+  .example-prompts {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color);
 }
 </style>
 
@@ -284,72 +698,130 @@ textarea { resize: vertical; min-height: 60px; }
 </head>
 <body>
 
-<!-- Cursor follower -->
-<div class="cursor-follower"></div>
-
-<!-- Particle canvas -->
-<canvas id="stars"></canvas>
-
-<div class="wrap">
-  <header>
-    <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(90deg,#7c3aed,#60a5fa);display:flex;align-items:center;justify-content:center;color:#04233b;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,0.5);backdrop-filter:blur(10px)">AI</div>
-    <div>
-      <h1>Nyvera</h1>
-      <div class="meta">Now supports text & image generation.</div>
-    </div>
-  </header>
-
-  <div class="card">
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <label style="color:var(--muted)" for="modelSelect">Model:</label>
-      <select id="modelSelect" aria-label="Select AI model"></select>
-      <button id="loadBtn" aria-label="Load selected model">Load model</button>
-      <button id="refreshModelsBtn" title="Re-read built-in model list" aria-label="Refresh model list">Refresh</button>
-      <button id="clearChatBtn" title="Clear chat history" aria-label="Clear chat" style="background:rgba(239,68,68,0.8)">Clear Chat</button>
-      <button id="exportChatBtn" title="Export chat history as text" aria-label="Export chat" style="background:rgba(34,197,94,0.8)">Export</button>
-      <div style="flex:1"></div>
-      <div style="font-size:12px;color:var(--muted)" role="status" aria-live="polite">Status: <span id="status">idle</span></div>
+<div class="app-container">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <button class="new-chat-btn" id="newChatBtn">
+        <span>+</span>
+        <span>New Chat</span>
+      </button>
     </div>
 
-    <div class="progress"><i id="progressBar"></i></div>
-    <div id="availableModels" class="help small"></div>
-    <div id="errorBox" class="error" style="display:none"></div>
+    <div class="conversations-list" id="conversationsList">
+      <!-- Conversations will be dynamically added here -->
+    </div>
 
-    <div class="chat" id="chat"></div>
+    <div class="sidebar-footer">
+      <select class="model-selector" id="modelSelect" aria-label="Select AI model">
+        <!-- Models will be populated here -->
+      </select>
+      <button class="load-model-btn" id="loadModelBtn">Load Model</button>
+      <button class="settings-btn" id="settingsBtn">Settings</button>
+    </div>
+  </div>
 
-    <footer>
-      <textarea id="prompt" placeholder="Type a message or /image something..." aria-label="Message input" rows="3"></textarea>
-      <button id="sendBtn" aria-label="Send message">Send</button>
-    </footer>
-    <div class="small" style="margin-top:6px;text-align:center;color:var(--muted)">
-      Tip: Press <kbd style="padding:2px 4px;background:rgba(255,255,255,0.1);border-radius:4px;">Ctrl+Enter</kbd> (or <kbd style="padding:2px 4px;background:rgba(255,255,255,0.1);border-radius:4px;">Cmd+Enter</kbd> on Mac) to send • Use <code style="background:rgba(255,255,255,0.1);padding:2px 4px;border-radius:4px;">/image</code> for image generation
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="main-header">
+      <button class="toggle-sidebar-btn" id="toggleSidebar">☰</button>
+      <div class="model-status">
+        <span class="status-indicator" id="statusIndicator"></span>
+        <span id="statusText">Idle</span>
+      </div>
+      <div></div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+      <div class="empty-state" id="emptyState">
+        <h2>Nyvera AI</h2>
+        <p>Your offline-capable AI assistant powered by WebLLM</p>
+        <div class="example-prompts">
+          <div class="example-prompt" data-prompt="Explain quantum computing in simple terms">
+            <div class="example-prompt-title">🔬 Explain</div>
+            <div class="example-prompt-text">Quantum computing basics</div>
+          </div>
+          <div class="example-prompt" data-prompt="Write a Python function to sort a list">
+            <div class="example-prompt-title">💻 Code</div>
+            <div class="example-prompt-text">Python sorting function</div>
+          </div>
+          <div class="example-prompt" data-prompt="/image a futuristic city at sunset">
+            <div class="example-prompt-title">🎨 Generate</div>
+            <div class="example-prompt-text">Create an image</div>
+          </div>
+          <div class="example-prompt" data-prompt="What are the benefits of meditation?">
+            <div class="example-prompt-title">💡 Discover</div>
+            <div class="example-prompt-text">Health and wellness</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages" style="display: none;">
+        <!-- Messages will be dynamically added here -->
+      </div>
+    </div>
+
+    <div class="input-container">
+      <div class="input-wrapper">
+        <textarea 
+          class="input-area" 
+          id="inputArea" 
+          placeholder="Send a message... (Shift+Enter for new line, /image for image generation)"
+          rows="1"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" aria-label="Send message">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="input-hint">
+          Press Enter to send • Shift+Enter for new line • Use /image for image generation
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Show tutorial button -->
-<button id="showTutorialBtn">Show Tutorial</button>
-
-<!-- Tutorial Overlay -->
-<div id="tutorialOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:none;z-index:99999;">
-  <div id="tutorialHighlight" style="position:absolute;border:2px solid var(--accent);border-radius:12px;box-shadow:0 0 20px var(--accent);pointer-events:none;transition:all 0.4s ease;"></div>
-  <div id="tutorialBox" style="position:absolute;max-width:400px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:20px;padding:20px;text-align:center;color:#e6eef8;z-index:99999;transition:all 0.4s ease;">
-    <div id="tutorialStepContent" style="margin-bottom:20px;font-size:16px;"></div>
-    <div style="display:flex;justify-content:space-between;">
-      <button id="tutorialBackBtn">Back</button>
-      <button id="tutorialNextBtn">Next</button>
+<!-- Settings Modal -->
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Settings</h2>
+      <button class="close-modal" id="closeSettings">×</button>
     </div>
-    <label style="display:block;margin-top:10px;font-size:12px;color:var(--muted)">
-      <input type="checkbox" id="tutorialDontShow"/> Don't show this again
-    </label>
-    <button id="tutorialCloseBtn" style="position:absolute;top:10px;right:10px;background:rgba(255,0,0,0.6);border:none;padding:6px 10px;border-radius:10px;color:white;">X</button>
+
+    <div class="modal-section">
+      <h3>Available Models</h3>
+      <div id="availableModelsInfo" style="font-size: 13px; color: var(--text-muted);"></div>
+    </div>
+
+    <div class="modal-section">
+      <h3>Chat Management</h3>
+      <button class="btn btn-secondary" id="exportChatBtn">Export Current Chat</button>
+      <button class="btn btn-secondary" id="clearAllChatsBtn" style="margin-left: 8px;">Clear All Chats</button>
+    </div>
+
+    <div class="modal-section">
+      <h3>About</h3>
+      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+        Nyvera is an offline-capable AI chat application powered by WebLLM. 
+        It supports text generation and image creation using Pollinations API.
+      </p>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="closeSettingsBtn">Close</button>
+    </div>
   </div>
 </div>
 
 <!-- AI & WebLLM Scripts -->
 <script type="module">
 // ============================================================================
-// Nyvera - AI Chat Application
+// Nyvera - AI Chat Application (OpenWebUI-inspired UI)
 // Powered by WebLLM for offline AI chat and Pollinations API for images
 // ============================================================================
 
@@ -359,92 +831,486 @@ const { CreateMLCEngine, prebuiltAppConfig } = webllm;
 // ============================================================================
 // DOM Element References
 // ============================================================================
-const statusEl=document.getElementById('status');
-const progressBar=document.getElementById('progressBar');
-const chatEl=document.getElementById('chat');
-const modelSelect=document.getElementById('modelSelect');
-const loadBtn=document.getElementById('loadBtn');
-const refreshBtn=document.getElementById('refreshModelsBtn');
-const clearChatBtn=document.getElementById('clearChatBtn');
-const sendBtn=document.getElementById('sendBtn');
-const promptEl=document.getElementById('prompt');
-const availableModelsEl=document.getElementById('availableModels');
-const errorBox=document.getElementById('errorBox');
+const sidebar = document.getElementById('sidebar');
+const toggleSidebar = document.getElementById('toggleSidebar');
+const newChatBtn = document.getElementById('newChatBtn');
+const conversationsList = document.getElementById('conversationsList');
+const modelSelect = document.getElementById('modelSelect');
+const loadModelBtn = document.getElementById('loadModelBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettings = document.getElementById('closeSettings');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const chatContainer = document.getElementById('chatContainer');
+const chatMessages = document.getElementById('chatMessages');
+const emptyState = document.getElementById('emptyState');
+const inputArea = document.getElementById('inputArea');
+const sendBtn = document.getElementById('sendBtn');
+const statusIndicator = document.getElementById('statusIndicator');
+const statusText = document.getElementById('statusText');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const exportChatBtn = document.getElementById('exportChatBtn');
+const clearAllChatsBtn = document.getElementById('clearAllChatsBtn');
+const availableModelsInfo = document.getElementById('availableModelsInfo');
 
 // ============================================================================
 // Application State
 // ============================================================================
-let engine=null;
-let messagesHistory=[];
+let engine = null;
+let conversations = [];
+let currentConversationId = null;
 
 // ============================================================================
-// Chat History Management
+// Utility Functions
 // ============================================================================
 
-// Load chat history from localStorage
-function loadChatHistory() {
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+function setStatus(status, type = 'idle') {
+  statusText.textContent = status;
+  statusIndicator.className = 'status-indicator ' + type;
+}
+
+function setProgress(percent) {
+  if (percent > 0) {
+    progressBar.classList.add('active');
+    progressFill.style.width = Math.min(100, Math.max(0, percent)) + '%';
+  } else {
+    progressBar.classList.remove('active');
+  }
+}
+
+function renderMarkdown(text) {
+  const processed = text.replace(/<think>(.*?)<\/think>/gs, "*$1*");
+  const html = marked.parse(processed, { breaks: true });
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  container.querySelectorAll("pre code").forEach(el => hljs.highlightElement(el));
+  return container.innerHTML;
+}
+
+// ============================================================================
+// Conversation Management
+// ============================================================================
+
+function loadConversations() {
   try {
-    const saved = localStorage.getItem('nyveraChatHistory');
+    const saved = localStorage.getItem('nyveraConversations');
     if (saved) {
-      const history = JSON.parse(saved);
-      history.forEach(msg => {
-        if (msg.role === 'user') {
-          appendMessage('user', msg.content, false);
-        } else if (msg.role === 'assistant') {
-          // Check if it's an image message
-          if (msg.imageUrl) {
-            const aiDiv = document.createElement('div');
-            aiDiv.className = 'msg ai';
-            const img = document.createElement('img');
-            img.src = msg.imageUrl;
-            img.alt = msg.content.match(/!\[(.*?)\]/)?.[1] || 'Generated image';
-            img.style.maxWidth = "100%";
-            img.style.borderRadius = "12px";
-            img.onerror = () => {
-              aiDiv.textContent = '❌ Image no longer available';
-            };
-            aiDiv.appendChild(img);
-            chatEl.appendChild(aiDiv);
-          } else {
-            appendMessage('ai', msg.content, false);
-          }
-        }
-      });
-      messagesHistory = history;
+      conversations = JSON.parse(saved);
+      renderConversations();
     }
   } catch (e) {
-    console.error('Failed to load chat history:', e);
+    console.error('Failed to load conversations:', e);
   }
 }
 
-// Save chat history to localStorage
-function saveChatHistory() {
+function saveConversations() {
   try {
-    localStorage.setItem('nyveraChatHistory', JSON.stringify(messagesHistory));
+    localStorage.setItem('nyveraConversations', JSON.stringify(conversations));
   } catch (e) {
-    console.error('Failed to save chat history:', e);
+    console.error('Failed to save conversations:', e);
   }
 }
 
-// Export chat history as text file
-function exportChat() {
-  if (messagesHistory.length === 0) {
-    setStatus('No chat history to export');
-    setTimeout(() => setStatus('idle'), 2000);
+function createNewConversation() {
+  const conversation = {
+    id: generateId(),
+    title: 'New Chat',
+    messages: [],
+    createdAt: Date.now()
+  };
+  conversations.unshift(conversation);
+  currentConversationId = conversation.id;
+  saveConversations();
+  renderConversations();
+  renderMessages();
+  showChatArea();
+}
+
+function deleteConversation(id) {
+  if (confirm('Are you sure you want to delete this conversation?')) {
+    conversations = conversations.filter(c => c.id !== id);
+    if (currentConversationId === id) {
+      currentConversationId = conversations.length > 0 ? conversations[0].id : null;
+    }
+    saveConversations();
+    renderConversations();
+    renderMessages();
+  }
+}
+
+function switchConversation(id) {
+  currentConversationId = id;
+  renderConversations();
+  renderMessages();
+  showChatArea();
+}
+
+function getCurrentConversation() {
+  return conversations.find(c => c.id === currentConversationId);
+}
+
+function updateConversationTitle(conversation) {
+  if (conversation.messages.length > 0) {
+    const firstUserMsg = conversation.messages.find(m => m.role === 'user');
+    if (firstUserMsg) {
+      conversation.title = firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
+    }
+  }
+}
+
+function renderConversations() {
+  conversationsList.innerHTML = '';
+  conversations.forEach(conv => {
+    const item = document.createElement('div');
+    item.className = 'conversation-item' + (conv.id === currentConversationId ? ' active' : '');
+    item.innerHTML = `
+      <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${conv.title}</span>
+      <button class="delete-conversation" data-id="${conv.id}">✕</button>
+    `;
+    item.querySelector('span').addEventListener('click', () => switchConversation(conv.id));
+    item.querySelector('.delete-conversation').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteConversation(conv.id);
+    });
+    conversationsList.appendChild(item);
+  });
+}
+
+function showChatArea() {
+  const hasMessages = getCurrentConversation()?.messages.length > 0;
+  if (hasMessages) {
+    emptyState.style.display = 'none';
+    chatMessages.style.display = 'flex';
+  } else {
+    emptyState.style.display = 'flex';
+    chatMessages.style.display = 'none';
+  }
+}
+
+// ============================================================================
+// Message Rendering
+// ============================================================================
+
+function renderMessages() {
+  chatMessages.innerHTML = '';
+  const conversation = getCurrentConversation();
+  
+  if (!conversation) {
+    showChatArea();
+    return;
+  }
+
+  conversation.messages.forEach(msg => {
+    appendMessageElement(msg.role, msg.content, msg.imageUrl);
+  });
+
+  showChatArea();
+  scrollToBottom();
+}
+
+function appendMessageElement(role, content, imageUrl = null) {
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `message ${role}`;
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'message-avatar';
+  avatar.textContent = role === 'user' ? 'U' : 'AI';
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'message-content';
+  
+  if (imageUrl) {
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = 'Generated image';
+    img.onerror = () => {
+      contentDiv.innerHTML = '❌ Image no longer available';
+    };
+    contentDiv.appendChild(img);
+  } else {
+    contentDiv.innerHTML = role === 'assistant' ? renderMarkdown(content) : content;
+  }
+  
+  if (role === 'assistant' && !imageUrl) {
+    const actions = document.createElement('div');
+    actions.className = 'message-actions';
+    actions.innerHTML = `
+      <button class="action-btn copy-btn">Copy</button>
+    `;
+    actions.querySelector('.copy-btn').addEventListener('click', () => copyToClipboard(content));
+    contentDiv.appendChild(actions);
+  }
+  
+  msgDiv.appendChild(avatar);
+  msgDiv.appendChild(contentDiv);
+  chatMessages.appendChild(msgDiv);
+  
+  scrollToBottom();
+}
+
+function scrollToBottom() {
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function copyToClipboard(text) {
+  const temp = document.createElement('div');
+  temp.innerHTML = text;
+  const plainText = temp.textContent || temp.innerText || '';
+  
+  navigator.clipboard.writeText(plainText).then(() => {
+    setStatus('Copied to clipboard!', 'ready');
+    setTimeout(() => setStatus(engine ? 'Ready' : 'Idle', engine ? 'ready' : 'idle'), 2000);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+  });
+}
+
+// ============================================================================
+// Model Management
+// ============================================================================
+
+function populateModelSelect() {
+  modelSelect.innerHTML = '';
+  const list = (prebuiltAppConfig && prebuiltAppConfig.model_list) ? prebuiltAppConfig.model_list : [];
+  
+  if (list.length === 0) {
+    const fallback = [
+      { id: 'SmolLM2-1.7B-Instruct-q0f16', label: 'SmolLM2-1.7B-Instruct' },
+      { id: 'Llama-3.1-8B-Instruct', label: 'Llama-3.1-8B-Instruct' },
+      { id: 'Qwen-1.5B', label: 'Qwen-1.5B' }
+    ];
+    fallback.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f.id;
+      opt.text = f.label || f.id;
+      modelSelect.appendChild(opt);
+    });
+    availableModelsInfo.textContent = 'Warning: no prebuilt models available.';
     return;
   }
   
-  let chatText = 'Nyvera Chat History\n';
+  list.forEach(m => {
+    const id = m.model_id || m.model || m.name;
+    if (!id) return;
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.text = (m.short_name || m.name || id) + (m.vram_required_MB ? ` (${m.vram_required_MB} MB)` : '');
+    modelSelect.appendChild(opt);
+  });
+  
+  availableModelsInfo.textContent = `Detected ${list.length} built-in models.`;
+}
+
+async function loadModel() {
+  const modelId = modelSelect.value;
+  setStatus('Initializing engine...', 'loading');
+  setProgress(0);
+  
+  try {
+    const initProgressCallback = (progress) => {
+      let frac = 0;
+      if (typeof progress === 'number') frac = progress;
+      else if (progress?.progress) frac = progress.progress;
+      
+      if (frac > 1) {
+        setProgress(frac);
+        setStatus(`Loading model: ${Math.round(frac)}%`, 'loading');
+      } else {
+        setProgress(frac * 100);
+        setStatus(`Loading model: ${Math.round(frac * 100)}%`, 'loading');
+      }
+    };
+    
+    const opts = { initProgressCallback };
+    if (prebuiltAppConfig) opts.appConfig = prebuiltAppConfig;
+    
+    engine = await CreateMLCEngine(modelId, opts);
+    setStatus(`Ready (${modelId})`, 'ready');
+    setProgress(100);
+    setTimeout(() => setProgress(0), 1000);
+  } catch (err) {
+    console.error(err);
+    setStatus('Error loading model', 'idle');
+    alert('Error loading model: ' + (err?.message || err));
+  }
+}
+
+// ============================================================================
+// Message Sending
+// ============================================================================
+
+async function sendMessage() {
+  const text = inputArea.value.trim();
+  if (!text) return;
+  
+  // Create new conversation if none exists
+  if (!currentConversationId) {
+    createNewConversation();
+  }
+  
+  const conversation = getCurrentConversation();
+  if (!conversation) return;
+  
+  inputArea.value = '';
+  autoResizeTextarea();
+  
+  // Check for image command
+  if (text.toLowerCase().startsWith('/image ')) {
+    const imgPrompt = text.replace(/^\/image\s+/, '').trim();
+    if (!imgPrompt) {
+      setStatus('Please provide an image prompt', 'idle');
+      setTimeout(() => setStatus('Idle', 'idle'), 2000);
+      return;
+    }
+    return sendImage(imgPrompt, conversation);
+  }
+  
+  if (!engine) {
+    setStatus('Please load a model first', 'idle');
+    setTimeout(() => setStatus('Idle', 'idle'), 2000);
+    return;
+  }
+  
+  // Add user message
+  conversation.messages.push({ role: 'user', content: text });
+  updateConversationTitle(conversation);
+  saveConversations();
+  renderConversations();
+  appendMessageElement('user', text);
+  
+  setStatus('Generating...', 'loading');
+  
+  // Create placeholder for AI response
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'message assistant';
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'message-avatar';
+  avatar.textContent = 'AI';
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'message-content';
+  contentDiv.innerHTML = '<span class="loading-spinner"></span> Thinking...';
+  
+  msgDiv.appendChild(avatar);
+  msgDiv.appendChild(contentDiv);
+  chatMessages.appendChild(msgDiv);
+  scrollToBottom();
+  
+  let partial = '';
+  try {
+    const stream = await engine.chat.completions.create({
+      messages: conversation.messages,
+      temperature: 0.7,
+      stream: true
+    });
+    
+    for await (const chunk of stream) {
+      const delta = chunk?.choices?.[0]?.delta?.content || '';
+      if (delta) {
+        partial += delta;
+        contentDiv.innerHTML = renderMarkdown(partial);
+        scrollToBottom();
+      }
+    }
+    
+    // Add copy button
+    const actions = document.createElement('div');
+    actions.className = 'message-actions';
+    actions.innerHTML = '<button class="action-btn copy-btn">Copy</button>';
+    actions.querySelector('.copy-btn').addEventListener('click', () => copyToClipboard(partial));
+    contentDiv.appendChild(actions);
+    
+    conversation.messages.push({ role: 'assistant', content: partial });
+    saveConversations();
+    setStatus('Ready', 'ready');
+  } catch (err) {
+    console.error(err);
+    contentDiv.textContent = 'Error: ' + (err?.message || err);
+    setStatus('Error', 'idle');
+  }
+}
+
+async function sendImage(prompt, conversation) {
+  conversation.messages.push({ role: 'user', content: '/image ' + prompt });
+  updateConversationTitle(conversation);
+  saveConversations();
+  renderConversations();
+  appendMessageElement('user', '/image ' + prompt);
+  
+  setStatus('Generating image...', 'loading');
+  
+  try {
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+    
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message assistant';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = 'AI';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = 'Generating image...';
+    
+    msgDiv.appendChild(avatar);
+    msgDiv.appendChild(contentDiv);
+    chatMessages.appendChild(msgDiv);
+    scrollToBottom();
+    
+    const img = new Image();
+    img.src = url;
+    img.alt = prompt;
+    img.style.maxWidth = "100%";
+    img.style.borderRadius = "12px";
+    
+    img.onload = () => {
+      contentDiv.innerHTML = '';
+      contentDiv.appendChild(img);
+      conversation.messages.push({ role: 'assistant', content: `![${prompt}](${url})`, imageUrl: url });
+      saveConversations();
+      setStatus('Ready', 'ready');
+    };
+    
+    img.onerror = () => {
+      contentDiv.textContent = '❌ Error generating image.';
+      conversation.messages.push({ role: 'assistant', content: `[Failed to generate image: ${prompt}]` });
+      saveConversations();
+      setStatus('Error', 'idle');
+    };
+  } catch (err) {
+    console.error(err);
+    setStatus('Error', 'idle');
+  }
+}
+
+// ============================================================================
+// Export/Clear Functions
+// ============================================================================
+
+function exportChat() {
+  const conversation = getCurrentConversation();
+  if (!conversation || conversation.messages.length === 0) {
+    alert('No messages to export');
+    return;
+  }
+  
+  let chatText = `Nyvera Chat: ${conversation.title}\n`;
   chatText += '='.repeat(50) + '\n';
   chatText += `Exported: ${new Date().toLocaleString()}\n`;
   chatText += '='.repeat(50) + '\n\n';
   
-  messagesHistory.forEach(msg => {
+  conversation.messages.forEach(msg => {
     const role = msg.role === 'user' ? 'You' : 'AI';
     chatText += `${role}:\n${msg.content}\n\n${'-'.repeat(50)}\n\n`;
   });
   
-  // Create and download file
   const blob = new Blob([chatText], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -454,380 +1320,109 @@ function exportChat() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  
-  setStatus('Chat exported successfully');
-  setTimeout(() => setStatus('ready'), 2000);
 }
 
-// Clear chat history
-function clearChat() {
-  if (confirm('Are you sure you want to clear the chat history?')) {
-    chatEl.innerHTML = '';
-    messagesHistory = [];
-    localStorage.removeItem('nyveraChatHistory');
-    setStatus('Chat cleared');
+function clearAllChats() {
+  if (confirm('Are you sure you want to clear all conversations? This cannot be undone.')) {
+    conversations = [];
+    currentConversationId = null;
+    localStorage.removeItem('nyveraConversations');
+    renderConversations();
+    renderMessages();
   }
 }
 
 // ============================================================================
-// UI Helper Functions
+// UI Event Handlers
 // ============================================================================
 
-function renderAIText(text){
-  const processed=text.replace(/<think>(.*?)<\/think>/gs,"*$1*");
-  const html=marked.parse(processed,{breaks:true});
-  const container=document.createElement("div");container.innerHTML=html;
-  container.querySelectorAll("pre code").forEach(el=>hljs.highlightElement(el));
-  return container.innerHTML;
+function autoResizeTextarea() {
+  inputArea.style.height = 'auto';
+  inputArea.style.height = Math.min(inputArea.scrollHeight, 200) + 'px';
 }
 
-function copyToClipboard(text) {
-  // Remove HTML tags for plain text copy
-  const temp = document.createElement('div');
-  temp.innerHTML = text;
-  const plainText = temp.textContent || temp.innerText || '';
-  
-  navigator.clipboard.writeText(plainText).then(() => {
-    setStatus('Copied to clipboard!');
-    setTimeout(() => setStatus('ready'), 2000);
-  }).catch(err => {
-    console.error('Failed to copy:', err);
-  });
-}
+toggleSidebar.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+});
 
-function appendMessage(who, text, save = true){
-  const div=document.createElement('div');
-  div.className='msg '+(who==='user'?'user':'ai');
-  
-  if (who === 'ai') {
-    div.innerHTML = renderAIText(text);
-    // Add copy button for AI messages
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn';
-    copyBtn.textContent = 'Copy';
-    copyBtn.onclick = () => copyToClipboard(text);
-    div.appendChild(copyBtn);
-  } else {
-    div.textContent = text;
-  }
-  
-  chatEl.appendChild(div);
-  chatEl.scrollTop=chatEl.scrollHeight;
-  
-  // Save to history if needed
-  if (save) {
-    saveChatHistory();
-  }
-}
+newChatBtn.addEventListener('click', createNewConversation);
 
-// ============================================================================
-// Model Management Functions
-// ============================================================================
-
-function setStatus(s){
-  // Add spinner for loading states
-  if (s.includes('loading') || s.includes('generating') || s.includes('initializing')) {
-    statusEl.textContent = '';
-    const spinner = document.createElement('span');
-    spinner.className = 'loading-spinner';
-    statusEl.appendChild(spinner);
-    statusEl.appendChild(document.createTextNode(' ' + s));
-  } else {
-    statusEl.textContent = s;
-  }
-}
-
-function setProgress(p){progressBar.style.width=Math.max(0,Math.min(100,p))+'%';}
-
-function populateModelSelect(){
-  modelSelect.innerHTML='';errorBox.style.display='none';
-  const list=(prebuiltAppConfig&&prebuiltAppConfig.model_list)?prebuiltAppConfig.model_list:[];
-  if(list.length===0){
-    const fallback=[{id:'SmolLM2-1.7B-Instruct-q0f16',label:'SmolLM2-1.7B-Instruct'},{id:'Llama-3.1-8B-Instruct',label:'Llama-3.1-8B-Instruct'},{id:'Qwen-1.5B',label:'Qwen-1.5B'}];
-    fallback.forEach(f=>{const opt=document.createElement('option');opt.value=f.id;opt.text=f.label||f.id;modelSelect.appendChild(opt);});
-    availableModelsEl.innerText='Warning: no prebuilt models available.';return;
-  }
-  list.forEach(m=>{const id=m.model_id||m.model||m.name;if(!id) return;
-    const opt=document.createElement('option');opt.value=id;opt.text=(m.short_name||m.name||id)+(m.vram_required_MB?` (VRAM ${m.vram_required_MB} MB)`: '');modelSelect.appendChild(opt);});
-  availableModelsEl.innerText=`Detected ${list.length} built-in models.`;}
-async function loadModel(){
-  const modelId=modelSelect.value;setStatus('initializing engine');setProgress(0);errorBox.style.display='none';
-  try{
-    const initProgressCallback=(progress)=>{let frac=0;if(typeof progress==='number') frac=progress; else if(progress?.progress) frac=progress.progress;
-      if(frac>1){setProgress(frac);setStatus('loading model: '+Math.round(frac)+'%');} else {setProgress(frac*100);setStatus('loading model: '+Math.round(frac*100)+'%');}};
-    const opts={initProgressCallback}; if(prebuiltAppConfig) opts.appConfig=prebuiltAppConfig;
-    engine=await CreateMLCEngine(modelId,opts); setStatus('ready ('+modelId+')'); setProgress(100);
-  }catch(err){console.error(err);setStatus('error');errorBox.style.display='block';errorBox.innerText='Error loading model: '+(err?.message||err);}
-}
-
-// ============================================================================
-// Image Generation Functions
-// ============================================================================
-
-async function sendImage(prompt) {
-  appendMessage('user', '/image ' + prompt);
-  setStatus('generating image...');
-
-  try {
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
-
-    const aiDiv = document.createElement('div');
-    aiDiv.className = 'msg ai';
-    aiDiv.textContent = 'Generating image...';
-    chatEl.appendChild(aiDiv);
-    chatEl.scrollTop = chatEl.scrollHeight;
-
-    const img = new Image();
-    img.src = url;
-    img.alt = prompt;
-    img.style.maxWidth = "100%";
-    img.style.borderRadius = "12px";
-    img.onload = () => {
-      aiDiv.textContent = '';
-      aiDiv.appendChild(img);
-      setStatus('ready');
-      // Save image URL to history so it can be restored
-      messagesHistory.push({ role: "assistant", content: `![${prompt}](${url})`, imageUrl: url });
-      saveChatHistory();
-    };
-    img.onerror = () => {
-      aiDiv.textContent = '❌ Error generating image.';
-      setStatus('error');
-      messagesHistory.push({ role: "assistant", content: `[Failed to generate image: ${prompt}]` });
-      saveChatHistory();
-    };
-  } catch (err) {
-    console.error(err);
-    appendMessage('ai', 'Error fetching image: ' + err.message);
-    setStatus('error');
-  }
-}
-
-// ============================================================================
-// Text Chat Functions
-// ============================================================================
-
-async function sendMessage() {
-  const text=promptEl.value.trim();
-  if (!text) {
-    setStatus('Please enter a message');
-    setTimeout(() => setStatus('idle'), 2000);
-    return;
-  }
-  promptEl.value = '';
-
-  // Check for image command
-  if (text.toLowerCase().startsWith('/image ')) {
-    const imgPrompt = text.replace(/^\/image\s+/, '').trim();
-    if (!imgPrompt) {
-      setStatus('Please provide an image prompt');
-      setTimeout(() => setStatus('idle'), 2000);
-      return;
-    }
-    return sendImage(imgPrompt);
-  }
-
-  if (!engine) {
-    setStatus('Please load a model first');
-    setTimeout(() => setStatus('idle'), 2000);
-    return;
-  }
-  
-  appendMessage('user', text);
-  messagesHistory.push({role:'user',content:text});
-  setStatus('generating...');
-  
-  const aiDiv=document.createElement('div');
-  aiDiv.className='msg ai';
-  aiDiv.innerHTML='<span class="loading-spinner"></span> Thinking...';
-  chatEl.appendChild(aiDiv);
-  chatEl.scrollTop=chatEl.scrollHeight;
-
-  let partial='';
-  try{
-    const stream=await engine.chat.completions.create({messages:messagesHistory,temperature:0.7,stream:true});
-    for await(const chunk of stream){
-      const delta=chunk?.choices?.[0]?.delta?.content||'';
-      if(delta){partial+=delta;aiDiv.innerHTML=renderAIText(partial);chatEl.scrollTop=chatEl.scrollHeight;}
-    }
-    // Add copy button after generation completes
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn';
-    copyBtn.textContent = 'Copy';
-    copyBtn.onclick = () => copyToClipboard(partial);
-    aiDiv.appendChild(copyBtn);
-    
-    messagesHistory.push({role:'assistant',content:partial}); 
-    saveChatHistory();
-    setStatus('ready');
-  }catch(err){console.error(err);appendMessage('ai','Error: '+(err?.message||err));setStatus('error');}
-}
-
-// ============================================================================
-// Event Listeners and Initialization
-// ============================================================================
-
-// Disable buttons during model loading and call loadModel
-loadBtn.addEventListener('click', async () => {
-  loadBtn.disabled = true;
+loadModelBtn.addEventListener('click', async () => {
+  loadModelBtn.disabled = true;
   modelSelect.disabled = true;
   try {
     await loadModel();
   } finally {
-    loadBtn.disabled = false;
+    loadModelBtn.disabled = false;
     modelSelect.disabled = false;
   }
 });
 
-sendBtn.addEventListener('click',sendMessage);
-refreshBtn.addEventListener('click',populateModelSelect);
-clearChatBtn.addEventListener('click',clearChat);
-const exportChatBtn=document.getElementById('exportChatBtn');
-exportChatBtn.addEventListener('click',exportChat);
-promptEl.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&!e.shiftKey&&(e.ctrlKey||e.metaKey)) {
+settingsBtn.addEventListener('click', () => {
+  settingsModal.classList.add('active');
+});
+
+closeSettings.addEventListener('click', () => {
+  settingsModal.classList.remove('active');
+});
+
+closeSettingsBtn.addEventListener('click', () => {
+  settingsModal.classList.remove('active');
+});
+
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) {
+    settingsModal.classList.remove('active');
+  }
+});
+
+exportChatBtn.addEventListener('click', exportChat);
+clearAllChatsBtn.addEventListener('click', clearAllChats);
+
+sendBtn.addEventListener('click', sendMessage);
+
+inputArea.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 });
 
-// Add focus to prompt on load
-window.addEventListener('load', () => {
-  promptEl.focus();
+inputArea.addEventListener('input', autoResizeTextarea);
+
+// Example prompts
+document.querySelectorAll('.example-prompt').forEach(prompt => {
+  prompt.addEventListener('click', () => {
+    inputArea.value = prompt.dataset.prompt;
+    autoResizeTextarea();
+    inputArea.focus();
+  });
 });
 
-// Better WebGPU detection
-if(!('gpu' in navigator)) {
-  setStatus('WARNING: WebGPU not available');
-  errorBox.style.display='block';
-  errorBox.textContent='WebGPU is not available in this browser. Please use Chrome/Edge 113+ or check if WebGPU is enabled in your browser flags.';
+// ============================================================================
+// Initialization
+// ============================================================================
+
+// Check WebGPU support
+if (!('gpu' in navigator)) {
+  setStatus('WARNING: WebGPU not available', 'idle');
+  alert('WebGPU is not available in this browser. Please use Chrome/Edge 113+ or check if WebGPU is enabled in your browser flags.');
 } else {
-  setStatus('idle');
+  setStatus('Idle', 'idle');
 }
 
 populateModelSelect();
-loadChatHistory(); // Load saved chat history on startup
-if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").then(reg=>console.log("SW registered:",reg.scope)).catch(err=>console.error("SW registration failed:",err));});}
-</script>
+loadConversations();
+showChatArea();
 
-<!-- Particle starfield -->
-<script>
-const canvas=document.getElementById("stars");
-const ctx=canvas.getContext("2d");
-let w,h,particles=[];
-function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
-window.addEventListener("resize",resize);resize();
-
-class Particle{
-  constructor(){this.reset();}
-  reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.r=Math.random()*1.8+0.2;this.dx=(Math.random()-0.5)*0.3;this.dy=(Math.random()-0.5)*0.3;this.alpha=Math.random()*0.5+0.5;}
-  update(){this.x+=this.dx; this.y+=this.dy; if(this.x<0||this.x>w||this.y<0||this.y>h)this.reset(); this.alpha+=(Math.random()-0.5)*0.05; this.alpha=Math.min(1,Math.max(0.2,this.alpha));}
-  draw(){ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle="rgba(255,255,255,"+this.alpha+")"; ctx.fill();}
+// Service Worker
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .then(reg => console.log("SW registered:", reg.scope))
+      .catch(err => console.error("SW registration failed:", err));
+  });
 }
-function initParticles(num=150){particles=[];for(let i=0;i<num;i++){particles.push(new Particle());}}
-function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animate);}
-initParticles();animate();
-</script>
-
-<!-- Cursor follower -->
-<script>
-const follower = document.querySelector('.cursor-follower');
-let mouseX = 0, mouseY = 0, posX = 0, posY = 0, speed = 0.1;
-document.addEventListener('mousemove', e=>{mouseX=e.clientX; mouseY=e.clientY;});
-function animateFollower(){ posX+=(mouseX-posX)*speed; posY+=(mouseY-posY)*speed; follower.style.left=posX+'px'; follower.style.top=posY+'px'; requestAnimationFrame(animateFollower);}
-animateFollower();
-</script>
-
-<!-- Tutorial Script -->
-<script>
-const tutorialOverlay = document.getElementById('tutorialOverlay');
-const tutorialBox = document.getElementById('tutorialBox');
-const tutorialContent = document.getElementById('tutorialStepContent');
-const highlight = document.getElementById('tutorialHighlight');
-const nextBtn = document.getElementById('tutorialNextBtn');
-const backBtn = document.getElementById('tutorialBackBtn');
-const closeBtn = document.getElementById('tutorialCloseBtn');
-const dontShowCheckbox = document.getElementById('tutorialDontShow');
-const showTutorialBtn = document.getElementById('showTutorialBtn');
-
-const tutorialSteps = [
-  { text: "Welcome to Nyvera! Let's go through the main features.", element: null },
-  { text: "Step 1: Select a model from the dropdown at the top. The second model from the top is usually the fastest.", element: "#modelSelect" },
-  { text: "Step 2: Click 'Load model' to initialize the AI engine.", element: "#loadBtn" },
-  { text: "Step 3: Type your message in the chat box and press 'Send' or Ctrl+Enter.", element: "#prompt" },
-  { text: "Step 4: Generate images using '/image your prompt here'.", element: "#sendBtn" },
-  { text: "Step 5: Monitor the status and progress bar to see model loading and generation.", element: "#progressBar" },
-  { text: "You're all set! Enjoy using Nyvera.", element: null }
-];
-
-let currentStep = 0;
-
-function showStep(index){
-  if(index < 0) index = 0;
-  if(index >= tutorialSteps.length) index = tutorialSteps.length - 1;
-  currentStep = index;
-
-  const step = tutorialSteps[index];
-  tutorialContent.innerText = step.text;
-  backBtn.style.display = index === 0 ? 'none' : 'inline-block';
-  nextBtn.innerText = index === tutorialSteps.length - 1 ? 'Finish' : 'Next';
-
-  if(step.element){
-    const el = document.querySelector(step.element);
-    if(el){
-      const rect = el.getBoundingClientRect();
-      highlight.style.display = 'block';
-      highlight.style.width = rect.width + 12 + 'px';
-      highlight.style.height = rect.height + 12 + 'px';
-      highlight.style.top = rect.top - 6 + 'px';
-      highlight.style.left = rect.left - 6 + 'px';
-
-      let top = rect.bottom + 10;
-      let left = rect.left;
-      if(top + 160 > window.innerHeight) top = rect.top - 170;
-      if(left + 400 > window.innerWidth) left = window.innerWidth - 420;
-      tutorialBox.style.top = top + 'px';
-      tutorialBox.style.left = left + 'px';
-      tutorialBox.style.transform = 'translate(0,0)';
-    } else {
-      resetBoxCenter();
-    }
-  } else {
-    resetBoxCenter();
-  }
-}
-
-function resetBoxCenter(){
-  highlight.style.display = 'none';
-  tutorialBox.style.top = '50%';
-  tutorialBox.style.left = '50%';
-  tutorialBox.style.transform = 'translate(-50%,-50%)';
-}
-
-nextBtn.addEventListener('click',()=>{
-  if(currentStep === tutorialSteps.length - 1){
-    if(dontShowCheckbox.checked) localStorage.setItem('nyveraTutorialDismissed','true');
-    tutorialOverlay.style.display = 'none';
-  } else {
-    showStep(currentStep + 1);
-  }
-});
-backBtn.addEventListener('click',()=>showStep(currentStep - 1));
-closeBtn.addEventListener('click',()=>{
-  if(dontShowCheckbox.checked) localStorage.setItem('nyveraTutorialDismissed','true');
-  tutorialOverlay.style.display='none';
-});
-showTutorialBtn.addEventListener('click',()=>{
-  tutorialOverlay.style.display='block';
-  showStep(0);
-});
-
-window.addEventListener('load',()=>{
-  if(localStorage.getItem('nyveraTutorialDismissed')!=='true'){
-    tutorialOverlay.style.display='block';
-    showStep(0);
-  }
-});
 </script>
 
 </body>

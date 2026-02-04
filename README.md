@@ -1,127 +1,153 @@
 # Nyvera
 
-Nyvera is a progressive web app (PWA) that lets you chat with models powered by WebLLM
-. It’s designed to look sleek, run fast, and stay usable even when offline. Once installed, Nyvera behaves like a native app on desktop or mobile, complete with icons, splash screens, and offline support.
+Nyvera is a progressive web app (PWA) that lets you chat with AI models powered by WebLLM. Featuring a modern, ChatGPT-like interface inspired by OpenWebUI, it's designed to look sleek, run fast, and stay usable even when offline. Once installed, Nyvera behaves like a native app on desktop or mobile, complete with icons, splash screens, and offline support.
 
 ## ✨ Features
 
-- Chat Interface – Seamless, modern chat UI built with Tailwind CSS.
+- **Modern ChatGPT-like Interface** – Clean, professional UI with sidebar navigation, conversation management, and dark theme inspired by OpenWebUI.
 
-- Model Selection – Choose different AI models from WebLLM.
+- **Conversation Management** – Create multiple chat sessions, switch between them, and maintain conversation history.
 
-- PWA Support – Installable on desktop and mobile, with offline caching.
+- **Sidebar Navigation** – Collapsible sidebar with conversation list, model selection, and settings.
 
-- Offline Mode – Lets you chat OFFLINE.
+- **Model Selection** – Choose different AI models from WebLLM's extensive library.
 
-- Theming – Colors and fonts configured for a clean, modern experience.
+- **Text & Image Generation** – Supports both text chat and image generation using Pollinations API.
 
-- Cross-Platform Support – Works on Chrome, Edge, Safari, and mobile browsers.
+- **PWA Support** – Installable on desktop and mobile, with offline caching.
 
-`
+- **Offline Mode** – Chat with AI models completely offline once loaded.
+
+- **Responsive Design** – Optimized for desktop, tablet, and mobile devices.
+
+- **Cross-Platform Support** – Works on Chrome, Edge, Safari, and mobile browsers.
+
 ## 🚀 Getting Started
+
 ### 1. Clone the Repository
 
-`git clone https://github.com/orgs/nyvera/nyvera.github.io.git`
+```bash
+git clone https://github.com/Nyvera/Nyvera.github.io.git
+cd Nyvera.github.io
+```
 
-`cd nyvera`
+### 2. Run Locally
 
-### 2. Add Icons
+You need a local server to test service workers (they don't run from file://).
 
-Place your generated icons in the /icons folder.
+**Quick option: use Python's HTTP server:**
 
-**Required: icon-192.png and icon-512.png**
-
-*Optional: Apple Touch Icon (apple-touch-icon.png) and favicons*
-
-If you don’t already have icons, you can generate them using a favicon generator (e.g. favicon.io
-).*
-
-### 3. Run Locally
-
-You need a local server to test service workers (they don’t run from file://).
-
-*Quick option: use Python’s HTTP server:*
-
-#### Python 3
-`python 
+```bash
+# Python 3
 python -m http.server 8080
-`
+```
 
+Then visit: http://localhost:8080
 
-#### Then visit:
+### 3. Deploy
 
-http://localhost:8080
-
-### 4. Deploy
-
-- GitHub Pages: Push to a GitHub repo and enable GitHub Pages in your repo settings.
-
-- Netlify/Vercel: Drag and drop the project folder into your dashboard.
-
-- Custom Hosting: Upload all files to your web server root.
+- **GitHub Pages**: Push to a GitHub repo and enable GitHub Pages in your repo settings.
+- **Netlify/Vercel**: Drag and drop the project folder into your dashboard.
+- **Custom Hosting**: Upload all files to your web server root.
 
 ## 📱 Installation (as PWA)
 
-Open Nyvera in Chrome, Edge, or Safari.
-
-Click the “Install App” prompt (or “Add to Home Screen” on iOS).
-
-Launch it like a normal app — complete with splash screen and custom icon.
+1. Open Nyvera in Chrome, Edge, or Safari.
+2. Click the "Install App" prompt (or "Add to Home Screen" on iOS).
+3. Launch it like a normal app — complete with splash screen and custom icon.
 
 ## ⚡ Offline Support
 
-When online, assets and API calls are cached automatically.
+- When online, assets and API calls are cached automatically.
+- If offline, cached assets load instantly.
+- Models can run completely offline once loaded.
+- This ensures the app feels responsive even without an internet connection.
 
-If offline, cached assets load instantly.
+## 🎨 New UI Features
 
-If a requested resource isn’t available, the app displays offline.html.
+### Sidebar Navigation
+- Collapsible sidebar for easy access to conversations and settings
+- "New Chat" button to start fresh conversations
+- Conversation history with easy switching between chats
+- Model selection integrated into the sidebar
 
-This ensures the app feels responsive even without an internet connection.
+### Chat Interface
+- Clean, modern message bubbles for user and AI responses
+- Markdown and code syntax highlighting support
+- Copy button for AI responses
+- Image generation support with `/image` command
+- Example prompts to get started quickly
+
+### Settings
+- Centralized settings modal
+- Export individual conversations
+- Clear all chat history
+- Model information display
 
 ## 🛠 Customization
+
 ### Colors & Theme
 
-Change the theme color in:
+The new interface uses a dark theme inspired by ChatGPT and OpenWebUI. You can customize colors by modifying the CSS variables in `index.html`:
 
-manifest.json → "theme_color" and "background_color"
+```css
+:root {
+  --bg-primary: #171717;
+  --bg-secondary: #212121;
+  --accent: #10a37f;
+  /* ... and more */
+}
+```
 
-<meta name="theme-color"> inside index.html and offline.html
+### API Integration
 
-API Integration
+Right now, the chat uses WebLLM to chat online and offline. You can swap this out with any other AI API by modifying the JavaScript logic inside `index.html`.
 
-Right now, the chat uses WebLLM to chat online and offline. You can swap this out with any other AI API by modifying the JavaScript fetch logic inside index.html.
+### Caching
 
-Caching
-
-Adjust what’s cached offline by editing the ASSETS array in sw.js.
+Adjust what's cached offline by editing the ASSETS array in `sw.js`.
 
 ## 🔒 Permissions
 
 This app:
 
 - Does not collect user data.
-
 - Does not require login.
-
-- Only communicates with external APIs when explicitly requested (Pollinations API).
+- Only communicates with external APIs when explicitly requested (Pollinations API for images).
+- Stores conversation history locally in your browser.
 
 ## 🧩 Browser Compatibility
 
-- Chrome / Edge (Desktop & Android) → Full support (PWA install, offline, push updates).
+- **Chrome / Edge (Desktop & Android)** → Full support (PWA install, offline, WebGPU for AI models).
+- **Safari (iOS & macOS)** → Supports install and Apple Touch Icon, but service workers have limited background functionality.
+- **Firefox** → Works as a website but limited PWA features.
 
-- Safari (iOS & macOS) → Supports install and Apple Touch Icon, but service workers have limited background functionality.
-
-- Firefox → Works as a website but limited PWA features.
+**Note**: WebGPU is required for running AI models. Please use Chrome/Edge 113+ or check if WebGPU is enabled in your browser flags.
 
 ## 📜 License
 
 This project is open-source under the MIT License.
 You are free to use, modify, and distribute it with attribution.
 
-# 🙌 Credits
+## 🙌 Credits
 
-### Built with Tailwind CSS
+- **UI Design**: Inspired by ChatGPT and OpenWebUI
+- **Built with**: Vanilla JavaScript, HTML5, CSS3
+- **Powered by**: WebLLM for offline AI inference
+- **Image Generation**: Pollinations AI
+- **Syntax Highlighting**: Highlight.js
+- **Markdown Rendering**: Marked.js
+- **Icon design**: Nyvera
 
-### Powered by WebLLM
+## 🌟 What's New
 
-### Icon design inspiration by Nyvera.
+**Latest Update: OpenWebUI-Inspired Interface**
+
+- Complete UI overhaul with a modern, ChatGPT-like design
+- Added sidebar navigation with conversation management
+- Implemented conversation history and switching
+- Added settings modal for better configuration
+- Improved mobile responsiveness
+- Enhanced message styling with copy functionality
+- Added example prompts for quick start
+- Better status indicators and progress tracking

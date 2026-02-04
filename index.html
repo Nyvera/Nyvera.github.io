@@ -769,7 +769,7 @@ html, body {
         <textarea 
           class="input-area" 
           id="inputArea" 
-          placeholder="Send a message... (Shift+Enter for new line, /image for image generation)"
+          placeholder="Send a message... (Enter to send, Shift+Enter for new line, /image for image generation)"
           rows="1"
         ></textarea>
         <button class="send-btn" id="sendBtn" aria-label="Send message">
@@ -866,7 +866,7 @@ let currentConversationId = null;
 // ============================================================================
 
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
 function setStatus(status, type = 'idle') {

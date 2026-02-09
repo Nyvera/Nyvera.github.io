@@ -372,6 +372,30 @@ html, body {
   opacity: 1;
 }
 
+.message.assistant.streaming {
+  border: 1px solid rgba(16, 163, 127, 0.35);
+  box-shadow: 0 0 0 1px rgba(16, 163, 127, 0.1);
+}
+
+.streaming-text {
+  white-space: pre-wrap;
+}
+
+.stream-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  animation: cursorBlink 1s steps(2, start) infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes cursorBlink {
+  to { opacity: 0; }
+}
+
 .action-btn {
   padding: 4px 8px;
   background: var(--bg-primary);
@@ -447,6 +471,15 @@ html, body {
 .send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.send-btn.loading {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+}
+
+.send-btn.loading .loading-spinner {
+  border-top-color: var(--accent);
 }
 
 .input-hint {
@@ -864,6 +897,10 @@ const availableModelsInfo = document.getElementById('availableModelsInfo');
 let engine = null;
 let conversations = [];
 let currentConversationId = null;
+let isGenerating = false;
+let initialInputPlaceholder = '';
+let initialSendButtonContent = '';
+const defaultMaxTokens = 1024;
 
 // ============================================================================
 // Utility Functions
@@ -884,6 +921,23 @@ function setProgress(percent) {
     progressFill.style.width = Math.min(100, Math.max(0, percent)) + '%';
   } else {
     progressBar.classList.remove('active');
+  }
+}
+
+function updateInputState() {
+  captureInitialUIState();
+  sendBtn.disabled = isGenerating || !engine;
+  sendBtn.classList.toggle('loading', isGenerating);
+  sendBtn.innerHTML = isGenerating ? '<span class="loading-spinner"></span>' : initialSendButtonContent;
+  inputArea.placeholder = engine ? initialInputPlaceholder : 'Load a model to start chatting...';
+}
+
+function captureInitialUIState() {
+  if (inputArea && !initialInputPlaceholder) {
+    initialInputPlaceholder = inputArea.placeholder;
+  }
+  if (sendBtn && !initialSendButtonContent) {
+    initialSendButtonContent = sendBtn.innerHTML;
   }
 }
 
@@ -1131,6 +1185,8 @@ async function loadModel() {
     console.error(err);
     setStatus('Error loading model', 'idle');
     alert('Error loading model: ' + (err?.message || err));
+  } finally {
+    updateInputState();
   }
 }
 
@@ -1140,7 +1196,7 @@ async function loadModel() {
 
 async function sendMessage() {
   const text = inputArea.value.trim();
-  if (!text) return;
+  if (!text || isGenerating) return;
   
   // Create new conversation if none exists
   if (!currentConversationId) {
@@ -1156,6 +1212,7 @@ async function sendMessage() {
   if (!engine) {
     setStatus('Please load a model first', 'idle');
     setTimeout(() => setStatus('Idle', 'idle'), 2000);
+    updateInputState();
     return;
   }
   
@@ -1167,6 +1224,8 @@ async function sendMessage() {
   appendMessageElement('user', text);
   
   setStatus('Generating...', 'loading');
+  isGenerating = true;
+  updateInputState();
   
   // Create placeholder for AI response
   const msgDiv = document.createElement('div');
@@ -1178,7 +1237,15 @@ async function sendMessage() {
   
   const contentDiv = document.createElement('div');
   contentDiv.className = 'message-content';
-  contentDiv.innerHTML = '<span class="loading-spinner"></span> Thinking...';
+  const streamText = document.createElement('div');
+  streamText.className = 'streaming-text';
+  streamText.textContent = 'Thinking...';
+  
+  const cursor = document.createElement('span');
+  cursor.className = 'stream-cursor';
+  
+  contentDiv.appendChild(streamText);
+  contentDiv.appendChild(cursor);
   
   msgDiv.appendChild(avatar);
   msgDiv.appendChild(contentDiv);
@@ -1186,21 +1253,46 @@ async function sendMessage() {
   scrollToBottom();
   
   let partial = '';
+  let receivedTokens = false;
+  let hasStreamed = false;
   try {
-    const stream = await engine.chat.completions.create({
+    const request = {
       messages: conversation.messages,
       temperature: 0.7,
-      stream: true
-    });
+      max_tokens: defaultMaxTokens
+    };
+    
+    const stream = await engine.chat.completions.create({ ...request, stream: true });
     
     for await (const chunk of stream) {
       const delta = chunk?.choices?.[0]?.delta?.content || '';
       if (delta) {
+        if (!hasStreamed) {
+          msgDiv.classList.add('streaming');
+          hasStreamed = true;
+        }
         partial += delta;
-        contentDiv.innerHTML = renderMarkdown(partial);
+        receivedTokens = true;
+        streamText.innerHTML = renderMarkdown(partial);
         scrollToBottom();
       }
     }
+    
+    if (!receivedTokens) {
+      setStatus('Retrying response generation...', 'loading');
+      console.warn('Streaming stalled; switching to non-streaming mode.');
+      const response = await engine.chat.completions.create({ ...request, stream: false });
+      partial = response?.choices?.[0]?.message?.content || '';
+    }
+    
+    if (!partial) {
+      const noResponseError = new Error('Model failed to generate a response.');
+      noResponseError.code = 'NO_RESPONSE';
+      throw noResponseError;
+    }
+    
+    msgDiv.classList.remove('streaming');
+    contentDiv.innerHTML = renderMarkdown(partial);
     
     // Add copy button
     const actions = document.createElement('div');
@@ -1214,8 +1306,16 @@ async function sendMessage() {
     setStatus('Ready', 'ready');
   } catch (err) {
     console.error(err);
-    contentDiv.textContent = 'Error: ' + (err?.message || err);
+    msgDiv.classList.remove('streaming');
+    const message = err?.message || err;
+    const userMessage = err?.code === 'NO_RESPONSE'
+      ? 'Model failed to generate a response. Try reloading the model or checking the model configuration.'
+      : message;
+    contentDiv.textContent = 'Error: ' + userMessage;
     setStatus('Error', 'idle');
+  } finally {
+    isGenerating = false;
+    updateInputState();
   }
 }
 
@@ -1349,6 +1449,8 @@ if (!('gpu' in navigator)) {
 }
 
 populateModelSelect();
+captureInitialUIState();
+updateInputState();
 loadConversations();
 showChatArea();
 
